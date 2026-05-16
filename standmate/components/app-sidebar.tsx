@@ -15,6 +15,7 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  Icon,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -29,7 +30,6 @@ import {
 } from "@/components/ui/sidebar"
 import { AudioWaveform, Brain, Command, GalleryVerticalEnd } from "lucide-react"
 import { WorkspaceSwitcher } from "@/components/workspace-switcher"
-import { TeamSwitcher } from "@/components/team-switcher"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchCurrentUser } from "@/lib/redux/slices/authSlice"
 import { fetchWorkspaces, fetchTeams } from "@/lib/redux/slices/workspaceSlice"
@@ -54,7 +54,7 @@ const data = {
     {
       title: "Brainstorms",
       url: "/brainstorms",
-      icon: Brain,
+      icon: Brain as unknown as Icon,
     },
     {
       title: "Analytics",
@@ -203,7 +203,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <WorkspaceSwitcher />
-        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

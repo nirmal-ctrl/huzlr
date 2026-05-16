@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Building } from "lucide-react"
+import { ChevronsUpDown, Plus, Building, Users, Check } from "lucide-react"
 
 import {
     DropdownMenu,
@@ -19,7 +19,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
-import { setActiveWorkspace, Workspace } from "@/lib/redux/slices/workspaceSlice"
+import { setActiveWorkspace, setActiveTeam, Workspace } from "@/lib/redux/slices/workspaceSlice"
 
 export function WorkspaceSwitcher() {
     const { isMobile } = useSidebar()
@@ -27,8 +27,11 @@ export function WorkspaceSwitcher() {
     
     const workspaces = useAppSelector((state) => state.workspace.workspaces)
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+    const teams = useAppSelector((state) => state.workspace.teams)
+    const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
     
     const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0]
+    const activeTeam = teams.find((t) => t.id === activeTeamId) || teams[0]
 
     if (!activeWorkspace) {
         return (
@@ -61,7 +64,7 @@ export function WorkspaceSwitcher() {
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{activeWorkspace.name}</span>
-                                <span className="truncate text-xs">Workspace</span>
+                                <span className="truncate text-xs">{activeTeam?.name || "Select Team"}</span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -84,10 +87,40 @@ export function WorkspaceSwitcher() {
                                 <div className="flex size-6 items-center justify-center rounded-md border">
                                     <Building className="size-3.5 shrink-0" />
                                 </div>
-                                {workspace.name}
+                                <span className="flex-1">{workspace.name}</span>
+                                {workspace.id === activeWorkspaceId && <Check className="size-3.5" />}
                                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                             </DropdownMenuItem>
                         ))}
+                        
+                        {teams.length > 0 && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel className="text-muted-foreground text-xs">
+                                    Teams in {activeWorkspace.name}
+                                </DropdownMenuLabel>
+                                {teams.map((team) => (
+                                    <DropdownMenuItem
+                                        key={team.id}
+                                        onClick={() => dispatch(setActiveTeam(team.id))}
+                                        className="gap-2 p-2"
+                                    >
+                                        <div className="flex size-6 items-center justify-center rounded-md border">
+                                            <Users className="size-3.5 shrink-0" />
+                                        </div>
+                                        <span className="flex-1">{team.name}</span>
+                                        {team.id === activeTeamId && <Check className="size-3.5" />}
+                                    </DropdownMenuItem>
+                                ))}
+                                <DropdownMenuItem className="gap-2 p-2">
+                                    <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+                                        <Plus className="size-4" />
+                                    </div>
+                                    <div className="text-muted-foreground font-medium">Add team</div>
+                                </DropdownMenuItem>
+                            </>
+                        )}
+
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="gap-2 p-2" onClick={() => {
                             // TODO: Open create workspace modal or redirect

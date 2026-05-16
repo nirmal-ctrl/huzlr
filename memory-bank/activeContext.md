@@ -6,12 +6,15 @@
 
 ## Recent Changes
 - The previous work on dynamic statuses for tasks has been superseded by the new plan for a generic view system.
+- Consolidated Workspace and Team switching UI into a single integrated component.
 
 ## Next Steps
 - Create a `ViewContainer` component to fetch data and property definitions for a given entity type.
 - Create a `ViewSwitcher` component to render the correct view based on the selected `viewType` and `groupBy` property.
 - Refactor the `KanbanBoard` and `DataTable` components to be more generic and configurable.
 - Refactor the entity pages (`app/projects/page.tsx`, `app/boards/page.tsx`) to use the new `ViewContainer` component.
+- Implement Team Management UI (Settings, Members, Invites) to leverage existing BE/DB structure.
+- Deprecate/Remove `TeamSwitcher.tsx` if no longer needed as a standalone component.
 
 ## Active Decisions & Considerations
 - Maintaining a strict boundary between frontend (`standmate`) and backend (`standmate-be`) services.
@@ -21,3 +24,4 @@
 ## Learnings & Insights
 - Standmate connects multiple data streams (Jira, brainstorms, boards) into a unified view.
 - Always use the reactive text editor (`TiptapEditor` / `InlineEditor`) for input fields that require formatted text or rich content, rather than basic inputs or textareas.
+- **Team Architecture**: The system uses a hierarchical Workspace -> Team -> User structure. Every workspace must have a default 'General' team created on initialization.

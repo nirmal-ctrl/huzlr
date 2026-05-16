@@ -15,6 +15,10 @@
 - Frontend communicates with Backend over HTTP REST APIs.
 - Next.js acts as a BFF (Backend for Frontend) for certain integrations, utilizing route handlers (`app/api/`) for features like Gemini AI interactions, save frames, etc.
 - **Projects**: The central entity. Projects own `Milestones` and `Tasks` directly. Tasks can optionally belong to a Milestone. (The `Scenario` model has been removed).
+- **Multi-Tenancy**: 
+  - Hierarchical structure: **Workspace** (Top Level) > **Team** (Functional Groups) > **Projects** (Work Units).
+  - Users are linked via **WorkspaceMembership** (with roles) and **TeamMembership**.
+  - Default 'General' teams are auto-provisioned per workspace.
 
 ## Critical Implementation Paths
 - Auth integration (likely Atlassian/OAuth based on `app/atlassian-callback/`).
@@ -28,3 +32,7 @@
   - A `ViewSwitcher` component renders the correct view (`KanbanBoard`, `DataTable`, `Timeline`) based on the selected `viewType` and `groupBy` property.
   - The `KanbanBoard` dynamically generates columns based on the unique values of the `groupBy` property.
   - The `DataTable` uses the `groupBy` feature of `@tanstack/react-table` to group data.
+- **Hierarchical Multi-Tenancy Navigation**:
+  - Workspace and Team switching is consolidated into a single `WorkspaceSwitcher` component.
+  - Selection of a Workspace automatically triggers the loading of its constituent Teams via Redux.
+  - All data-fetching services use the `activeTeamId` from the global state to ensure strict tenant isolation.
