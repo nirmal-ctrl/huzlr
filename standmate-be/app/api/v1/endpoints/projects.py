@@ -16,6 +16,7 @@ router = APIRouter()
 
 @router.get("/", response_model=list[ProjectResponse])
 async def list_projects(
+    workspace_id: int | None = None,
     team_id: int | None = None,
     skip: int = 0, 
     limit: int = 100, 
@@ -27,8 +28,17 @@ async def list_projects(
     if team_id:
         await assert_can_access_project(current_user.id, team_id, db)
         query = query.where(Project.team_id == team_id)
+    elif workspace_id:
+        # Filter projects by workspace via the Team model
+        from models.team import Team
+        query = (
+            query.join(Team, Team.id == Project.team_id)
+            .where(Team.workspace_id == workspace_id)
+            .join(TeamMembership, TeamMembership.team_id == Team.id)
+            .where(TeamMembership.user_id == current_user.id)
+        )
     else:
-        # If no team_id specified, list all projects across all teams the user belongs to
+        # If no team_id or workspace_id specified, list all projects across all teams the user belongs to
         query = (
             query.join(TeamMembership, TeamMembership.team_id == Project.team_id)
             .where(TeamMembership.user_id == current_user.id)

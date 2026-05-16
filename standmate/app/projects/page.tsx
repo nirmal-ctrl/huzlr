@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar"
 
 import { DataTable } from "@/components/data-table"
+import { DataTableSkeleton } from "@/components/data-table-skeleton"
 import { KanbanBoard } from "@/components/kanban/kanban-board"
 import { SpinnerEmpty } from "@/components/spinner-empty"
 import { ConnectedIntegrationsSheet } from "@/components/connected-integrations"
@@ -30,6 +31,8 @@ import { ColumnDef } from "@tanstack/react-table"
 export default function Page() {
   const dispatch = useAppDispatch()
   const { items: data, loading: isLoading, error } = useAppSelector((state) => state.projects)
+  const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+  const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
   const properties = useAppSelector((state) => state.meta.propertyDefinitions['project'])
   const viewState = useAppSelector((state) => state.view.views['project'])
   const layout = viewState?.layout || 'list'
@@ -38,11 +41,28 @@ export default function Page() {
   const user = useAppSelector((state) => state.auth.user)
   const [jiraImportOpen, setJiraImportOpen] = useState(false)
 
-  // Fetch projects and properties on mount
+  // Fetch projects and properties on mount and when team/workspace changes
   useEffect(() => {
-    dispatch(fetchProjects())
+    // If activeTeamId exists, it implies activeWorkspaceId exists (and team is more specific).
+    // The previous logic fired twice: once when workspace loaded, and again when team loaded sequentially.
+    // By only triggering when activeTeamId is present (which the backend requires or prefers anyway),
+    // we prevent the double-fetch race condition.
+    // Fallback to workspaceId if for some reason a team isn't assigned yet.
+    const fetchId = activeTeamId || activeWorkspaceId;
+    
+    if (fetchId) {
+      dispatch(fetchProjects({ 
+        workspaceId: activeWorkspaceId, 
+        teamId: activeTeamId 
+      }))
+    }
+    
+    // fetchPropertyDefinitions is now optimized in the slice to avoid redundant network calls
     dispatch(fetchPropertyDefinitions('project'))
-  }, [dispatch])
+    
+    // We purposefully omit activeWorkspaceId from deps to prevent the "waterfall double fetch"
+    // because activeTeamId will always update immediately after it in the Redux lifecycle.
+  }, [dispatch, activeTeamId])
 
   const hasConnectedIntegrations = user?.integrations?.jira?.connected || false
 
@@ -92,10 +112,10 @@ export default function Page() {
             </Button>
           </Link>
         </SiteHeader>
-        <div className="flex flex-1 flex-col gap-4 px-2 py-4">
-          <div className="mx-auto w-full max-w-6xl flex flex-1 flex-col gap-2">
+        <div className="flex flex-1 flex-col gap-4 py-4">
+          <div className="w-full flex flex-1 flex-col gap-2">
             <div className="flex flex-1 flex-col gap-4 md:gap-6">
-              {isPageLoading && <SpinnerEmpty />}
+              {isPageLoading && <DataTableSkeleton />}
 
               {isError && (
                 <div className="flex items-center justify-center py-8">

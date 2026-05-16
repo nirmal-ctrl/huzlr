@@ -54,6 +54,16 @@ export const fetchWorkspaces = createAsyncThunk(
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
+    },
+    {
+        condition: (_, { getState }) => {
+            const state = getState() as any;
+            // Cancel the fetch if we already have workspaces loaded
+            if (state.workspace.workspaces.length > 0) {
+                return false;
+            }
+            return true;
+        }
     }
 );
 
@@ -76,7 +86,7 @@ export const createWorkspace = createAsyncThunk(
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || 'Failed to create workspace');
             
-            // After creating a workspace, fetch all again
+            // After creating a workspace, fetch all again (ignoring condition)
             await dispatch(fetchWorkspaces());
             return data as Workspace;
         } catch (error: any) {
@@ -103,6 +113,16 @@ export const fetchTeams = createAsyncThunk(
             return data as Team[];
         } catch (error: any) {
             return rejectWithValue(error.message);
+        }
+    },
+    {
+        condition: (workspaceId, { getState }) => {
+            const state = getState() as any;
+            // Cancel the fetch if we already have teams for THIS workspace loaded
+            if (state.workspace.teams.length > 0 && state.workspace.teams[0].workspace_id === workspaceId) {
+                return false;
+            }
+            return true;
         }
     }
 );
@@ -153,7 +173,7 @@ const workspaceSlice = createSlice({
                 
                 // Auto-select General team if none selected
                 if (action.payload.length > 0 && !state.activeTeamId) {
-                    const generalTeam = action.payload.find(t => t.is_default);
+                    const generalTeam = action.payload.find((t: Team) => t.is_default);
                     state.activeTeamId = generalTeam ? generalTeam.id : action.payload[0].id;
                 }
             })

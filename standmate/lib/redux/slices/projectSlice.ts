@@ -14,6 +14,8 @@ interface ProjectState {
     loading: boolean;
     error: string | null;
     importing: boolean;
+    lastFetchedWorkspaceId: number | null;
+    lastFetchedTeamId: number | null;
 }
 
 const initialState: ProjectState = {
@@ -21,11 +23,13 @@ const initialState: ProjectState = {
     loading: true,  // Start with loading true to prevent empty state flash
     error: null,
     importing: false,
+    lastFetchedWorkspaceId: null,
+    lastFetchedTeamId: null,
 };
 
 export const fetchProjects = createAsyncThunk(
     'projects/fetchAll',
-    async (teamId: number | undefined, { getState, rejectWithValue }) => {
+    async ({ workspaceId, teamId }: { workspaceId?: number | null, teamId?: number | null }, { getState, rejectWithValue }) => {
         try {
             const state = getState() as any;
             const token = state.auth.token || localStorage.getItem('token');
@@ -35,6 +39,9 @@ export const fetchProjects = createAsyncThunk(
             const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/projects/`);
             if (teamId) {
                 url.searchParams.append('team_id', teamId.toString());
+            }
+            if (workspaceId) {
+                url.searchParams.append('workspace_id', workspaceId.toString());
             }
 
             const response = await fetch(url.toString(), {
@@ -48,9 +55,28 @@ export const fetchProjects = createAsyncThunk(
             }
 
             const data = await response.json();
-            return data as Project[];
+            return {
+                data: data as Project[],
+                workspaceId,
+                teamId
+            };
         } catch (error: any) {
             return rejectWithValue(error.message);
+        }
+    },
+    {
+        condition: ({ workspaceId, teamId }, { getState }) => {
+            const state = getState() as any;
+            // Cancel the fetch if we already have projects loaded for THIS exact context
+            if (
+                state.projects.items.length > 0 && 
+                !state.projects.error &&
+                state.projects.lastFetchedWorkspaceId === workspaceId &&
+                state.projects.lastFetchedTeamId === teamId
+            ) {
+                return false;
+            }
+            return true;
         }
     }
 );
@@ -206,7 +232,9 @@ const projectSlice = createSlice({
             })
             .addCase(fetchProjects.fulfilled, (state, action) => {
                 state.loading = false;
-                state.items = action.payload;
+                state.items = action.payload.data;
+                state.lastFetchedWorkspaceId = action.payload.workspaceId ?? null;
+                state.lastFetchedTeamId = action.payload.teamId ?? null;
             })
             .addCase(fetchProjects.rejected, (state, action) => {
                 state.loading = false;

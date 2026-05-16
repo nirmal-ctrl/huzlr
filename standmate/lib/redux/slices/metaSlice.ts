@@ -29,8 +29,6 @@ export const fetchPropertyDefinitions = createAsyncThunk(
         try {
             const state = getState() as any;
             const token = state.auth.token || localStorage.getItem('token');
-            // If no token, maybe we should still try fetching if endpoint allows public access?
-            // But we made it protected, so we need token.
             const headers: HeadersInit = {};
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
@@ -49,6 +47,16 @@ export const fetchPropertyDefinitions = createAsyncThunk(
             return { entityType, definitions: data as PropertyDefinition[] };
         } catch (error: any) {
             return rejectWithValue(error.message);
+        }
+    },
+    {
+        condition: (entityType, { getState }) => {
+            const state = getState() as any;
+            // Cancel the fetch if we already have data for this entity type
+            if (state.meta.propertyDefinitions[entityType] && state.meta.propertyDefinitions[entityType].length > 0) {
+                return false;
+            }
+            return true;
         }
     }
 );
