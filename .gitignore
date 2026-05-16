@@ -18,6 +18,11 @@ env/
 .env.*
 !.env.template
 !.env.example
+*.sqlite3
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+htmlcov/
 
 # OS
 .DS_Store
@@ -33,6 +38,9 @@ pnpm-debug.log*
 # IDE
 .vscode/
 .idea/
+.cursor
+.cursorignore
+.cursorrules
 
 # Testing
 coverage/
