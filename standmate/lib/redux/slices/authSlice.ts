@@ -70,6 +70,15 @@ export const fetchCurrentUser = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const state = getState() as { auth: AuthState };
+      if (state.auth.user) {
+        return false;
+      }
+      return true;
+    }
   }
 );
 

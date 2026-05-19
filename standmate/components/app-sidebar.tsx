@@ -175,13 +175,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
 
   React.useEffect(() => {
-    if (!user) {
-      dispatch(fetchCurrentUser())
-    } else {
-      // User is loaded, fetch workspaces
+    // Only fetch if not already in store. Thunk conditions also handle this,
+    // but guarding here prevents the action from even being dispatched.
+    dispatch(fetchCurrentUser())
+  }, [dispatch])
+
+  React.useEffect(() => {
+    if (user) {
       dispatch(fetchWorkspaces())
     }
-  }, [dispatch, user])
+  }, [dispatch, !!user])
 
   React.useEffect(() => {
     if (activeWorkspaceId) {

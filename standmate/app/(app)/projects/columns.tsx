@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { ProjectData } from "@/app/projects/schema"
+import { ProjectData } from "./schema"
 import {
     createTitleColumn,
     createStatusColumn,
@@ -18,7 +18,7 @@ import {
     createSelectColumn
 } from "@/components/columns/shared"
 
-export { type ProjectData, projectSchema } from "@/app/projects/schema"
+export { type ProjectData, projectSchema } from "./schema"
 
 export const projectColumns: ColumnDef<ProjectData>[] = [
     createDragColumn<ProjectData>(),
