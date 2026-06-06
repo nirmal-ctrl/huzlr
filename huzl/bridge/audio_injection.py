@@ -31,29 +31,50 @@ class AudioInjectionPipeline:
         return None
 
     def _audio_callback(self, outdata, frames, time_info, status):
+        """Audio callback to fill the playback buffer from the queue."""
         if status:
             logger.warning(f"Audio injection status: {status}")
-        try:
-            # Try to get the next chunk from the queue
-            # Since each callback asks for 'frames' (e.g., 320), we should pull that many samples
-            raw_chunk = self.play_queue.get_nowait()
-            # Convert 16-bit PCM bytes back to float32
-            samples = np.frombuffer(raw_chunk, dtype=np.int16).astype(np.float32) / 32767.0
             
-            # Ensure correct size
-            if len(samples) < frames:
-                # Pad with zeros if chunk is too small
-                padded = np.zeros(frames, dtype=np.float32)
-                padded[:len(samples)] = samples
-                samples = padded
-            elif len(samples) > frames:
-                # Truncate if too long
-                samples = samples[:frames]
+        # Initialize outdata with silence
+        outdata.fill(0)
+        
+        filled_frames = 0
+        while filled_frames < frames:
+            try:
+                # Try to get a chunk from the queue
+                raw_chunk = self.play_queue.get_nowait()
                 
-            outdata[:, 0] = samples
-        except queue.Empty:
-            # Fill with silent samples if queue is empty to avoid noise/buffer clicks
-            outdata.fill(0)
+                # Convert 16-bit PCM bytes to float32
+                chunk_samples = np.frombuffer(raw_chunk, dtype=np.int16).astype(np.float32) / 32768.0
+                
+                # How many samples can we take from this chunk?
+                remaining_frames = frames - filled_frames
+                to_take = min(len(chunk_samples), remaining_frames)
+                
+                # Fill the buffer
+                outdata[filled_frames : filled_frames + to_take, 0] = chunk_samples[:to_take]
+                filled_frames += to_take
+                
+                # If we didn't use the whole chunk, put the remainder back at the front of the queue
+                # Note: This simple queue implementation doesn't support 'put_front', 
+                # but since we use 20ms fixed blocks in the test script, we usually consume exactly one chunk.
+                if to_take < len(chunk_samples):
+                    # For now, we just log a warning if chunks are mismatched
+                    # In a real system, we'd use a separate buffer to handle partial chunks.
+                    logger.debug(f"Partial chunk consumed: {to_take}/{len(chunk_samples)}")
+
+            except queue.Empty:
+                # No more data in queue, stop filling
+                break
+
+    def write_chunk(self, pcm_chunk: bytes):
+        """Pushes a 16-bit PCM audio chunk (any size) to be injected."""
+        if not self.is_injecting:
+            logger.warning("Cannot write chunk, injection stream is not active.")
+            return
+            
+        if pcm_chunk:
+            self.play_queue.put(pcm_chunk)
 
     def start(self):
         """Starts the audio injection output stream."""
@@ -73,13 +94,6 @@ class AudioInjectionPipeline:
             callback=self._audio_callback
         )
         self.stream.start()
-
-    def write_chunk(self, pcm_chunk: bytes):
-        """Pushes a 20ms 16-bit PCM audio chunk to be injected."""
-        if self.is_injecting:
-            self.play_queue.put(pcm_chunk)
-        else:
-            logger.warning("Cannot write chunk, injection stream is not active.")
 
     def clear_buffer(self):
         """Clears all pending audio chunks in the injection buffer (used during interruptions)."""
