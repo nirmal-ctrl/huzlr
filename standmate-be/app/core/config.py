@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_SECRET: str = "admin-secret-key"
 
+    # LiveKit Voice Agent Configurations
+    LIVEKIT_API_KEY: str = ""
+    LIVEKIT_API_SECRET: str = ""
+    LIVEKIT_URL: str = "wss://huzl-hdzkgm0u.livekit.cloud"
+
     class Config:
         env_file = str(ENV_FILE)
         env_file_encoding = 'utf-8'

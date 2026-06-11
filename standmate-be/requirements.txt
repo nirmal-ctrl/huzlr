@@ -56,3 +56,12 @@ uvicorn==0.38.0
 xxhash==3.6.0
 zstandard==0.25.0
 cryptography
+
+# LiveKit Voice Agent Backend Dependencies
+livekit>=1.1.0
+livekit-agents>=0.8.0
+livekit-plugins-openai>=0.7.0
+livekit-plugins-silero>=0.6.0
+livekit-plugins-google>=0.5.0
+livekit-plugins-deepgram>=0.5.0
+livekit-plugins-cartesia>=0.5.0
