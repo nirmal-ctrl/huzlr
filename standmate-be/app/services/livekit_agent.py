@@ -94,7 +94,7 @@ async def entrypoint(ctx: JobContext):
     vad = silero.VAD.load()
     stt = deepgram.STT()
     llm_model = google.LLM(model="gemini-3.5-flash")
-    tts = cartesia.TTS()
+    tts = "deepgram/aura-2:odysseus"
 
     # Instantiate the AgentSession with the components
     session = AgentSession(

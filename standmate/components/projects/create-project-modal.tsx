@@ -109,6 +109,32 @@ export function CreateProjectModal({
     const [milestones, setMilestones] = useState<any[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    // Highlight states for visual pulsing
+    const [highlightTitle, setHighlightTitle] = useState(false)
+    const [highlightSummary, setHighlightSummary] = useState(false)
+    const [highlightDescription, setHighlightDescription] = useState(false)
+    const [highlightStatus, setHighlightStatus] = useState(false)
+    const [highlightPriority, setHighlightPriority] = useState(false)
+
+    const triggerHighlight = (field: string) => {
+        if (field === "title") {
+            setHighlightTitle(true)
+            setTimeout(() => setHighlightTitle(false), 3000)
+        } else if (field === "summary") {
+            setHighlightSummary(true)
+            setTimeout(() => setHighlightSummary(false), 3000)
+        } else if (field === "description") {
+            setHighlightDescription(true)
+            setTimeout(() => setHighlightDescription(false), 3000)
+        } else if (field === "status") {
+            setHighlightStatus(true)
+            setTimeout(() => setHighlightStatus(false), 3000)
+        } else if (field === "priority") {
+            setHighlightPriority(true)
+            setTimeout(() => setHighlightPriority(false), 3000)
+        }
+    }
+
     const dispatch = useAppDispatch()
     const descriptionRef = useRef(description)
 
@@ -119,11 +145,49 @@ export function CreateProjectModal({
     useEffect(() => {
         const handleAgentUpdate = (e: Event) => {
             const data = (e as CustomEvent).detail
-            if (data.project_title !== undefined) setProjectTitle(data.project_title)
-            if (data.short_summary !== undefined) setShortSummary(data.short_summary)
-            if (data.status !== undefined) setStatus(data.status)
-            if (data.priority !== undefined) setPriority(data.priority)
+            
+            if (data.project_title !== undefined) {
+                triggerHighlight("title")
+                let index = 0
+                const targetText = data.project_title
+                setProjectTitle("")
+                const timer = setInterval(() => {
+                    if (index < targetText.length) {
+                        setProjectTitle(prev => prev + targetText[index])
+                        index++
+                    } else {
+                        clearInterval(timer)
+                    }
+                }, 30)
+            }
+            
+            if (data.short_summary !== undefined) {
+                triggerHighlight("summary")
+                let index = 0
+                const targetText = data.short_summary
+                setShortSummary("")
+                const timer = setInterval(() => {
+                    if (index < targetText.length) {
+                        setShortSummary(prev => prev + targetText[index])
+                        index++
+                    } else {
+                        clearInterval(timer)
+                    }
+                }, 20)
+            }
+            
+            if (data.status !== undefined) {
+                setStatus(data.status)
+                triggerHighlight("status")
+            }
+            
+            if (data.priority !== undefined) {
+                setPriority(data.priority)
+                triggerHighlight("priority")
+            }
+            
             if (data.description !== undefined) {
+                triggerHighlight("description")
                 const htmlToType = markdownToHtml(data.description)
                 let index = 0
                 let currentTyped = ""
@@ -238,25 +302,33 @@ export function CreateProjectModal({
                             </Button>
                         </div>
                         <div className="flex-1 space-y-3">
-                            <InlineEditor
-                                value={projectTitle}
-                                onChange={setProjectTitle}
-                                placeholder="Project name"
-                                className="text-2xl font-semibold leading-tight"
-                            />
-                            <InlineEditor
-                                value={shortSummary}
-                                onChange={setShortSummary}
-                                placeholder="Add a short summary..."
-                                className="text-base text-muted-foreground"
-                            />
+                            <div className={`transition-all duration-300 rounded p-1 ${highlightTitle ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
+                                <InlineEditor
+                                    value={projectTitle}
+                                    onChange={setProjectTitle}
+                                    placeholder="Project name"
+                                    className="text-2xl font-semibold leading-tight"
+                                />
+                            </div>
+                            <div className={`transition-all duration-300 rounded p-1 ${highlightSummary ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
+                                <InlineEditor
+                                    value={shortSummary}
+                                    onChange={setShortSummary}
+                                    placeholder="Add a short summary..."
+                                    className="text-base text-muted-foreground"
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Property Row - Horizontal Scrollable */}
                     <div className="flex flex-wrap items-center gap-2 -ml-2">
-                        <ProjectStatusSelector value={status} onChange={setStatus} />
-                        <ProjectPrioritySelector value={priority} onChange={setPriority} />
+                        <div className={`transition-all duration-300 rounded p-1 ${highlightStatus ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
+                            <ProjectStatusSelector value={status} onChange={setStatus} />
+                        </div>
+                        <div className={`transition-all duration-300 rounded p-1 ${highlightPriority ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
+                            <ProjectPrioritySelector value={priority} onChange={setPriority} />
+                        </div>
                         <div className="w-px h-4 bg-border mx-1" />
                         <MemberSelector value={lead} onChange={(val) => setLead(val as string)} />
                         <MemberSelector value={members} onChange={(val) => setMembers(val as string[])} multiple />
@@ -270,7 +342,9 @@ export function CreateProjectModal({
                     <div className="h-px bg-border/40 w-full my-2" />
 
                     {/* Editor - Full space */}
-                    <div className="min-h-[200px] text-base text-foreground/90">
+                    <div className={`min-h-[200px] text-base text-foreground/90 transition-all duration-300 rounded p-2 ${
+                        highlightDescription ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""
+                    }`}>
                         <TiptapEditor
                             value={description}
                             onChange={setDescription}

@@ -2,6 +2,7 @@ import sys
 import os
 import asyncio
 import logging
+import subprocess
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 # Trigger reload
@@ -52,6 +53,25 @@ async def lifespan(app: FastAPI):
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Start LiveKit Agent worker in a background subprocess so they run together
+    agent_process = None
+    try:
+        agent_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "services", "livekit_agent.py")
+        if os.path.exists(agent_path):
+            logger.info("Starting LiveKit voice agent worker subprocess...")
+            python_executable = sys.executable
+            agent_process = subprocess.Popen(
+                [python_executable, agent_path, "start"],
+                stdout=None,
+                stderr=None,
+            )
+            logger.info(f"LiveKit agent worker started successfully with PID {agent_process.pid}")
+        else:
+            logger.warning(f"LiveKit agent script not found at {agent_path}")
+    except Exception as e:
+        logger.error(f"Failed to start LiveKit voice agent subprocess: {e}")
+
     yield
     
     # Cancel background task on shutdown
@@ -60,6 +80,17 @@ async def lifespan(app: FastAPI):
         await health_check_task
     except asyncio.CancelledError:
         pass
+
+    # Terminate LiveKit agent worker on shutdown
+    if agent_process:
+        logger.info("Terminating LiveKit voice agent worker subprocess...")
+        agent_process.terminate()
+        try:
+            agent_process.wait(timeout=5)
+            logger.info("LiveKit voice agent worker terminated successfully.")
+        except Exception as e:
+            logger.warning(f"Agent worker did not terminate cleanly: {e}. Killing it...")
+            agent_process.kill()
 
 
 app = FastAPI(lifespan=lifespan)

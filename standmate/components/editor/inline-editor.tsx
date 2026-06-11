@@ -84,7 +84,7 @@ export function InlineEditor({
     return (
         <div className={`relative ${!value && !editor?.isFocused ? "before:pointer-events-none" : ""}`}>
             {/* Placeholder rendered when editor is empty and not focused */}
-            {editor && !editor.getText() && (
+            {editor && !editor.getText() && !value && (
                 <span
                     className="absolute top-0 left-0 pointer-events-none select-none text-muted-foreground/40"
                     aria-hidden="true"

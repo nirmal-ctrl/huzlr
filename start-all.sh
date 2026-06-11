@@ -29,21 +29,11 @@ kill_port() {
 kill_port 8001
 kill_port 3001
 
-echo "Starting Standmate Backend on port 8001..."
+echo "Starting Standmate Backend on port 8001 (LiveKit Agent will start automatically inside)..."
 (
     cd standmate-be || { echo "Directory standmate-be not found"; exit 1; }
     cd app || { echo "Directory standmate-be/app not found"; exit 1; }
     ../.venv/bin/python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 8001
-) &
-
-echo "Starting LiveKit Voice Agent..."
-(
-    cd standmate-be || { echo "Directory standmate-be not found"; exit 1; }
-    if [ -f "app/services/livekit_agent.py" ]; then
-        ./.venv/bin/python3 app/services/livekit_agent.py dev
-    else
-        echo "⚠️  LiveKit voice agent script not found yet at standmate-be/app/services/livekit_agent.py. Skipping agent runner (will start once created)."
-    fi
 ) &
 
 echo "Starting Standmate Frontend..."
