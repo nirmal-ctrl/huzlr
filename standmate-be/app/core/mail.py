@@ -142,10 +142,28 @@ def template_welcome(context: Dict[str, Any]) -> str:
     """
     return _base_template(content)
 
+def template_workspace_invite(context: Dict[str, Any]) -> str:
+    inviter = context.get("inviter", "An admin")
+    workspace_name = context.get("workspace_name", "a workspace")
+    frontend_url = context.get("frontend_url", settings.FRONTEND_BASE_URL)
+    
+    content = f"""
+        <p class="welcome-text" style="font-size: 18px; color: #52525b; margin-bottom: 24px;">
+            Join the team.
+        </p>
+        <p><strong>{inviter}</strong> has invited you to join the <strong>{workspace_name}</strong> workspace on Standmate (Huzlr).</p>
+        
+        <p>Click the link below to sign up and join your team:</p>
+        
+        <a href="{frontend_url}/signup" class="cta-button">Join Workspace</a>
+    """
+    return _base_template(content)
+
 # Registry mapping template names to functions
 TEMPLATES: Dict[str, Callable[[Dict[str, Any]], str]] = {
     "access_code": template_access_code,
     "welcome": template_welcome,
+    "workspace_invite": template_workspace_invite,
 }
 
 # --- Async Sender Function ---

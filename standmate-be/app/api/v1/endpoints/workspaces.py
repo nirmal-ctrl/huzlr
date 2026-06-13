@@ -94,7 +94,9 @@ async def get_workspace(
     
     result = await db.execute(
         select(Workspace)
-        .options(selectinload(Workspace.memberships))
+        .options(
+            selectinload(Workspace.memberships).selectinload(WorkspaceMembership.user)
+        )
         .where(Workspace.id == workspace_id)
     )
     workspace = result.scalar_one_or_none()

@@ -47,16 +47,69 @@ async def signup(
             detail="Username already taken",
         )
 
-    # Create new user
+    from models.invite import Invite, InviteStatusEnum
+    from sqlalchemy import and_
+
+    # Check if user has an active workspace invitation
+    invite_result = await db.execute(
+        select(Invite)
+        .where(
+            and_(
+                Invite.email == user_in.email,
+                Invite.status == InviteStatusEnum.PENDING
+            )
+        )
+    )
+    pending_invites_list = invite_result.scalars().all()
+    has_invite = len(pending_invites_list) > 0
+
+    # Create new user (automatically grant access if they have a pending invite)
     db_user = User(
         email=user_in.email,
         username=user_in.username,
         hashed_password=security.get_password_hash(user_in.password),
-        auth_provider="email"
+        auth_provider="email",
+        has_access=has_invite
     )
     db.add(db_user)
     await db.commit()
     await db.refresh(db_user)
+
+    # Automatically accept invitations and join workspaces on signup
+    if has_invite:
+        from models.workspace_membership import WorkspaceMembership
+        from models.team import Team
+        from models.team_membership import TeamMembership
+
+        for invite in pending_invites_list:
+            workspace_membership = WorkspaceMembership(
+                user_id=db_user.id,
+                workspace_id=invite.workspace_id,
+                role=invite.role
+            )
+            db.add(workspace_membership)
+
+            team_result = await db.execute(
+                select(Team)
+                .where(
+                    and_(
+                        Team.workspace_id == invite.workspace_id,
+                        Team.is_default == True,
+                        Team.name == 'General'
+                    )
+                )
+            )
+            general_team = team_result.scalars().first()
+            if general_team:
+                team_membership = TeamMembership(
+                    user_id=db_user.id,
+                    team_id=general_team.id
+                )
+                db.add(team_membership)
+
+            invite.status = InviteStatusEnum.ACCEPTED
+
+        await db.commit()
 
     # Send Welcome Email
     await send_email(
@@ -155,16 +208,69 @@ async def callback(request: Request, db: Annotated[AsyncSession, Depends(get_db)
                  import uuid
                  base_username = f"{base_username}_{uuid.uuid4().hex[:4]}"
                  
+            from models.invite import Invite, InviteStatusEnum
+            from sqlalchemy import and_
+
+            # Check if user has an active workspace invitation
+            invite_result = await db.execute(
+                select(Invite)
+                .where(
+                    and_(
+                        Invite.email == email,
+                        Invite.status == InviteStatusEnum.PENDING
+                    )
+                )
+            )
+            pending_invites_list = invite_result.scalars().all()
+            has_invite = len(pending_invites_list) > 0
+
             user = User(
                 email=email,
                 username=base_username,
                 hashed_password=None,
                 auth_provider="google",
-                is_active=True
+                is_active=True,
+                has_access=has_invite
             )
             db.add(user)
             await db.commit()
             await db.refresh(user)
+
+            # Automatically accept invitations and join workspaces on signup
+            if has_invite:
+                from models.workspace_membership import WorkspaceMembership
+                from models.team import Team
+                from models.team_membership import TeamMembership
+
+                for invite in pending_invites_list:
+                    workspace_membership = WorkspaceMembership(
+                        user_id=user.id,
+                        workspace_id=invite.workspace_id,
+                        role=invite.role
+                    )
+                    db.add(workspace_membership)
+
+                    team_result = await db.execute(
+                        select(Team)
+                        .where(
+                            and_(
+                                Team.workspace_id == invite.workspace_id,
+                                Team.is_default == True,
+                                Team.name == 'General'
+                            )
+                        )
+                    )
+                    general_team = team_result.scalars().first()
+                    if general_team:
+                        team_membership = TeamMembership(
+                            user_id=user.id,
+                            team_id=general_team.id
+                        )
+                        db.add(team_membership)
+
+                    invite.status = InviteStatusEnum.ACCEPTED
+
+                await db.commit()
 
             # Send Welcome Email
             await send_email(

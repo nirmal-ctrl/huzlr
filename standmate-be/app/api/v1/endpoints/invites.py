@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from typing import List
@@ -11,14 +11,16 @@ from models.workspace import Workspace
 from models.workspace_membership import WorkspaceMembership
 from models.team import Team
 from models.team_membership import TeamMembership
-from schemas.invite import InviteCreate, InviteResponse, InviteAccept
+from schemas.invite import InviteCreate, InviteResponse, InviteAccept, InviteWithWorkspaceResponse
 from core.access import assert_admin
+from core.mail import send_email
 
 router = APIRouter()
 
 @router.post("/", response_model=InviteResponse, status_code=status.HTTP_201_CREATED)
 async def create_invite(
     invite_in: InviteCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -28,6 +30,12 @@ async def create_invite(
     """
     await assert_admin(current_user.id, invite_in.workspace_id, db)
     
+    # Fetch workspace for name
+    ws_result = await db.execute(select(Workspace).where(Workspace.id == invite_in.workspace_id))
+    workspace = ws_result.scalars().first()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
     # Check if there is already a pending invite for this email and workspace
     result = await db.execute(
         select(Invite)
@@ -57,7 +65,17 @@ async def create_invite(
     await db.commit()
     await db.refresh(invite)
     
-    # TODO: Send email
+    # Send email asynchronously via background tasks (non-blocking)
+    background_tasks.add_task(
+        send_email,
+        invite_in.email,
+        f"Invitation to join {workspace.name} on Huzlr",
+        "workspace_invite",
+        {
+            "inviter": current_user.username or current_user.email,
+            "workspace_name": workspace.name
+        }
+    )
     
     return invite
 
@@ -169,3 +187,65 @@ async def accept_invite(
     await db.commit()
     
     return {"detail": "Successfully joined workspace."}
+
+@router.post("/{invite_id}/remind", status_code=status.HTTP_200_OK)
+async def remind_invite(
+    invite_id: int,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Resend invitation email.
+    """
+    result = await db.execute(
+        select(Invite)
+        .where(Invite.id == invite_id)
+    )
+    invite = result.scalars().first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+        
+    await assert_admin(current_user.id, invite.workspace_id, db)
+    
+    ws_result = await db.execute(select(Workspace).where(Workspace.id == invite.workspace_id))
+    workspace = ws_result.scalars().first()
+    if not workspace:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
+    # Resend email
+    background_tasks.add_task(
+        send_email,
+        invite.email,
+        f"Reminder: Invitation to join {workspace.name} on Huzlr",
+        "workspace_invite",
+        {
+            "inviter": current_user.username or current_user.email,
+            "workspace_name": workspace.name
+        }
+    )
+    
+    return {"detail": "Reminder sent successfully."}
+
+from sqlalchemy.orm import selectinload
+
+@router.get("/user/pending", response_model=List[InviteWithWorkspaceResponse])
+async def list_my_invites(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List all pending workspace invites sent to the current user's email.
+    """
+    result = await db.execute(
+        select(Invite)
+        .options(selectinload(Invite.workspace))
+        .where(
+            and_(
+                Invite.email == current_user.email,
+                Invite.status == InviteStatusEnum.PENDING
+            )
+        )
+    )
+    invites = result.scalars().all()
+    return invites

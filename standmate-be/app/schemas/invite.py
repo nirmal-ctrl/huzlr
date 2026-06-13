@@ -20,5 +20,15 @@ class InviteResponse(InviteBase):
     class Config:
         from_attributes = True
 
+class WorkspaceMinResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class InviteWithWorkspaceResponse(InviteResponse):
+    workspace: WorkspaceMinResponse
+
 class InviteAccept(BaseModel):
     invite_id: int

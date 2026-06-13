@@ -13,6 +13,14 @@ class WorkspaceUpdate(BaseModel):
     name: Optional[str] = None
     owner_id: Optional[int] = None
 
+class UserMinResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
 class WorkspaceMembershipBase(BaseModel):
     user_id: int
     role: WorkspaceRoleEnum
@@ -21,6 +29,7 @@ class WorkspaceMembershipResponse(WorkspaceMembershipBase):
     id: int
     workspace_id: int
     created_at: datetime
+    user: Optional[UserMinResponse] = None
     
     class Config:
         from_attributes = True
