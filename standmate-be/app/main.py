@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
             logger.info("Starting LiveKit voice agent worker subprocess...")
             python_executable = sys.executable
             agent_process = subprocess.Popen(
-                [python_executable, agent_path, "start"],
+                [python_executable, agent_path, "dev", "--no-reload"],
                 stdout=None,
                 stderr=None,
             )
