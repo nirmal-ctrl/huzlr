@@ -20,15 +20,21 @@ import {
 } from "@/components/ui/sidebar"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { setActiveWorkspace, setActiveTeam, Workspace } from "@/lib/redux/slices/workspaceSlice"
+import { CreateWorkspaceModal } from "./teams/create-workspace-modal"
+import { CreateTeamModal } from "./teams/create-team-modal"
 
 export function WorkspaceSwitcher() {
     const { isMobile } = useSidebar()
     const dispatch = useAppDispatch()
+    const user = useAppSelector((state) => state.auth.user)
     
     const workspaces = useAppSelector((state) => state.workspace.workspaces)
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
     const teams = useAppSelector((state) => state.workspace.teams)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+    
+    const [workspaceModalOpen, setWorkspaceModalOpen] = React.useState(false)
+    const [teamModalOpen, setTeamModalOpen] = React.useState(false)
     
     const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0]
     const activeTeam = teams.find((t) => t.id === activeTeamId) || teams[0]
@@ -87,12 +93,21 @@ export function WorkspaceSwitcher() {
                                 <div className="flex size-6 items-center justify-center rounded-md border">
                                     <Building className="size-3.5 shrink-0" />
                                 </div>
-                                <span className="flex-1">{workspace.name}</span>
+                                <span className="flex-1 truncate">{workspace.name}</span>
+                                {user && workspace.owner_id === user.id ? (
+                                    <span className="text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded border border-border">
+                                        Personal
+                                    </span>
+                                ) : (
+                                    <span className="text-[10px] text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">
+                                        Joined
+                                    </span>
+                                )}
                                 {workspace.id === activeWorkspaceId && <Check className="size-3.5" />}
                                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
                             </DropdownMenuItem>
                         ))}
-                        
+
                         {teams.length > 0 && (
                             <>
                                 <DropdownMenuSeparator />
@@ -112,7 +127,7 @@ export function WorkspaceSwitcher() {
                                         {team.id === activeTeamId && <Check className="size-3.5" />}
                                     </DropdownMenuItem>
                                 ))}
-                                <DropdownMenuItem className="gap-2 p-2">
+                                <DropdownMenuItem className="gap-2 p-2" onClick={() => setTeamModalOpen(true)}>
                                     <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                         <Plus className="size-4" />
                                     </div>
@@ -122,10 +137,7 @@ export function WorkspaceSwitcher() {
                         )}
 
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="gap-2 p-2" onClick={() => {
-                            // TODO: Open create workspace modal or redirect
-                            window.location.href = '/onboarding'
-                        }}>
+                        <DropdownMenuItem className="gap-2 p-2" onClick={() => setWorkspaceModalOpen(true)}>
                             <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                 <Plus className="size-4" />
                             </div>
@@ -134,6 +146,9 @@ export function WorkspaceSwitcher() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>
+            
+            <CreateWorkspaceModal open={workspaceModalOpen} onOpenChange={setWorkspaceModalOpen} />
+            <CreateTeamModal open={teamModalOpen} onOpenChange={setTeamModalOpen} />
         </SidebarMenu>
     )
 }

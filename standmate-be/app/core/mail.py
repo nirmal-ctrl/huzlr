@@ -146,6 +146,9 @@ def template_workspace_invite(context: Dict[str, Any]) -> str:
     inviter = context.get("inviter", "An admin")
     workspace_name = context.get("workspace_name", "a workspace")
     frontend_url = context.get("frontend_url", settings.FRONTEND_BASE_URL)
+    invite_id = context.get("invite_id", "")
+    
+    link = f"{frontend_url}/signup?invite_id={invite_id}" if invite_id else f"{frontend_url}/signup"
     
     content = f"""
         <p class="welcome-text" style="font-size: 18px; color: #52525b; margin-bottom: 24px;">
@@ -155,7 +158,7 @@ def template_workspace_invite(context: Dict[str, Any]) -> str:
         
         <p>Click the link below to sign up and join your team:</p>
         
-        <a href="{frontend_url}/signup" class="cta-button">Join Workspace</a>
+        <a href="{link}" class="cta-button">Join Workspace</a>
     """
     return _base_template(content)
 

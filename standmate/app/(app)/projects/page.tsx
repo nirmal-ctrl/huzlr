@@ -39,13 +39,13 @@ export default function Page() {
     
     if (fetchId) {
       dispatch(fetchProjects({ 
-        workspaceId: activeWorkspaceId, 
-        teamId: activeTeamId 
+        workspaceId: activeWorkspaceId,
+        teamId: activeTeamId
       }))
     }
     
     dispatch(fetchPropertyDefinitions('project'))
-  }, [dispatch, activeTeamId])
+  }, [dispatch, activeTeamId, activeWorkspaceId])
 
   const columns = useMemo(() => {
     if (!properties) return [];

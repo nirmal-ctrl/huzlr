@@ -54,16 +54,6 @@ export const fetchWorkspaces = createAsyncThunk(
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
-    },
-    {
-        condition: (_, { getState }) => {
-            const state = getState() as any;
-            // Cancel the fetch if we already have workspaces loaded
-            if (state.workspace.workspaces.length > 0) {
-                return false;
-            }
-            return true;
-        }
     }
 );
 
@@ -89,6 +79,34 @@ export const createWorkspace = createAsyncThunk(
             // After creating a workspace, fetch all again (ignoring condition)
             await dispatch(fetchWorkspaces());
             return data as Workspace;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const createTeam = createAsyncThunk(
+    'workspace/createTeam',
+    async ({ workspaceId, name, description }: { workspaceId: number; name: string; description?: string }, { getState, rejectWithValue, dispatch }) => {
+        try {
+            const state = getState() as any;
+            const token = state.auth.token || localStorage.getItem('token');
+            if (!token) return rejectWithValue('No token found');
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teams/${workspaceId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description, is_default: false }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Failed to create team');
+            
+            // Force fetch teams again
+            await dispatch(fetchTeams(workspaceId));
+            return data as Team;
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
@@ -162,6 +180,9 @@ const workspaceSlice = createSlice({
             .addCase(createWorkspace.fulfilled, (state, action) => {
                 // We set the active workspace to the newly created one
                 state.activeWorkspaceId = action.payload.id;
+            })
+            .addCase(createTeam.fulfilled, (state, action) => {
+                state.activeTeamId = action.payload.id;
             })
             .addCase(fetchTeams.pending, (state) => {
                 state.loading = true;

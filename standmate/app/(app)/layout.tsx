@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
 import {
   SidebarInset,
   SidebarProvider,
@@ -20,6 +21,7 @@ export default function AppLayout({
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
+        <SiteHeader />
         {children}
       </SidebarInset>
     </SidebarProvider>

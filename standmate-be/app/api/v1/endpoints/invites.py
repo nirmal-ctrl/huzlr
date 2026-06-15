@@ -73,7 +73,8 @@ async def create_invite(
         "workspace_invite",
         {
             "inviter": current_user.username or current_user.email,
-            "workspace_name": workspace.name
+            "workspace_name": workspace.name,
+            "invite_id": invite.id
         }
     )
     
@@ -221,7 +222,8 @@ async def remind_invite(
         "workspace_invite",
         {
             "inviter": current_user.username or current_user.email,
-            "workspace_name": workspace.name
+            "workspace_name": workspace.name,
+            "invite_id": invite.id
         }
     )
     

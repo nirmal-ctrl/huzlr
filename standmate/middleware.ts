@@ -48,6 +48,22 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // If trying to access /signup but already logged in and has access, redirect to dashboard
+  if (pathname === '/signup') {
+    if (token) {
+      try {
+        const secretKey = process.env.JWT_SECRET || "your-super-secret-key-change-it"
+        const secret = new TextEncoder().encode(secretKey)
+        const { payload } = await jwtVerify(token, secret)
+        if (payload.has_access === true) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
   return NextResponse.next()
 }
 

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { setActiveTeam } from "@/lib/redux/slices/workspaceSlice"
+import { CreateTeamModal } from "./teams/create-team-modal"
 
 export function TeamSwitcher() {
     const { isMobile } = useSidebar()
@@ -27,6 +28,7 @@ export function TeamSwitcher() {
     
     const teams = useAppSelector((state) => state.workspace.teams)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+    const [teamModalOpen, setTeamModalOpen] = React.useState(false)
     
     const activeTeam = teams.find((t) => t.id === activeTeamId) || teams[0]
 
@@ -76,7 +78,7 @@ export function TeamSwitcher() {
                             </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="gap-2 p-2">
+                        <DropdownMenuItem className="gap-2 p-2" onClick={() => setTeamModalOpen(true)}>
                             <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                 <Plus className="size-4" />
                             </div>
@@ -85,6 +87,8 @@ export function TeamSwitcher() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>
+            
+            <CreateTeamModal open={teamModalOpen} onOpenChange={setTeamModalOpen} />
         </SidebarMenu>
     )
 }

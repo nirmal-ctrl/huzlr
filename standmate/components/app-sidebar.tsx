@@ -57,12 +57,7 @@ const data = {
       icon: Brain as unknown as Icon,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
-    },
-    {
-      title: "Team",
+      title: "Workspace & Teams",
       url: "/teams",
       icon: IconUsers,
     },
@@ -209,7 +204,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
