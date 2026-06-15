@@ -69,6 +69,20 @@ async def assert_can_access_project(user_id: int, team_id: int, db: AsyncSession
     1. Be a member of the team the project belongs to.
     2. Be a member of the workspace the team belongs to.
     """
-    workspace_id = await get_team_workspace(team_id, db)
-    await assert_workspace_member(user_id, workspace_id, db)
-    await assert_team_member(user_id, team_id, db)
+    from models.team_membership import TeamMembership
+    from models.workspace_membership import WorkspaceMembership
+
+    stmt = (
+        select(Team.id)
+        .join(TeamMembership, TeamMembership.team_id == Team.id)
+        .join(WorkspaceMembership, WorkspaceMembership.workspace_id == Team.workspace_id)
+        .where(Team.id == team_id)
+        .where(TeamMembership.user_id == user_id)
+        .where(WorkspaceMembership.user_id == user_id)
+    )
+    result = await db.execute(stmt)
+    if not result.scalar():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this project/team."
+        )

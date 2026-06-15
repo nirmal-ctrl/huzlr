@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, JSON
+from sqlalchemy import String, Integer, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column
 from models.base import Base
 
@@ -13,5 +13,5 @@ class Property(Base):
     # Add indices for fast lookup
     # We query properties by entity_type and entity_id often
     __table_args__ = (
-        {"schema": "public"} if False else ()
+        Index("idx_properties_entity_type_id", "entity_type", "entity_id"),
     )

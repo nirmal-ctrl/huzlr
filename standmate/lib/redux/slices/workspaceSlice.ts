@@ -26,11 +26,27 @@ interface WorkspaceState {
     error: string | null;
 }
 
+const getSavedWorkspaceId = (): number | null => {
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('activeWorkspaceId');
+        return saved ? parseInt(saved, 10) : null;
+    }
+    return null;
+};
+
+const getSavedTeamId = (): number | null => {
+    if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('activeTeamId');
+        return saved ? parseInt(saved, 10) : null;
+    }
+    return null;
+};
+
 const initialState: WorkspaceState = {
     workspaces: [],
-    activeWorkspaceId: null,
+    activeWorkspaceId: getSavedWorkspaceId(),
     teams: [],
-    activeTeamId: null,
+    activeTeamId: getSavedTeamId(),
     loading: false,
     error: null,
 };
@@ -153,9 +169,16 @@ const workspaceSlice = createSlice({
             state.activeWorkspaceId = action.payload;
             state.teams = []; // Reset teams when workspace changes
             state.activeTeamId = null;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('activeWorkspaceId', action.payload.toString());
+                localStorage.removeItem('activeTeamId');
+            }
         },
         setActiveTeam: (state, action: PayloadAction<number>) => {
             state.activeTeamId = action.payload;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('activeTeamId', action.payload.toString());
+            }
         },
     },
     extraReducers: (builder) => {
@@ -168,9 +191,13 @@ const workspaceSlice = createSlice({
                 state.loading = false;
                 state.workspaces = action.payload;
                 
-                // Auto-select first workspace if none selected and we have workspaces
-                if (action.payload.length > 0 && !state.activeWorkspaceId) {
+                // Validate or select active workspace ID
+                const exists = action.payload.some(w => w.id === state.activeWorkspaceId);
+                if (!exists && action.payload.length > 0) {
                     state.activeWorkspaceId = action.payload[0].id;
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem('activeWorkspaceId', action.payload[0].id.toString());
+                    }
                 }
             })
             .addCase(fetchWorkspaces.rejected, (state, action) => {
@@ -180,9 +207,16 @@ const workspaceSlice = createSlice({
             .addCase(createWorkspace.fulfilled, (state, action) => {
                 // We set the active workspace to the newly created one
                 state.activeWorkspaceId = action.payload.id;
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('activeWorkspaceId', action.payload.id.toString());
+                    localStorage.removeItem('activeTeamId');
+                }
             })
             .addCase(createTeam.fulfilled, (state, action) => {
                 state.activeTeamId = action.payload.id;
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('activeTeamId', action.payload.id.toString());
+                }
             })
             .addCase(fetchTeams.pending, (state) => {
                 state.loading = true;
@@ -192,10 +226,15 @@ const workspaceSlice = createSlice({
                 state.loading = false;
                 state.teams = action.payload;
                 
-                // Auto-select General team if none selected
-                if (action.payload.length > 0 && !state.activeTeamId) {
+                // Validate or select active team ID
+                const exists = action.payload.some(t => t.id === state.activeTeamId);
+                if (!exists && action.payload.length > 0) {
                     const generalTeam = action.payload.find((t: Team) => t.is_default);
-                    state.activeTeamId = generalTeam ? generalTeam.id : action.payload[0].id;
+                    const defaultTeamId = generalTeam ? generalTeam.id : action.payload[0].id;
+                    state.activeTeamId = defaultTeamId;
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem('activeTeamId', defaultTeamId.toString());
+                    }
                 }
             })
             .addCase(fetchTeams.rejected, (state, action) => {

@@ -21,7 +21,6 @@ export default function AppLayout({
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader />
         {children}
       </SidebarInset>
     </SidebarProvider>

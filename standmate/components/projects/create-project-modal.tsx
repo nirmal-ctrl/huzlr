@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useAppDispatch } from "@/lib/redux/hooks"
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { createProject } from "@/lib/redux/slices/projectSlice"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -136,6 +136,7 @@ export function CreateProjectModal({
     }
 
     const dispatch = useAppDispatch()
+    const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
     const descriptionRef = useRef(description)
 
     useEffect(() => {
@@ -244,7 +245,7 @@ export function CreateProjectModal({
                     description: description,
                     milestones: milestones,
                 },
-                team_id: 1 // TODO: get active team from redux
+                team_id: activeTeamId || 1
             } as unknown as ProjectCreate
 
             const data = await dispatch(createProject(projectData)).unwrap()

@@ -84,17 +84,15 @@ export default function Page() {
       <div className="flex flex-1 flex-col gap-4 py-4">
         <div className="w-full flex flex-1 flex-col gap-2">
           <div className="flex flex-1 flex-col gap-4 md:gap-6">
-            {isPageLoading && <DataTableSkeleton />}
-
-            {isError && (
+            {isPageLoading ? (
+              <DataTableSkeleton />
+            ) : isError ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-destructive">
                   Error loading projects: {error?.toString()}
                 </div>
               </div>
-            )}
-
-            {data && data.length > 0 ? (
+            ) : data && data.length > 0 ? (
               layout === 'list' ? (
                 <DataTable<any>
                   data={data}
@@ -111,34 +109,32 @@ export default function Page() {
               )
             ) : (
               // Only show empty state if not loading and no data
-              !isPageLoading && !isError && (
-                <div className="flex flex-1 flex-col items-center justify-center">
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <h3 className="text-base font-medium tracking-tight">
-                      Start planning your projects
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Bring existing work or start fresh. huzlr helps you think, plan,execute, moitor and predict outcomes.
-                    </p>
+              <div className="flex flex-1 flex-col items-center justify-center">
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <h3 className="text-base font-medium tracking-tight">
+                    Start planning your projects
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Bring existing work or start fresh. huzlr helps you think, plan,execute, moitor and predict outcomes.
+                  </p>
 
-                    <div className="mt-4 flex items-center gap-4">
-                      <Link href="/projects/new">
-                        <Button className="gap-2 rounded-full cursor-pointer">
-                          <Plus className="h-4 w-4" />
-                          Start from Scratch
-                        </Button>
-                      </Link>
-                      <ConnectedIntegrationsSheet
-                        onImportClick={(integration) => {
-                          if (integration === "jira") {
-                            setJiraImportOpen(true)
-                          }
-                        }}
-                      />
-                    </div>
+                  <div className="mt-4 flex items-center gap-4">
+                    <Link href="/projects/new">
+                      <Button className="gap-2 rounded-full cursor-pointer">
+                        <Plus className="h-4 w-4" />
+                        Start from Scratch
+                      </Button>
+                    </Link>
+                    <ConnectedIntegrationsSheet
+                      onImportClick={(integration) => {
+                        if (integration === "jira") {
+                          setJiraImportOpen(true)
+                        }
+                      }}
+                    />
                   </div>
                 </div>
-              )
+              </div>
             )}
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks"
+import { SiteHeader } from "@/components/site-header"
 import {
     useGetWorkspaceWithMembersQuery,
     useGetWorkspaceInvitesQuery,
@@ -96,24 +97,29 @@ export default function TeamsPage() {
 
     if (!activeWorkspaceId) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-6 bg-background rounded-lg border border-border w-full">
-                <AlertCircle className="size-10 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-1">No Active Workspace</h3>
-                <p className="text-sm text-muted-foreground">Select or create a workspace to view settings.</p>
-                <Button 
-                    onClick={() => setIsWorkspaceModalOpen(true)}
-                    className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                    <Plus className="size-4 mr-2" />
-                    Create Workspace
-                </Button>
-                <CreateWorkspaceModal open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
-            </div>
+            <>
+                <SiteHeader title="Workspace & Teams" />
+                <div className="flex flex-col items-center justify-center min-h-[500px] text-center p-6 bg-background rounded-lg border border-border w-full">
+                    <AlertCircle className="size-10 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-1">No Active Workspace</h3>
+                    <p className="text-sm text-muted-foreground">Select or create a workspace to view settings.</p>
+                    <Button 
+                        onClick={() => setIsWorkspaceModalOpen(true)}
+                        className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                        <Plus className="size-4 mr-2" />
+                        Create Workspace
+                    </Button>
+                    <CreateWorkspaceModal open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
+                </div>
+            </>
         )
     }
 
     return (
-        <div className="w-full p-6 lg:p-8 space-y-8 bg-background min-h-screen text-foreground">
+        <>
+            <SiteHeader title="Workspace & Teams" />
+            <div className="w-full p-6 lg:p-8 space-y-8 bg-background min-h-screen text-foreground">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6 w-full">
                 <div>
@@ -603,6 +609,7 @@ export default function TeamsPage() {
             <InviteMembersModal open={isInviteOpen} onOpenChange={setIsInviteOpen} />
             <CreateWorkspaceModal open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
             <CreateTeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
-        </div>
+            </div>
+        </>
     )
 }

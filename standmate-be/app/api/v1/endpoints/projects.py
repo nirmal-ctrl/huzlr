@@ -26,8 +26,12 @@ async def list_projects(
     query = select(Project).options(selectinload(Project._property_record))
     
     if team_id:
-        await assert_can_access_project(current_user.id, team_id, db)
-        query = query.where(Project.team_id == team_id)
+        # Filter and authorize projects in a single optimized database query
+        query = (
+            query.join(TeamMembership, TeamMembership.team_id == Project.team_id)
+            .where(TeamMembership.team_id == team_id)
+            .where(TeamMembership.user_id == current_user.id)
+        )
     elif workspace_id:
         # Filter projects by workspace via the Team model
         from models.team import Team
@@ -73,7 +77,14 @@ async def create_project(
     db_project._property_record = prop_record
     
     await db.commit()
-    await db.refresh(db_project)
+    
+    # Eagerly load the project with its properties to prevent MissingGreenlet / lazy loading exception
+    result = await db.execute(
+        select(Project)
+        .options(selectinload(Project._property_record))
+        .where(Project.project_id == db_project.project_id)
+    )
+    db_project = result.scalars().first()
     return db_project
 
 @router.get("/{project_id}", response_model=ProjectResponse)
@@ -178,9 +189,34 @@ async def batch_delete_projects(
     )
     projects = result.scalars().all()
     
+    if not projects:
+        return None
+
+    # Batch authorization check: Find distinct team IDs of all requested projects
+    team_ids = list({project.team_id for project in projects})
+    
+    from models.team_membership import TeamMembership
+    from models.workspace_membership import WorkspaceMembership
+    from models.team import Team
+
+    stmt = (
+        select(Team.id)
+        .join(TeamMembership, TeamMembership.team_id == Team.id)
+        .join(WorkspaceMembership, WorkspaceMembership.workspace_id == Team.workspace_id)
+        .where(Team.id.in_(team_ids))
+        .where(TeamMembership.user_id == current_user.id)
+        .where(WorkspaceMembership.user_id == current_user.id)
+    )
+    auth_result = await db.execute(stmt)
+    authorized_team_ids = set(auth_result.scalars().all())
+    
+    if len(authorized_team_ids) < len(team_ids):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to some of the selected projects."
+        )
+    
     for project in projects:
-        # Perform auth check per project
-        await assert_can_access_project(current_user.id, project.team_id, db)
         await db.delete(project)
     
     await db.commit()
