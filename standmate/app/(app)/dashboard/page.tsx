@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Sparkles, Check, Loader2 } from "lucide-react"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, Suspense } from "react"
 
-export default function Page() {
+function DashboardPageContent() {
     const dispatch = useAppDispatch()
     const { toast } = useToast()
     const searchParams = useSearchParams()
@@ -66,22 +66,34 @@ export default function Page() {
     }, [inviteIdParam, pendingInvites])
 
     return (
-        <>
-            <div className="flex flex-1 flex-col">
-                <div className="@container/main flex flex-1 flex-col gap-2">
-                    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-
-                        <SectionCards />
-                        <div className="px-4 lg:px-6">
-                            <ChartAreaInteractive />
-                        </div>
-                        <DataTable<ProjectData>
-                            data={data.map((item: any) => ({ id: item.id, project_id: item.project_id, ...item.properties })) as ProjectData[]}
-                            columns={projectColumns}
-                        />
+        <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+                    <SectionCards />
+                    <div className="px-4 lg:px-6">
+                        <ChartAreaInteractive />
                     </div>
+                    <DataTable<ProjectData>
+                        data={data.map((item: any) => ({ id: item.id, project_id: item.project_id, ...item.properties })) as ProjectData[]}
+                        columns={projectColumns}
+                    />
                 </div>
             </div>
-        </>
+        </div>
+    )
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground text-sm font-medium">Loading dashboard...</p>
+                </div>
+            </div>
+        }>
+            <DashboardPageContent />
+        </Suspense>
     )
 }
