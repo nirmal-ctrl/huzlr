@@ -9,9 +9,10 @@ interface OrbProps {
     agentVolume?: number
     userVolume?: number
     className?: string
+    variant?: "default" | "founder"
 }
 
-export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbProps) {
+export function Orb({ status, agentVolume = 0, userVolume = 0, className, variant = "default" }: OrbProps) {
     const agentVolumeMotion = useMotionValue(0)
     const userVolumeMotion = useMotionValue(0)
     const wobbleRotation = useMotionValue(0)
@@ -52,12 +53,21 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
 
     // Unified pastel palette (Periwinkle/Lavender/Blue) for all states as requested
     const commonGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(186,230,253,1) 20%, rgba(165,180,252,1) 50%, rgba(192,132,252,0.8) 100%)"
+    
+    // Elegant, theme-inspired glowing color palette using custom CSS variables (Huzlr Blue and Huzlr Gold)
+    const founderGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95) 0%, var(--chart-1) 30%, var(--primary) 70%, rgba(22,81,139,0.8) 100%)"
+
+    const selectedGradient = variant === "founder" ? founderGradient : commonGradient
 
     // Shadow for depth
     const orbShadow = "inset -10px -10px 20px rgba(0,0,0,0.1), 0px 20px 40px rgba(0,0,0,0.15), 0px 0px 0px 1px rgba(255,255,255,0.2)"
 
+    // Sizing customization
+    const baseOrbClass = variant === "founder" ? "w-20 h-20" : "w-32 h-32"
+    const connectedOrbClass = variant === "founder" ? "w-24 h-24" : "w-40 h-40"
+
     return (
-        <div className={cn("relative flex items-center justify-center w-64 h-64", className)}>
+        <div className={cn("relative flex items-center justify-center", variant === "founder" ? "w-36 h-36" : "w-64 h-64", className)}>
 
             {/* SVG Filter for Noise/Grain */}
             <svg className="hidden">
@@ -72,18 +82,18 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                 {status === "idle" && (
                     <motion.div
                         animate={{
-                            y: [0, -10, 0],
-                            rotate: [0, 5, -5, 0]
+                            y: [0, -6, 0],
+                            rotate: [0, 4, -4, 0]
                         }}
                         transition={{
                             y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
                             rotate: { duration: 8, repeat: Infinity, ease: "easeInOut" }
                         }}
                         style={{
-                            background: commonGradient,
+                            background: selectedGradient,
                             boxShadow: orbShadow,
                         }}
-                        className="w-32 h-32 rounded-full relative overflow-hidden"
+                        className={cn("rounded-full relative overflow-hidden", baseOrbClass)}
                     >
                         {/* Grain Overlay */}
                         <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ filter: "url(#noiseFilter)" }} />
@@ -94,15 +104,15 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                 {status === "connecting" && (
                     <motion.div
                         animate={{
-                            scale: [0.95, 1.05, 0.95],
+                            scale: [0.96, 1.04, 0.96],
                             opacity: [0.8, 1, 0.8]
                         }}
                         transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                         style={{
-                            background: commonGradient,
+                            background: selectedGradient,
                             boxShadow: orbShadow,
                         }}
-                        className="w-32 h-32 rounded-full relative overflow-hidden"
+                        className={cn("rounded-full relative overflow-hidden", baseOrbClass)}
                     >
                         {/* Grain Overlay */}
                         <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{ filter: "url(#noiseFilter)" }} />
@@ -112,17 +122,21 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                 {/* CONNECTED STATE */}
                 {status === "connected" && (
                     <div className="relative flex items-center justify-center">
-                        {/* Decorative floating orbs (glassmorphism style) - Kept subtle */}
-                        <motion.div
-                            animate={{ y: [-5, 5, -5], rotate: 360 }}
-                            transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" }, rotate: { duration: 20, repeat: Infinity, ease: "linear" } }}
-                            className="absolute -top-8 -right-8 w-12 h-12 rounded-full backdrop-blur-md bg-white/30 border border-white/40 shadow-sm z-10"
-                        />
-                        <motion.div
-                            animate={{ y: [5, -5, 5], rotate: -360 }}
-                            transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" }, rotate: { duration: 25, repeat: Infinity, ease: "linear" } }}
-                            className="absolute -bottom-6 -left-10 w-16 h-16 rounded-full backdrop-blur-md bg-purple-100/30 border border-white/40 shadow-sm z-0"
-                        />
+                        {/* Decorative floating orbs (glassmorphism style) - Kept subtle, disabled for founder */}
+                        {variant !== "founder" && (
+                            <>
+                                <motion.div
+                                    animate={{ y: [-5, 5, -5], rotate: 360 }}
+                                    transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" }, rotate: { duration: 20, repeat: Infinity, ease: "linear" } }}
+                                    className="absolute -top-8 -right-8 w-12 h-12 rounded-full backdrop-blur-md bg-white/30 border border-white/40 shadow-sm z-10"
+                                />
+                                <motion.div
+                                    animate={{ y: [5, -5, 5], rotate: -360 }}
+                                    transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" }, rotate: { duration: 25, repeat: Infinity, ease: "linear" } }}
+                                    className="absolute -bottom-6 -left-10 w-16 h-16 rounded-full backdrop-blur-md bg-purple-100/30 border border-white/40 shadow-sm z-0"
+                                />
+                            </>
+                        )}
 
                         {/* Listening Ripples / Background Spread */}
                         <div className="absolute inset-0 flex items-center justify-center -z-10 pointer-events-none">
@@ -132,7 +146,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: ripple1Scale,
                                     opacity: ripple1Opacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-2xl"
+                                className={cn("absolute rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-2xl", variant === "founder" ? "w-24 h-24" : "w-40 h-40")}
                             />
                             {/* Ripple 2 (Medium) */}
                             <motion.div
@@ -140,7 +154,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: ripple2Scale,
                                     opacity: ripple2Opacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-xl"
+                                className={cn("absolute rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-xl", variant === "founder" ? "w-24 h-24" : "w-40 h-40")}
                             />
                             {/* Ripple 3 (Closest) */}
                             <motion.div
@@ -148,7 +162,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: userGlowScale,
                                     opacity: userGlowOpacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-chart-1/30 dark:bg-chart-1/20 blur-lg"
+                                className={cn("absolute rounded-full bg-chart-1/30 dark:bg-chart-1/20 blur-lg", variant === "founder" ? "w-24 h-24" : "w-40 h-40")}
                             />
                         </div>
 
@@ -170,13 +184,13 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                 transition={{
                                     borderRadius: { duration: 0.5, repeat: agentVolume > 0.02 ? Infinity : 0 }
                                 }}
-                                className="w-40 h-40 rounded-full relative transition-colors duration-300 overflow-hidden"
+                                className={cn("rounded-full relative transition-colors duration-300 overflow-hidden", connectedOrbClass)}
                             >
                                 {/* Inner gradient layer - CONSTANT COLOR */}
                                 <motion.div
                                     className="w-full h-full rounded-full"
                                     style={{
-                                        background: commonGradient, // Always use the common gradient
+                                        background: selectedGradient,
                                         boxShadow: orbShadow
                                     }}
                                 >
@@ -185,7 +199,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                 </motion.div>
 
                                 {/* Specular highlight helper - Reduced opacity for less gloss */}
-                                <div className="absolute top-[20%] left-[25%] w-10 h-6 bg-white/40 blur-md rounded-full transform -rotate-45" />
+                                <div className="absolute top-[20%] left-[25%] w-8 h-4 bg-white/40 blur-md rounded-full transform -rotate-45" />
                             </motion.div>
                         </motion.div>
                     </div>

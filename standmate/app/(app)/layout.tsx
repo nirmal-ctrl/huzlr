@@ -4,6 +4,7 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { FounderAgentWidget } from "@/components/founder-agent"
 
 export default function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default function AppLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         {children}
+        <FounderAgentWidget />
       </SidebarInset>
     </SidebarProvider>
   )
