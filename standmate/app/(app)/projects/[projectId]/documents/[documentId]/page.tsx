@@ -130,38 +130,16 @@ export default function DocumentPage() {
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background">
             <SiteHeader>
-                <div className="flex items-center justify-between w-full pr-4">
-                    {/* Header Context Bar / Breadcrumbs */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground select-none">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => router.push(`/projects/${projectId}`)}
-                            className="h-7 w-7 text-muted-foreground/60 hover:text-foreground"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <span>Projects</span>
-                        <span>/</span>
-                        <span className="hover:text-foreground cursor-pointer" onClick={() => router.push(`/projects/${projectId}`)}>{project.properties?.project_title || "Project"}</span>
-                        <span>/</span>
-                        <span className="text-foreground font-medium flex items-center gap-1">
-                            <DocIcon value={emoji} className="w-3.5 h-3.5" />
-                            {title || "Untitled"}
-                        </span>
-                    </div>
-
-                    {/* Delete Document Button */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleDelete}
-                        disabled={isDeleting}
-                        className="h-7 w-7 rounded-md hover:bg-red-500/10 hover:text-red-500 text-muted-foreground/50 transition-all"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                </div>
+                {/* Delete Document Button */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="h-7 w-7 rounded-md hover:bg-red-500/10 hover:text-red-500 text-muted-foreground/50 transition-all"
+                >
+                    <Trash2 className="w-3.5 h-3.5" />
+                </Button>
             </SiteHeader>
 
             {/* Document Edit Workspace */}

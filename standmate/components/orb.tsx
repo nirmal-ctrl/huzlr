@@ -132,7 +132,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: ripple1Scale,
                                     opacity: ripple1Opacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-[#d7bd7c]/40 dark:bg-[#d7bd7c]/20 blur-2xl"
+                                className="absolute w-40 h-40 rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-2xl"
                             />
                             {/* Ripple 2 (Medium) */}
                             <motion.div
@@ -140,7 +140,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: ripple2Scale,
                                     opacity: ripple2Opacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-[#d7bd7c]/40 dark:bg-[#d7bd7c]/20 blur-xl"
+                                className="absolute w-40 h-40 rounded-full bg-chart-1/40 dark:bg-chart-1/20 blur-xl"
                             />
                             {/* Ripple 3 (Closest) */}
                             <motion.div
@@ -148,7 +148,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className }: OrbP
                                     scale: userGlowScale,
                                     opacity: userGlowOpacity,
                                 }}
-                                className="absolute w-40 h-40 rounded-full bg-[#d7bd7c]/30 dark:bg-[#d7bd7c]/20 blur-lg"
+                                className="absolute w-40 h-40 rounded-full bg-chart-1/30 dark:bg-chart-1/20 blur-lg"
                             />
                         </div>
 

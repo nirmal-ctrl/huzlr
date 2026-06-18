@@ -148,18 +148,14 @@ export const updateProject = createAsyncThunk(
 
             if (!token) return rejectWithValue('No token found');
 
-            // Find current project existing properties to merge
-            const currentProject = state.projects.items.find((p: Project) => p.project_id.toString() === projectId.toString());
-            const mergedProperties = currentProject ? { ...currentProject.properties, ...updates } : updates;
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${projectId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                // The backend ProjectUpdate schema expects a JSON body like {"properties": {...}, "lead_id": null}
-                body: JSON.stringify({ properties: mergedProperties }),
+                // Send only the delta update (modified properties) to keep integration atomic
+                body: JSON.stringify({ properties: updates }),
             });
 
             if (!response.ok) {

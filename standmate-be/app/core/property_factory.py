@@ -72,4 +72,4 @@ def create_pydantic_model_from_schema(
 def validate_properties(entity_type: str, data: Dict[str, Any]) -> Dict[str, Any]:
     Model = create_pydantic_model_from_schema(entity_type)
     instance = Model(**data)
-    return instance.model_dump(exclude_unset=True)
+    return instance.model_dump(mode='json', exclude_unset=True)

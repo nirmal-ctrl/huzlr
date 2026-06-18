@@ -536,7 +536,7 @@ export const FlowCanvas = ({
             key={resolvedTheme}
             nodeColor={() => "#888"}
             maskColor={maskColor}
-            style={{ backgroundColor: isDark ? "#1e293b" : "#f1f5f9" }}
+            style={{ backgroundColor: isDark ? "var(--muted)" : "var(--secondary)" }}
           />
         )}
       </ReactFlow>

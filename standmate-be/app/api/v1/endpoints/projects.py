@@ -64,7 +64,7 @@ async def create_project(
     project_data = project.model_dump()
     
     if 'properties' in project_data and hasattr(project_data['properties'], 'model_dump'):
-         project_data['properties'] = project_data['properties'].model_dump()
+         project_data['properties'] = project_data['properties'].model_dump(mode='json')
          
     properties_data = project_data.pop('properties', {})
     
@@ -131,7 +131,7 @@ async def update_project(
         new_props = update_data['properties']
         
         if hasattr(new_props, 'model_dump'):
-            new_props = new_props.model_dump(exclude_unset=True)
+            new_props = new_props.model_dump(mode='json', exclude_unset=True)
             
         existing_props.update(new_props)
         

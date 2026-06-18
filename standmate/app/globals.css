@@ -201,7 +201,19 @@ html {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-[12px] leading-normal tracking-tight;
+  }
+
+  h1 {
+    @apply text-sm font-semibold tracking-tight;
+  }
+
+  h2 {
+    @apply text-[13px] font-medium tracking-tight;
+  }
+
+  h3 {
+    @apply text-[12px] font-medium tracking-tight;
   }
 }
 
