@@ -25,6 +25,8 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { ProjectDetailsDrawer } from "@/components/project-details-drawer"
+import { useAppDispatch } from "@/lib/redux/hooks"
+import { updateProject } from "@/lib/redux/slices/projectSlice"
 
 import {
     ProjectStatusSelector,
@@ -34,22 +36,129 @@ import {
     LabelSelector
 } from "./factory"
 
+// ----------------------------------------------------------------------
+// Cell Wrapper Components for React Hooks Compatibility in TanStack
+// ----------------------------------------------------------------------
+
+function StatusCell({ row, value, accessorKey }: { row: any; value: string; accessorKey: string }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    return (
+        <ProjectStatusSelector
+            value={value}
+            onChange={(val) => {
+                dispatch(updateProject({ projectId, updates: { [key]: val } }))
+            }}
+        />
+    )
+}
+
+function PriorityCell({ row, value, accessorKey }: { row: any; value: string; accessorKey: string }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    return (
+        <ProjectPrioritySelector
+            value={value}
+            onChange={(val) => {
+                dispatch(updateProject({ projectId, updates: { [key]: val } }))
+            }}
+        />
+    )
+}
+
+function MemberCell({ row, value, accessorKey, multiple = false }: { row: any; value: string | string[]; accessorKey: string; multiple?: boolean }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    return (
+        <MemberSelector
+            value={value}
+            multiple={multiple}
+            onChange={(val) => {
+                dispatch(updateProject({ projectId, updates: { [key]: val } }))
+            }}
+        />
+    )
+}
+
+function DateCell({ row, value, accessorKey }: { row: any; value: string | undefined; accessorKey: string }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    return (
+        <DateSelector
+            value={value}
+            onChange={(val) => {
+                dispatch(updateProject({ projectId, updates: { [key]: val } }))
+            }}
+        />
+    )
+}
+
+function LabelCell({ row, value, accessorKey }: { row: any; value: string[]; accessorKey: string }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    return (
+        <LabelSelector
+            value={value}
+            onChange={(val) => {
+                dispatch(updateProject({ projectId, updates: { [key]: val } }))
+            }}
+        />
+    )
+}
+
+function InputCell({ row, value, accessorKey, header }: { row: any; value: string | number; accessorKey: string; header: string }) {
+    const dispatch = useAppDispatch()
+    const projectId = row.original.project_id || row.original.id
+    const key = accessorKey.split(".")[1] || accessorKey
+    const id = row.id
+
+    return (
+        <form
+            onSubmit={(e) => {
+                e.preventDefault()
+                const form = e.currentTarget
+                const input = form.elements.namedItem(`${id}-${accessorKey}`) as HTMLInputElement
+                const val = input.value
+                toast.promise(
+                    dispatch(updateProject({ projectId, updates: { [key]: val } })).unwrap(),
+                    {
+                        loading: `Saving ${header}...`,
+                        success: `${header} saved!`,
+                        error: `Failed to save ${header}`,
+                    }
+                )
+            }}
+        >
+            <Label htmlFor={`${id}-${accessorKey}`} className="sr-only">
+                {header}
+            </Label>
+            <Input
+                className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+                defaultValue={value}
+                id={`${id}-${accessorKey}`}
+                name={`${id}-${accessorKey}`}
+            />
+        </form>
+    )
+}
+
+// ----------------------------------------------------------------------
+// Factory Configurations
+// ----------------------------------------------------------------------
+
 // Factory for Status Column
 export function createStatusColumn<TData>(accessorKey: string, header: string = "Status"): ColumnDef<TData> {
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const status = getValue() as string
-            return (
-                <ProjectStatusSelector
-                    value={status}
-                    onChange={(val) => {
-                        // TODO: Implement update logic
-                        console.log("Status changed to:", val)
-                    }}
-                />
-            )
+            return <StatusCell row={row} value={status} accessorKey={accessorKey} />
         },
     }
 }
@@ -59,17 +168,9 @@ export function createPriorityColumn<TData>(accessorKey: string, header: string 
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const priority = getValue() as string
-            return (
-                <ProjectPrioritySelector
-                    value={priority}
-                    onChange={(val) => {
-                        // TODO: Implement update logic
-                        console.log("Priority changed to:", val)
-                    }}
-                />
-            )
+            return <PriorityCell row={row} value={priority} accessorKey={accessorKey} />
         },
     }
 }
@@ -98,29 +199,8 @@ export function createInputColumn<TData>(accessorKey: string, header: string): C
         accessorKey,
         header: () => <div className="w-full text-right">{header}</div>,
         cell: ({ row, getValue }) => {
-            const id = row.id
             const value = getValue() as string | number
-            return (
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault()
-                        toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-                            loading: `Saving...`,
-                            success: "Done",
-                            error: "Error",
-                        })
-                    }}
-                >
-                    <Label htmlFor={`${id}-${accessorKey}`} className="sr-only">
-                        {header}
-                    </Label>
-                    <Input
-                        className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-                        defaultValue={value}
-                        id={`${id}-${accessorKey}`}
-                    />
-                </form>
-            )
+            return <InputCell row={row} value={value} accessorKey={accessorKey} header={header} />
         },
     }
 }
@@ -130,16 +210,9 @@ export function createMemberColumn<TData>(accessorKey: string, header: string = 
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const value = getValue() as string | undefined
-            return (
-                <MemberSelector
-                    value={value}
-                    onChange={(val) => {
-                        console.log("Member changed:", val)
-                    }}
-                />
-            )
+            return <MemberCell row={row} value={value || ""} accessorKey={accessorKey} />
         },
     }
 }
@@ -149,17 +222,9 @@ export function createMembersColumn<TData>(accessorKey: string, header: string =
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const value = getValue() as string[] | undefined
-            return (
-                <MemberSelector
-                    value={value || []}
-                    multiple
-                    onChange={(val) => {
-                        console.log("Members changed:", val)
-                    }}
-                />
-            )
+            return <MemberCell row={row} value={value || []} accessorKey={accessorKey} multiple />
         },
     }
 }
@@ -169,16 +234,9 @@ export function createDateColumn<TData>(accessorKey: string, header: string = "D
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const value = getValue() as string | undefined
-            return (
-                <DateSelector
-                    value={value}
-                    onChange={(val) => {
-                        console.log("Date changed:", val)
-                    }}
-                />
-            )
+            return <DateCell row={row} value={value} accessorKey={accessorKey} />
         },
     }
 }
@@ -188,16 +246,9 @@ export function createLabelsColumn<TData>(accessorKey: string, header: string = 
     return {
         accessorKey,
         header,
-        cell: ({ getValue }) => {
+        cell: ({ row, getValue }) => {
             const value = getValue() as string[] | undefined
-            return (
-                <LabelSelector
-                    value={value || []}
-                    onChange={(val) => {
-                        console.log("Labels changed:", val)
-                    }}
-                />
-            )
+            return <LabelCell row={row} value={value || []} accessorKey={accessorKey} />
         },
     }
 }

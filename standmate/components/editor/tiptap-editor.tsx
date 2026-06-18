@@ -5,6 +5,7 @@ import StarterKit from "@tiptap/starter-kit"
 import TaskList from "@tiptap/extension-task-list"
 import TaskItem from "@tiptap/extension-task-item"
 import Image from "@tiptap/extension-image"
+import Placeholder from "@tiptap/extension-placeholder"
 import { useEffect } from "react"
 import { SlashCommand, getSuggestionItems, renderItems } from "./extensions/slash-command"
 
@@ -29,7 +30,11 @@ export function TiptapEditor({
                 nested: true,
             }),
             Image,
+            Placeholder.configure({
+                placeholder: placeholder,
+            }),
             SlashCommand.configure({
+                // @ts-ignore
                 suggestion: {
                     items: getSuggestionItems,
                     render: renderItems,

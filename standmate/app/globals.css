@@ -210,3 +210,32 @@ html {
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* Tiptap editor placeholder styles */
+.tiptap p.is-editor-empty:first-child::before {
+  color: oklch(0.552 0.016 285.938 / 50%);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Hide scroll bar inside Emoji Picker React completely while preserving scroll functionality */
+.EmojiPickerReact *::-webkit-scrollbar {
+  display: none !important;
+}
+
+.EmojiPickerReact * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE/Edge */
+}
+
+/* Reusable no-scrollbar class to hide scrollbar while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}

@@ -16,6 +16,7 @@ const routeMapping: Record<string, string> = {
     new: "New Project",
     brainstorms: "Brainstorms",
     dashboard: "Dashboard",
+    documents: "Documents",
 }
 
 export function DynamicBreadcrumb() {
@@ -61,7 +62,7 @@ export function DynamicBreadcrumb() {
                     return (
                         <React.Fragment key={href}>
                             <BreadcrumbItem>
-                                {isLast ? (
+                                {isLast || segment === "documents" ? (
                                     <BreadcrumbPage>{label}</BreadcrumbPage>
                                 ) : (
                                     <BreadcrumbLink href={href}>{label}</BreadcrumbLink>

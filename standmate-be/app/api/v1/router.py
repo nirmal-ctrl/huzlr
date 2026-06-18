@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from api.v1.endpoints import tasks, projects, auth, health, jira, meta, milestones, workspaces, teams, invites, livekit
+from api.v1.endpoints import tasks, projects, auth, health, jira, meta, milestones, workspaces, teams, invites, livekit, project_documents
 
 api_router = APIRouter()
 
@@ -13,4 +13,5 @@ api_router.include_router(projects.router, prefix="/projects", tags=["projects"]
 api_router.include_router(jira.router, prefix="/jira", tags=["jira"])
 api_router.include_router(meta.router, prefix="/meta", tags=["meta"])
 api_router.include_router(milestones.router, tags=["milestones"])
+api_router.include_router(project_documents.router, tags=["project_documents"])
 api_router.include_router(livekit.router, prefix="/livekit", tags=["livekit"])

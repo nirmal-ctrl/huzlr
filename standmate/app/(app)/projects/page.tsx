@@ -58,9 +58,10 @@ export default function Page() {
     ];
 
     // Dynamic columns from properties
-    const dynamicColumns = buildColumnsFromProperties(properties).filter(col =>
-      !["header", "project_title", "title"].includes((col as any).accessorKey)
-    );
+    const dynamicColumns = buildColumnsFromProperties(properties).filter(col => {
+      const accessor = (col as any).accessorKey;
+      return !["header", "project_title", "title", "properties.project_title"].includes(accessor);
+    });
 
     return [
       ...baseColumns,

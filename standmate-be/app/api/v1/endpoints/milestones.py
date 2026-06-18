@@ -7,6 +7,7 @@ from models.project import Project
 from schemas.milestone import MilestoneResponse, MilestoneCreate, MilestoneUpdate
 from models.user import User
 from api.deps import get_current_user
+from core.access import assert_can_access_project
 
 router = APIRouter()
 
@@ -21,8 +22,8 @@ async def list_project_milestones(
     project = result.scalars().first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     result = await db.execute(
         select(Milestone).where(Milestone.project_id == project_id).order_by(Milestone.order_index)
@@ -45,8 +46,8 @@ async def create_project_milestone(
     project = result.scalars().first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     db_milestone = Milestone(**milestone.model_dump())
     db.add(db_milestone)
@@ -69,8 +70,10 @@ async def update_milestone(
     # Verify user owns the project this milestone belongs to
     result = await db.execute(select(Project).where(Project.project_id == db_milestone.project_id))
     project = result.scalars().first()
-    if not project or project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     update_data = milestone_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
@@ -94,8 +97,10 @@ async def delete_milestone(
     # Verify user owns the project
     result = await db.execute(select(Project).where(Project.project_id == db_milestone.project_id))
     project = result.scalars().first()
-    if not project or project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     await db.delete(db_milestone)
     await db.commit()

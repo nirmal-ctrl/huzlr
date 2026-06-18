@@ -74,7 +74,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <body className={`font-sans antialiased ${caveat.variable}`}>
+      <body className={`font-sans antialiased ${caveat.variable}`} suppressHydrationWarning={true}>
         <ReduxProvider>
           <ThemeProvider
             attribute="class"

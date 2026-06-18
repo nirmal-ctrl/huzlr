@@ -23,12 +23,15 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { useAppSelector } from "@/lib/redux/hooks"
+import { useGetWorkspaceWithMembersQuery } from "@/services/invitesApi"
 
 export interface SelectorProps {
     value: string | string[] | undefined // Changed to support multi-select and dates
     onChange: (value: any) => void
     className?: string
     options?: any[]
+    placeholder?: string
 }
 
 // ----------------------------------------------------------------------
@@ -64,8 +67,8 @@ const mapStringOptions = (options: any[] | undefined, fallbackMap: any[], defaul
     });
 }
 
-// Mock Users
-export const USERS = [
+// Fallback Mock Users
+export const STATIC_USERS = [
     { id: "1", name: "Alicia Koch", username: "alicia", avatar: "/avatars/01.png" },
     { id: "2", name: "Acme Corp", username: "acme", avatar: "/avatars/02.png" },
     { id: "3", name: "Bruno", username: "bruno", avatar: "/avatars/03.png" },
@@ -195,13 +198,34 @@ interface MemberSelectorProps extends Omit<SelectorProps, 'value'> {
 
 export function MemberSelector({ value, onChange, className, multiple = false }: MemberSelectorProps) {
     const [open, setOpen] = React.useState(false)
+    const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+
+    // Pull real workspace members respectively from API query
+    const { data: workspaceData } = useGetWorkspaceWithMembersQuery(activeWorkspaceId || 0, {
+        skip: !activeWorkspaceId,
+    })
+
+    const USERS = React.useMemo(() => {
+        if (!workspaceData?.memberships || workspaceData.memberships.length === 0) {
+            return STATIC_USERS
+        }
+        return workspaceData.memberships.map((m) => {
+            const u = m.user || { id: m.user_id, username: "Unknown User", email: "Unknown Email" }
+            return {
+                id: u.id.toString(),
+                name: u.username,
+                username: u.username,
+                avatar: "/huzlr-no-bg.png" // Use workspace icon placeholder for avatar fallback
+            }
+        })
+    }, [workspaceData])
 
     // Helper to get user objects — deduplicate incoming IDs to prevent duplicate key warnings
     const selectedUsers = React.useMemo(() => {
         if (!value) return []
         const ids = Array.isArray(value) ? [...new Set(value)] : [value]
         return USERS.filter(u => ids.includes(u.id))
-    }, [value])
+    }, [value, USERS])
 
     const handleSelect = (userId: string) => {
         if (multiple) {
@@ -288,7 +312,7 @@ export function MemberSelector({ value, onChange, className, multiple = false }:
 // Date Selector
 // ----------------------------------------------------------------------
 
-export function DateSelector({ value, onChange, className }: SelectorProps) {
+export function DateSelector({ value, onChange, className, placeholder = "Date" }: SelectorProps) {
     const [open, setOpen] = React.useState(false)
 
     // Value is expected to be a date string (ISO) or undefined
@@ -306,16 +330,108 @@ export function DateSelector({ value, onChange, className }: SelectorProps) {
                     )}
                 >
                     <CalendarIcon className="w-3.5 h-3.5" />
-                    <span>{date ? format(date, "MMM d") : "Date"}</span>
+                    <span>{date ? format(date, "MMM d") : placeholder}</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-auto" side="bottom" align="start">
+            <PopoverContent className="p-0 w-auto flex flex-col" side="bottom" align="start">
                 <Calendar
                     mode="single"
                     selected={date}
                     onSelect={(d) => {
                         onChange(d ? d.toISOString() : undefined)
                         setOpen(false)
+                    }}
+                    initialFocus
+                />
+                {date && (
+                    <div className="p-2 border-t border-border/40 flex justify-end">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                onChange(undefined)
+                                setOpen(false)
+                            }}
+                            className="h-6 px-2 text-[10px] font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded"
+                        >
+                            Clear date
+                        </Button>
+                    </div>
+                )}
+            </PopoverContent>
+        </Popover>
+    )
+}
+
+// ----------------------------------------------------------------------
+// Project Date Range Selector
+// ----------------------------------------------------------------------
+
+interface ProjectDateRangeSelectorProps {
+    startDate: string | undefined
+    targetDate: string | undefined
+    onChange: (dates: { start_date: string | undefined; target_date: string | undefined }) => void
+    className?: string
+}
+
+export function ProjectDateRangeSelector({ startDate, targetDate, onChange, className }: ProjectDateRangeSelectorProps) {
+    const [open, setOpen] = React.useState(false)
+
+    const fromDate = startDate ? new Date(startDate) : undefined
+    const toDate = targetDate ? new Date(targetDate) : undefined
+
+    const formattedRange = React.useMemo(() => {
+        if (!fromDate && !toDate) return "Add date range"
+        
+        const fromStr = fromDate ? format(fromDate, "MMM d") : "No start date"
+        const toStr = toDate ? format(toDate, "MMM d, ''yy") : "No target date"
+        
+        return `${fromStr} → ${toStr}`
+    }, [fromDate, toDate])
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                        "h-7 px-2 text-xs font-medium rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 gap-1.5 border border-transparent hover:border-border/40 transition-all",
+                        className
+                    )}
+                >
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <span>{formattedRange}</span>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-auto flex flex-col" side="bottom" align="start">
+                <div className="p-3 border-b border-border/40 flex items-center justify-between gap-4">
+                    <span className="text-xs font-semibold text-muted-foreground">Project Date Range</span>
+                    {(startDate || targetDate) && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                                onChange({ start_date: undefined, target_date: undefined })
+                                setOpen(false)
+                            }}
+                            className="h-6 px-1.5 text-[10px] font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer rounded"
+                        >
+                            Clear dates
+                        </Button>
+                    )}
+                </div>
+                <Calendar
+                    mode="range"
+                    selected={{
+                        from: fromDate,
+                        to: toDate
+                    }}
+                    onSelect={(range) => {
+                        onChange({
+                            start_date: range?.from ? range.from.toISOString() : undefined,
+                            target_date: range?.to ? range.to.toISOString() : undefined
+                        })
                     }}
                     initialFocus
                 />
