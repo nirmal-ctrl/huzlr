@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export function Footer() {
   return (
     <footer className="border-t border-border py-12 px-4 sm:px-6 lg:px-8">
@@ -32,9 +34,9 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-foreground transition">
+                <Link href="/blog" className="hover:text-foreground transition">
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="hover:text-foreground transition">
@@ -47,6 +49,11 @@ export function Footer() {
             <h3 className="font-semibold">Resources</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>
+                <Link href="/case-studies" className="hover:text-foreground transition">
+                  Case Studies
+                </Link>
+              </li>
+              <li>
                 <a href="#" className="hover:text-foreground transition">
                   Docs
                 </a>
@@ -54,11 +61,6 @@ export function Footer() {
               <li>
                 <a href="#" className="hover:text-foreground transition">
                   API
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Support
                 </a>
               </li>
             </ul>

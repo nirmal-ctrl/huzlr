@@ -16,6 +16,18 @@
     },
     "slug": {
       "type": "uid"
+    },
+    "blogs": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::blog.blog",
+      "mappedBy": "tags"
+    },
+    "case_studies": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::case-study.case-study",
+      "mappedBy": "tags"
     }
   }
 }
