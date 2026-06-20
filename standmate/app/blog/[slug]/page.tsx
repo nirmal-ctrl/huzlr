@@ -11,7 +11,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 0; // Dynamic fetching or set to 3600 for ISR with webhook revalidation
+export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
 function renderStrapiBlocks(content: any): string {
   if (!content) return '';

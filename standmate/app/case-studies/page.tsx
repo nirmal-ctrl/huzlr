@@ -6,7 +6,7 @@ import { strapiApi, StrapiCaseStudy } from "@/services/strapiApi";
 import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const revalidate = 0; // Dynamic fetching or set to 3600 for ISR with webhook revalidation
+export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
 export default async function CaseStudiesIndexPage() {
   let cases: StrapiCaseStudy[] = [];
