@@ -93,11 +93,11 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
 
         {/* Hero Image */}
         {heroUrl && (
-          <div className="w-full h-[350px] md:h-[450px] rounded-2xl overflow-hidden border border-border bg-muted relative">
+          <div className="w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden border border-border/60 bg-muted/10 relative flex items-center justify-center">
             <img 
               src={heroUrl} 
               alt={cs.title} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
         )}

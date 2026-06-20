@@ -69,11 +69,11 @@ export default async function CaseStudiesIndexPage() {
                   <div className="space-y-4 w-full">
                     {/* Hero Image */}
                     {heroUrl && (
-                      <div className="w-full h-48 rounded-xl overflow-hidden border border-border/50 bg-muted mb-2 relative">
+                      <div className="w-full h-48 rounded-xl overflow-hidden border border-border/30 bg-muted/20 mb-2 relative flex items-center justify-center">
                         <img 
                           src={heroUrl} 
                           alt={cs.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-500"
                         />
                       </div>
                     )}
