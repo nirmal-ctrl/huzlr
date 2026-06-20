@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
-import { strapiApi, StrapiBlogPost } from "@/services/strapiApi";
+import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
 import { Calendar, ArrowRight, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,14 +59,27 @@ export default async function BlogIndexPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {posts.map((post) => (
-              <article 
-                key={post.id} 
-                className="group relative flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:bg-accent/5 transition-all duration-300 hover:shadow-lg hover:border-border/80"
-              >
-                <div className="space-y-4">
-                  {/* Tags */}
-                  {post.tags && post.tags.length > 0 && (
+            {posts.map((post) => {
+              const coverUrl = getStrapiMediaUrl(post.coverImage);
+              return (
+                <article 
+                  key={post.id} 
+                  className="group relative flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:bg-accent/5 transition-all duration-300 hover:shadow-lg hover:border-border/80"
+                >
+                  <div className="space-y-4 w-full">
+                    {/* Cover Image */}
+                    {coverUrl && (
+                      <div className="w-full h-48 rounded-xl overflow-hidden border border-border/50 bg-muted mb-2 relative">
+                        <img 
+                          src={coverUrl} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    )}
+
+                    {/* Tags */}
+                    {post.tags && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {post.tags.map((tag) => (
                         <span 
@@ -115,15 +128,16 @@ export default async function BlogIndexPage() {
                     </div>
                   </div>
 
-                  <Link href={`/blog/${post.slug}`}>
-                    <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform cursor-pointer gap-1.5 text-xs font-semibold">
-                      Read article
-                      <ArrowRight className="size-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </article>
-            ))}
+                    <Link href={`/blog/${post.slug}`}>
+                      <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform cursor-pointer gap-1.5 text-xs font-semibold">
+                        Read article
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

@@ -109,6 +109,14 @@ async function fetchStrapi<T>(path: string, options: RequestInit = {}): Promise<
   return response.json();
 }
 
+export function getStrapiMediaUrl(image: StrapiImage | null | undefined): string | null {
+  if (!image || !image.url) return null;
+  if (image.url.startsWith('http://') || image.url.startsWith('https://')) {
+    return image.url;
+  }
+  return `${STRAPI_URL}${image.url}`;
+}
+
 export const strapiApi = {
   /**
    * Get all blog posts

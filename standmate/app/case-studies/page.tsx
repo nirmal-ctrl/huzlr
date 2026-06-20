@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
-import { strapiApi, StrapiCaseStudy } from "@/services/strapiApi";
+import { strapiApi, StrapiCaseStudy, getStrapiMediaUrl } from "@/services/strapiApi";
 import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -59,37 +59,50 @@ export default async function CaseStudiesIndexPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {cases.map((cs) => (
-              <article 
-                key={cs.id} 
-                className="group relative flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:bg-accent/5 transition-all duration-300 hover:shadow-lg hover:border-border/80"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                      {cs.clientName}
-                    </span>
-                    {cs.publishDate && (
-                      <span className="text-[11px] text-muted-foreground">
-                        {new Date(cs.publishDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </span>
+            {cases.map((cs) => {
+              const heroUrl = getStrapiMediaUrl(cs.heroImage);
+              return (
+                <article 
+                  key={cs.id} 
+                  className="group relative flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:bg-accent/5 transition-all duration-300 hover:shadow-lg hover:border-border/80"
+                >
+                  <div className="space-y-4 w-full">
+                    {/* Hero Image */}
+                    {heroUrl && (
+                      <div className="w-full h-48 rounded-xl overflow-hidden border border-border/50 bg-muted mb-2 relative">
+                        <img 
+                          src={heroUrl} 
+                          alt={cs.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
                     )}
-                  </div>
 
-                  {/* Title & Subtitle */}
-                  <div className="space-y-2">
-                    <Link href={`/case-studies/${cs.slug}`}>
-                      <h2 className="text-xl md:text-2xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors cursor-pointer leading-snug">
-                        {cs.title}
-                      </h2>
-                    </Link>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {cs.subtitle}
-                    </p>
-                  </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                        {cs.clientName}
+                      </span>
+                      {cs.publishDate && (
+                        <span className="text-[11px] text-muted-foreground">
+                          {new Date(cs.publishDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title & Subtitle */}
+                    <div className="space-y-2">
+                      <Link href={`/case-studies/${cs.slug}`}>
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors cursor-pointer leading-snug">
+                          {cs.title}
+                        </h2>
+                      </Link>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {cs.subtitle}
+                      </p>
+                    </div>
 
                   {/* Tags */}
                   {cs.tags && cs.tags.length > 0 && (
@@ -113,15 +126,16 @@ export default async function CaseStudiesIndexPage() {
                     10X Faster Delivery
                   </div>
 
-                  <Link href={`/case-studies/${cs.slug}`}>
-                    <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform cursor-pointer gap-1.5 text-xs font-semibold">
-                      Read full study
-                      <ArrowRight className="size-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </article>
-            ))}
+                    <Link href={`/case-studies/${cs.slug}`}>
+                      <Button variant="ghost" size="sm" className="group-hover:translate-x-1 transition-transform cursor-pointer gap-1.5 text-xs font-semibold">
+                        Read full study
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

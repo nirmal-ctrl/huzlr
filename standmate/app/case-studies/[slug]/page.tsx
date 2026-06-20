@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
-import { strapiApi, StrapiCaseStudy } from "@/services/strapiApi";
-import { ArrowLeft, CheckCircle2, TrendingUp, HelpCircle } from "lucide-react";
+import { strapiApi, StrapiCaseStudy, getStrapiMediaUrl } from "@/services/strapiApi";
+import { ArrowLeft, ArrowRight, CheckCircle2, TrendingUp, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 
@@ -63,6 +63,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
   const renderedChallenge = renderStrapiBlocks(cs.challenge);
   const renderedSolution = renderStrapiBlocks(cs.solution);
   const renderedResults = renderStrapiBlocks(cs.results);
+  const heroUrl = getStrapiMediaUrl(cs.heroImage);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
@@ -89,6 +90,17 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
             {cs.subtitle}
           </p>
         </div>
+
+        {/* Hero Image */}
+        {heroUrl && (
+          <div className="w-full h-[350px] md:h-[450px] rounded-2xl overflow-hidden border border-border bg-muted relative">
+            <img 
+              src={heroUrl} 
+              alt={cs.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
 
         {/* Case Study Sections */}
         <div className="space-y-12">

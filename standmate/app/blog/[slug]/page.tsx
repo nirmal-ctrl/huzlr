@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
-import { strapiApi, StrapiBlogPost } from "@/services/strapiApi";
+import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
 import { Calendar, ArrowLeft, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
@@ -63,6 +63,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
   }
 
   const renderedContent = renderStrapiBlocks(post.content);
+  const coverUrl = getStrapiMediaUrl(post.coverImage);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
@@ -129,6 +130,17 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Cover Image */}
+        {coverUrl && (
+          <div className="w-full h-[350px] md:h-[450px] rounded-2xl overflow-hidden border border-border bg-muted relative">
+            <img 
+              src={coverUrl} 
+              alt={post.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
 
         {/* Article Content - Semantic Prose styled for Light/Dark Theme matching Linear reference */}
         <article 
