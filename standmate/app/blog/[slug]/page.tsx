@@ -64,6 +64,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
 
   const renderedContent = renderStrapiBlocks(post.content);
   const coverUrl = getStrapiMediaUrl(post.coverImage);
+  const avatarUrl = getStrapiMediaUrl(post.author?.avatar);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
@@ -103,9 +104,19 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
 
           <div className="flex items-center gap-6 pt-4 border-b border-border pb-6">
             <div className="flex items-center gap-2.5">
-              <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-sm font-bold text-primary">
-                {post.author?.name ? post.author.name.charAt(0) : 'H'}
-              </div>
+              {avatarUrl ? (
+                <div className="size-10 rounded-full overflow-hidden border border-border/50 bg-muted shrink-0 relative flex items-center justify-center">
+                  <img 
+                    src={avatarUrl} 
+                    alt={post.author?.name || 'Author'} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-sm font-bold text-primary shrink-0">
+                  {post.author?.name ? post.author.name.charAt(0) : 'H'}
+                </div>
+              )}
               <div>
                 <p className="text-sm font-semibold text-foreground">{post.author?.name || 'Huzlr Editor'}</p>
                 <p className="text-xs text-muted-foreground">{post.author?.bio || 'Huzlr Editorial Team'}</p>

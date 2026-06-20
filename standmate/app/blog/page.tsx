@@ -61,6 +61,7 @@ export default async function BlogIndexPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {posts.map((post) => {
               const coverUrl = getStrapiMediaUrl(post.coverImage);
+              const authorAvatarUrl = getStrapiMediaUrl(post.author?.avatar);
               return (
                 <article 
                   key={post.id} 
@@ -80,41 +81,51 @@ export default async function BlogIndexPage() {
 
                     {/* Tags */}
                     {post.tags && post.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {post.tags.map((tag) => (
-                        <span 
-                          key={tag.id} 
-                          className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-                        >
-                          {tag.title}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags.map((tag) => (
+                          <span 
+                            key={tag.id} 
+                            className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
+                          >
+                            {tag.title}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Title & Description */}
-                  <div className="space-y-2">
-                    <Link href={`/blog/${post.slug}`}>
-                      <h2 className="text-xl md:text-2xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors cursor-pointer leading-snug">
-                        {post.title}
-                      </h2>
-                    </Link>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {post.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Meta & Footer */}
-                <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                      {post.author?.name ? post.author.name.charAt(0) : 'H'}
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-foreground">
-                        {post.author?.name || 'Huzlr Editor'}
+                    {/* Title & Description */}
+                    <div className="space-y-2">
+                      <Link href={`/blog/${post.slug}`}>
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-card-foreground group-hover:text-primary transition-colors cursor-pointer leading-snug">
+                          {post.title}
+                        </h2>
+                      </Link>
+                      <p className="text-muted-foreground text-sm leading-relaxed">
+                        {post.description}
                       </p>
+                    </div>
+                  </div>
+
+                  {/* Meta & Footer */}
+                  <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {authorAvatarUrl ? (
+                        <div className="size-8 rounded-full overflow-hidden border border-border/50 bg-muted shrink-0 relative flex items-center justify-center">
+                          <img 
+                            src={authorAvatarUrl} 
+                            alt={post.author?.name || 'Author'} 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="size-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                          {post.author?.name ? post.author.name.charAt(0) : 'H'}
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          {post.author?.name || 'Huzlr Editor'}
+                        </p>
                       {post.publishDate && (
                         <p className="text-[10px] text-muted-foreground flex items-center gap-1">
                           <Calendar className="size-3" />
