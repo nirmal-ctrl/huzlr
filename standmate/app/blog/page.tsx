@@ -72,7 +72,7 @@ export default async function BlogIndexPage() {
               <div className="group relative rounded-3xl border border-border/60 bg-muted/5 p-1 transition-all duration-300 hover:border-border/100 hover:bg-muted/10">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 lg:p-8 items-center">
                   {/* Featured Image */}
-                  <div className="lg:col-span-7 aspect-[16/10] w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
+                  <div className="lg:col-span-7 aspect-[1.91/1] w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
                     {getStrapiMediaUrl(featuredPost.coverImage) ? (
                       <img 
                         src={getStrapiMediaUrl(featuredPost.coverImage)!} 
@@ -174,7 +174,7 @@ export default async function BlogIndexPage() {
                       >
                         <div className="space-y-4">
                           {/* Card Cover Image */}
-                          <div className="w-full aspect-[16/10] overflow-hidden border-b border-border/40 bg-muted/20 relative flex items-center justify-center">
+                          <div className="w-full aspect-[1.91/1] overflow-hidden border-b border-border/40 bg-muted/20 relative flex items-center justify-center">
                             {coverUrl ? (
                               <img 
                                 src={coverUrl} 

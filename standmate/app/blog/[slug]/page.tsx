@@ -159,7 +159,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
 
         {/* Cover Image */}
         {coverUrl && (
-          <div className="w-full aspect-[21/9] rounded-3xl overflow-hidden border border-border bg-muted/10 relative flex items-center justify-center shadow-lg">
+          <div className="w-full aspect-[1.91/1] rounded-3xl overflow-hidden border border-border bg-muted/10 relative flex items-center justify-center shadow-lg">
             <img 
               src={coverUrl} 
               alt={post.title} 

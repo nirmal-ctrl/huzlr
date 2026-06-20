@@ -72,7 +72,7 @@ export default async function CaseStudiesIndexPage() {
                 >
                   <div className="space-y-5 w-full">
                     {/* Hero Image / Card Banner */}
-                    <div className="w-full aspect-[16/10] rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
+                    <div className="w-full aspect-[1.91/1] rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
                       {heroUrl ? (
                         <img 
                           src={heroUrl} 
