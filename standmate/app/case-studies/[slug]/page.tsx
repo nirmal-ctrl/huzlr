@@ -13,6 +13,39 @@ interface PageProps {
 
 export const revalidate = 0; // Dynamic fetching or set to 3600 for ISR with webhook revalidation
 
+function renderStrapiBlocks(content: any): string {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+
+  return content.map((block: any) => {
+    const textContent = (block.children || [])
+      .map((child: any) => child.text || '')
+      .join('');
+
+    switch (block.type) {
+      case 'heading':
+        const level = block.level || 2;
+        return `<h${level}>${textContent}</h${level}>`;
+      case 'paragraph':
+        if (textContent.trim().startsWith('<') && textContent.trim().endsWith('>')) {
+          return textContent;
+        }
+        return `<p>${textContent}</p>`;
+      case 'quote':
+        return `<blockquote>${textContent}</blockquote>`;
+      case 'list':
+        const tag = block.format === 'ordered' ? 'ol' : 'ul';
+        const items = (block.children || [])
+          .map((item: any) => `<li>${item.children?.map((c: any) => c.text).join('') || ''}</li>`)
+          .join('');
+        return `<${tag}>${items}</${tag}>`;
+      default:
+        return textContent;
+    }
+  }).join('\n');
+}
+
 export default async function CaseStudyDetailPage({ params }: PageProps) {
   const { slug } = await params;
   let cs: Partial<StrapiCaseStudy> | null = null;
@@ -26,6 +59,10 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
   if (!cs) {
     notFound();
   }
+
+  const renderedChallenge = renderStrapiBlocks(cs.challenge);
+  const renderedSolution = renderStrapiBlocks(cs.solution);
+  const renderedResults = renderStrapiBlocks(cs.results);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
@@ -56,7 +93,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
         {/* Case Study Sections */}
         <div className="space-y-12">
           {/* Challenge */}
-          {cs.challenge && (
+          {renderedChallenge && (
             <section className="space-y-4">
               <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <HelpCircle className="size-5 text-muted-foreground" />
@@ -64,13 +101,13 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
               </h3>
               <div 
                 className="prose dark:prose-invert prose-neutral prose-p:text-muted-foreground prose-p:leading-relaxed max-w-none"
-                dangerouslySetInnerHTML={{ __html: cs.challenge }}
+                dangerouslySetInnerHTML={{ __html: renderedChallenge }}
               />
             </section>
           )}
 
           {/* Solution */}
-          {cs.solution && (
+          {renderedSolution && (
             <section className="space-y-4 p-6 rounded-2xl border border-primary/10 bg-primary/5">
               <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <CheckCircle2 className="size-5 text-primary" />
@@ -78,13 +115,13 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
               </h3>
               <div 
                 className="prose dark:prose-invert prose-neutral prose-p:text-muted-foreground prose-p:leading-relaxed max-w-none"
-                dangerouslySetInnerHTML={{ __html: cs.solution }}
+                dangerouslySetInnerHTML={{ __html: renderedSolution }}
               />
             </section>
           )}
 
           {/* Results */}
-          {cs.results && (
+          {renderedResults && (
             <section className="space-y-4">
               <h3 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <TrendingUp className="size-5 text-amber-500" />
@@ -92,7 +129,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
               </h3>
               <div 
                 className="prose dark:prose-invert prose-neutral prose-p:text-muted-foreground prose-p:leading-relaxed max-w-none prose-li:text-muted-foreground"
-                dangerouslySetInnerHTML={{ __html: cs.results }}
+                dangerouslySetInnerHTML={{ __html: renderedResults }}
               />
             </section>
           )}

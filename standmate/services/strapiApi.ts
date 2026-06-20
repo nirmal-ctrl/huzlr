@@ -96,7 +96,7 @@ async function fetchStrapi<T>(path: string, options: RequestInit = {}): Promise<
     headers,
     next: {
       tags: ['strapi'],
-      revalidate: 3600, // Revalidate every hour, or on-demand via webhook
+      revalidate: 0, // Disable caching to fetch fresh live data on every request
       ...options.next,
     },
   });

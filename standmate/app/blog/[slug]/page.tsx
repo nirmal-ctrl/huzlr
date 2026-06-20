@@ -13,6 +13,41 @@ interface PageProps {
 
 export const revalidate = 0; // Dynamic fetching or set to 3600 for ISR with webhook revalidation
 
+function renderStrapiBlocks(content: any): string {
+  if (!content) return '';
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+
+  return content.map((block: any) => {
+    const textContent = (block.children || [])
+      .map((child: any) => child.text || '')
+      .join('');
+
+    switch (block.type) {
+      case 'heading':
+        const level = block.level || 2;
+        return `<h${level}>${textContent}</h${level}>`;
+      case 'paragraph':
+        // If the user pasted raw HTML strings (like "<p>...</p>") inside their blocks editor,
+        // we output it directly. Otherwise, wrap it in p tags.
+        if (textContent.trim().startsWith('<') && textContent.trim().endsWith('>')) {
+          return textContent;
+        }
+        return `<p>${textContent}</p>`;
+      case 'quote':
+        return `<blockquote>${textContent}</blockquote>`;
+      case 'list':
+        const tag = block.format === 'ordered' ? 'ol' : 'ul';
+        const items = (block.children || [])
+          .map((item: any) => `<li>${item.children?.map((c: any) => c.text).join('') || ''}</li>`)
+          .join('');
+        return `<${tag}>${items}</${tag}>`;
+      default:
+        return textContent;
+    }
+  }).join('\n');
+}
+
 export default async function BlogPostDetailPage({ params }: PageProps) {
   const { slug } = await params;
   let post: Partial<StrapiBlogPost> | null = null;
@@ -26,6 +61,8 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
   if (!post) {
     notFound();
   }
+
+  const renderedContent = renderStrapiBlocks(post.content);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
@@ -96,7 +133,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
         {/* Article Content - Semantic Prose styled for Light/Dark Theme matching Linear reference */}
         <article 
           className="prose dark:prose-invert max-w-none prose-neutral prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-blockquote:border-l-primary prose-blockquote:bg-muted/30 prose-blockquote:p-4 prose-blockquote:rounded-r-xl"
-          dangerouslySetInnerHTML={{ __html: post.content || '' }}
+          dangerouslySetInnerHTML={{ __html: renderedContent }}
         />
       </main>
 
