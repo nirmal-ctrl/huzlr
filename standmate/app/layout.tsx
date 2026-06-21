@@ -22,6 +22,7 @@ const caveat = Caveat({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://huzlr.com"),
   title: "Huzlr - AI Project Manager | Deliver Projects 10X Faster",
   description:
     "Autonomous AI project management that predicts risks, prevents delays, and accelerates delivery. Smart planning, real-time monitoring, and team optimization. Start free trial.",
@@ -72,9 +73,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Huzlr",
+    "operatingSystem": "All",
+    "applicationCategory": "BusinessApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Autonomous AI project management that predicts risks, prevents delays, and accelerates delivery. Smart planning, real-time monitoring, and team optimization.",
+    "featureList": "Risk forecasting, predictive delay warnings, agile planning, automated project intelligence, team resource optimization"
+  }
+
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className={`font-sans antialiased ${caveat.variable}`} suppressHydrationWarning={true}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <ReduxProvider>
           <ThemeProvider
             attribute="class"

@@ -6,9 +6,46 @@ import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiA
 import { Calendar, ArrowLeft, ArrowRight, Clock, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
+import type { Metadata } from 'next';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const post = await strapiApi.getBlogPostBySlug(slug);
+    if (!post) return {};
+    
+    const coverUrl = getStrapiMediaUrl(post.coverImage);
+    const postUrl = `https://huzlr.com/blog/${slug}`;
+
+    return {
+      title: `${post.title} | Huzlr Blog`,
+      description: post.description,
+      openGraph: {
+        title: post.title,
+        description: post.description,
+        url: postUrl,
+        type: 'article',
+        publishedTime: post.publishDate,
+        modifiedTime: post.updatedAt,
+        images: coverUrl ? [coverUrl] : [],
+        authors: post.author?.name ? [post.author.name] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description: post.description,
+        images: coverUrl ? [coverUrl] : [],
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Huzlr Blog Post',
+    };
+  }
 }
 
 export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
@@ -68,8 +105,39 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
   const wordCount = post.description?.split(/\s+/).length || 0 + (renderedContent?.split(/\s+/).length || 0);
   const readTime = Math.max(1, Math.ceil(wordCount / 225));
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": post.title,
+    "description": post.description,
+    "image": coverUrl ? [coverUrl] : [],
+    "datePublished": post.publishDate,
+    "dateModified": post.updatedAt || post.publishDate,
+    "author": {
+      "@type": "Person",
+      "name": post.author?.name || "Huzlr Editor",
+      "jobTitle": post.author?.bio || "Huzlr Editorial Team"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Huzlr",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://huzlr.com/favicon.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://huzlr.com/blog/${slug}`
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Decorative background grid and gradient */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-primary/3 blur-[120px] rounded-full pointer-events-none" />

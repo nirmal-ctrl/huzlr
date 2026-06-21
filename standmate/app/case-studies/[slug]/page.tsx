@@ -6,9 +6,44 @@ import { strapiApi, StrapiCaseStudy, getStrapiMediaUrl } from "@/services/strapi
 import { ArrowLeft, ArrowRight, CheckCircle2, TrendingUp, HelpCircle, Sparkles, Building2, Zap, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
+import type { Metadata } from 'next';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const cs = await strapiApi.getCaseStudyBySlug(slug);
+    if (!cs) return {};
+    
+    const heroUrl = getStrapiMediaUrl(cs.heroImage);
+    const csUrl = `https://huzlr.com/case-studies/${slug}`;
+
+    return {
+      title: `${cs.clientName} Case Study: ${cs.title} | Huzlr`,
+      description: cs.subtitle,
+      openGraph: {
+        title: cs.title,
+        description: cs.subtitle,
+        url: csUrl,
+        type: 'article',
+        publishedTime: cs.publishDate,
+        images: heroUrl ? [heroUrl] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: cs.title,
+        description: cs.subtitle,
+        images: heroUrl ? [heroUrl] : [],
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Huzlr Case Study',
+    };
+  }
 }
 
 export const revalidate = 0; // Dynamic fetching or set to 3600 for ISR with webhook revalidation
@@ -65,8 +100,39 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
   const renderedResults = renderStrapiBlocks(cs.results);
   const heroUrl = getStrapiMediaUrl(cs.heroImage);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": cs.title,
+    "description": cs.subtitle,
+    "image": heroUrl ? [heroUrl] : [],
+    "datePublished": cs.publishDate,
+    "dateModified": cs.createdAt || cs.publishDate,
+    "author": {
+      "@type": "Organization",
+      "name": "Huzlr Marketing Team",
+      "url": "https://huzlr.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Huzlr",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://huzlr.com/favicon.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://huzlr.com/case-studies/${slug}`
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Decorative background grid and gradient */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-primary/3 blur-[120px] rounded-full pointer-events-none" />
