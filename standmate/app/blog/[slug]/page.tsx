@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
+export const dynamic = 'force-dynamic'; // Fetch fresh post on every request
 
 function renderStrapiBlocks(content: any): string {
   if (!content) return '';
