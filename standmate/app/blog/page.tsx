@@ -6,7 +6,7 @@ import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiA
 import { Calendar, ArrowRight, BookOpen, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const dynamic = 'force-dynamic'; // Fetch fresh posts on every request
+export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
 export default async function BlogIndexPage() {
   let posts: StrapiBlogPost[] = [];
