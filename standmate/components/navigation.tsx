@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu as MenuIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export function Navigation() {
   return (
@@ -51,19 +51,19 @@ function Navbar({ className }: { className?: string }) {
             <div className="sm:hidden">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full border border-border bg-background/50 backdrop-blur-sm shadow-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-center">
-                    <MenuIcon className="h-4 w-4" />
-                    <span className="sr-only">Toggle menu</span>
+                  <Button variant="ghost" className="h-9 px-3 gap-1 rounded-full border border-border bg-background/50 backdrop-blur-sm shadow-sm hover:bg-accent/50 text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center justify-center">
+                    Explore
+                    <ChevronDown className="h-3 w-3 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-40 mt-2">
                   <DropdownMenuItem asChild>
-                    <Link href="/blog" className="w-full cursor-pointer">
+                    <Link href="/blog" className="w-full cursor-pointer font-medium">
                       Blog
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/case-studies" className="w-full cursor-pointer">
+                    <Link href="/case-studies" className="w-full cursor-pointer font-medium">
                       Case Studies
                     </Link>
                   </DropdownMenuItem>
