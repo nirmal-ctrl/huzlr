@@ -1,12 +1,12 @@
 import { createApi } from '@reduxjs/toolkit/query/react'
 import { baseApi } from './baseApi'
-import type { TaskResponse, TaskCreate } from '@/lib/types'
+import type { IssueResponse, IssueCreate } from '@/lib/types'
 
-export const tasksApi = baseApi.injectEndpoints({
+export const issuesApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // Query to get all tasks across all projects
-        getAllTasks: builder.query<TaskResponse[], void>({
-            query: () => `/tasks/`,
+        // Query to get all issues across all projects
+        getAllIssues: builder.query<IssueResponse[], void>({
+            query: () => `/issues/`,
             providesTags: (result) =>
                 result
                     ? [
@@ -16,9 +16,15 @@ export const tasksApi = baseApi.injectEndpoints({
                     : [{ type: 'Tasks', id: 'LIST' }],
         }),
 
-        // Query to get all tasks for a project
-        getProjectTasks: builder.query<TaskResponse[], number>({
-            query: (projectId) => `/tasks/project/${projectId}`,
+        // Query to get a single issue by ID
+        getIssue: builder.query<IssueResponse, number>({
+            query: (issueId) => `/issues/${issueId}`,
+            providesTags: (result, error, issueId) => [{ type: 'Tasks', id: issueId }],
+        }),
+
+        // Query to get all issues for a project
+        getProjectIssues: builder.query<IssueResponse[], number>({
+            query: (projectId) => `/issues/project/${projectId}`,
             providesTags: (result, error, projectId) =>
                 result
                     ? [
@@ -28,9 +34,9 @@ export const tasksApi = baseApi.injectEndpoints({
                     : [{ type: 'ProjectTasks', id: projectId }],
         }),
 
-        // Query to get all tasks for a team
-        getTeamTasks: builder.query<TaskResponse[], number>({
-            query: (teamId) => `/tasks/team/${teamId}`,
+        // Query to get all issues for a team
+        getTeamIssues: builder.query<IssueResponse[], number>({
+            query: (teamId) => `/issues/team/${teamId}`,
             providesTags: (result, error, teamId) =>
                 result
                     ? [
@@ -41,12 +47,12 @@ export const tasksApi = baseApi.injectEndpoints({
                     : [{ type: 'TeamTasks', id: teamId }, { type: 'Tasks', id: 'LIST' }],
         }),
 
-        // Mutation to create a new task
-        createTask: builder.mutation<TaskResponse, { projectId: number; task: TaskCreate }>({
-            query: ({ projectId, task }) => ({
-                url: `/tasks/project/${projectId}`,
+        // Mutation to create a new issue
+        createIssue: builder.mutation<IssueResponse, { projectId: number; issue: IssueCreate }>({
+            query: ({ projectId, issue }) => ({
+                url: `/issues/project/${projectId}`,
                 method: 'POST',
-                body: task,
+                body: issue,
             }),
             invalidatesTags: (result, error, { projectId }) => [
                 { type: 'ProjectTasks', id: projectId },
@@ -54,36 +60,36 @@ export const tasksApi = baseApi.injectEndpoints({
             ],
         }),
 
-        // Mutation to update an existing task
-        updateTask: builder.mutation<TaskResponse, { taskId: number; updates: any; teamId?: number; projectId?: number }>({
-            query: ({ taskId, updates }) => ({
-                url: `/tasks/${taskId}`,
+        // Mutation to update an existing issue
+        updateIssue: builder.mutation<IssueResponse, { issueId: number; updates: any; teamId?: number; projectId?: number }>({
+            query: ({ issueId, updates }) => ({
+                url: `/issues/${issueId}`,
                 method: 'PUT',
                 body: updates,
             }),
-            invalidatesTags: (result, error, { taskId }) => [
-                { type: 'Tasks', id: taskId },
+            invalidatesTags: (result, error, { issueId }) => [
+                { type: 'Tasks', id: issueId },
                 { type: 'Tasks', id: 'LIST' },
                 ...(result ? [{ type: 'ProjectTasks' as const, id: result.project_id }] : []),
             ],
-            async onQueryStarted({ taskId, updates, teamId, projectId }, { dispatch, queryFulfilled }) {
+            async onQueryStarted({ issueId, updates, teamId, projectId }, { dispatch, queryFulfilled }) {
                 const patches: any[] = []
                 
                 if (teamId) {
                     const patchResult = dispatch(
-                        tasksApi.util.updateQueryData('getTeamTasks', teamId, (draft) => {
-                            const task = draft.find(t => t.id === taskId)
-                            if (task) {
-                                if (updates.status) task.status = updates.status
+                        issuesApi.util.updateQueryData('getTeamIssues', teamId, (draft) => {
+                            const issue = draft.find(t => t.id === issueId)
+                            if (issue) {
+                                if (updates.status) issue.status = updates.status
                                 if (updates.properties) {
-                                    task.properties = {
-                                        ...(task.properties || {}),
+                                    issue.properties = {
+                                        ...(issue.properties || {}),
                                         ...updates.properties
                                     }
                                 }
                                 Object.keys(updates).forEach(key => {
                                     if (key !== 'properties' && key !== 'status') {
-                                        (task as any)[key] = updates[key]
+                                        (issue as any)[key] = updates[key]
                                     }
                                 })
                             }
@@ -94,19 +100,19 @@ export const tasksApi = baseApi.injectEndpoints({
 
                 if (projectId) {
                     const patchResult = dispatch(
-                        tasksApi.util.updateQueryData('getProjectTasks', projectId, (draft) => {
-                            const task = draft.find(t => t.id === taskId)
-                            if (task) {
-                                if (updates.status) task.status = updates.status
+                        issuesApi.util.updateQueryData('getProjectIssues', projectId, (draft) => {
+                            const issue = draft.find(t => t.id === issueId)
+                            if (issue) {
+                                if (updates.status) issue.status = updates.status
                                 if (updates.properties) {
-                                    task.properties = {
-                                        ...(task.properties || {}),
+                                    issue.properties = {
+                                        ...(issue.properties || {}),
                                         ...updates.properties
                                     }
                                 }
                                 Object.keys(updates).forEach(key => {
                                     if (key !== 'properties' && key !== 'status') {
-                                        (task as any)[key] = updates[key]
+                                        (issue as any)[key] = updates[key]
                                     }
                                 })
                             }
@@ -123,14 +129,14 @@ export const tasksApi = baseApi.injectEndpoints({
             }
         }),
 
-        // Mutation to delete a task
-        deleteTask: builder.mutation<void, { taskId: number; projectId: number }>({
-            query: ({ taskId }) => ({
-                url: `/tasks/${taskId}`,
+        // Mutation to delete an issue
+        deleteIssue: builder.mutation<void, { issueId: number; projectId: number }>({
+            query: ({ issueId }) => ({
+                url: `/issues/${issueId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: (result, error, { taskId, projectId }) => [
-                { type: 'Tasks', id: taskId },
+            invalidatesTags: (result, error, { issueId, projectId }) => [
+                { type: 'Tasks', id: issueId },
                 { type: 'Tasks', id: 'LIST' },
                 { type: 'ProjectTasks', id: projectId },
             ],
@@ -141,10 +147,11 @@ export const tasksApi = baseApi.injectEndpoints({
 
 // Export hooks for usage in functional components
 export const {
-    useGetAllTasksQuery,
-    useGetProjectTasksQuery,
-    useGetTeamTasksQuery,
-    useCreateTaskMutation,
-    useUpdateTaskMutation,
-    useDeleteTaskMutation,
-} = tasksApi
+    useGetAllIssuesQuery,
+    useGetIssueQuery,
+    useGetProjectIssuesQuery,
+    useGetTeamIssuesQuery,
+    useCreateIssueMutation,
+    useUpdateIssueMutation,
+    useDeleteIssueMutation,
+} = issuesApi

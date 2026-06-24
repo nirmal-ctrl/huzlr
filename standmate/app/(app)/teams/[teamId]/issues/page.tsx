@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Plus, Filter, X, ChevronDown, Check, ChevronRight } from "lucide-react"
+import { Plus, Filter, X, ChevronDown, Check, ChevronRight, ListFilter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { TaskList } from "@/components/projects/task-list"
@@ -12,15 +12,15 @@ import { ViewOptionsDropdown } from "@/components/views/view-options-dropdown"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { 
-    useGetTeamTasksQuery, 
-    useCreateTaskMutation, 
-    useUpdateTaskMutation, 
-    useDeleteTaskMutation 
-} from "@/services/tasksApi"
+    useGetTeamIssuesQuery, 
+    useCreateIssueMutation, 
+    useUpdateIssueMutation, 
+    useDeleteIssueMutation 
+} from "@/services/issuesApi"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchProjects } from "@/lib/redux/slices/projectSlice"
 import { fetchPropertyDefinitions } from "@/lib/redux/slices/metaSlice"
-import { TaskCreate } from "@/lib/types"
+import { IssueCreate } from "@/lib/types"
 
 export default function TeamIssuesPage() {
     const params = useParams()
@@ -38,13 +38,13 @@ export default function TeamIssuesPage() {
     const currentTeam = teams.find(t => t.id === teamId)
     const teamProjects = projects.filter(p => p.team_id === teamId)
 
-    const { data: tasks, isLoading, error } = useGetTeamTasksQuery(teamId, {
+    const { data: issues, isLoading, error } = useGetTeamIssuesQuery(teamId, {
         skip: isNaN(teamId)
     })
 
-    const [createTask] = useCreateTaskMutation()
-    const [updateTask] = useUpdateTaskMutation()
-    const [deleteTask] = useDeleteTaskMutation()
+    const [createIssue] = useCreateIssueMutation()
+    const [updateIssue] = useUpdateIssueMutation()
+    const [deleteIssue] = useDeleteIssueMutation()
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     
@@ -104,46 +104,46 @@ export default function TeamIssuesPage() {
         }
     }, [])
 
-    const handleCreateTask = async (taskData: Partial<TaskCreate> & { properties?: any }) => {
-        if (!taskData.project_id) return
+    const handleCreateIssue = async (issueData: Partial<IssueCreate> & { properties?: any }) => {
+        if (!issueData.project_id) return
         try {
-            await createTask({
-                projectId: taskData.project_id,
-                task: {
-                    title: taskData.title || "",
-                    description: taskData.description || "",
-                    status: taskData.status || "pending",
-                    project_id: taskData.project_id,
-                    properties: taskData.properties || {},
+            await createIssue({
+                projectId: issueData.project_id,
+                issue: {
+                    title: issueData.title || "",
+                    description: issueData.description || "",
+                    status: issueData.status || "pending",
+                    project_id: issueData.project_id,
+                    properties: issueData.properties || {},
                     critical_path_flag: false
-                } as TaskCreate
+                } as IssueCreate
             }).unwrap()
         } catch (err) {
-            console.error("Failed to create task:", err)
+            console.error("Failed to create issue:", err)
         }
     }
 
-    const handleUpdateTask = async (taskId: number, updates: any) => {
+    const handleUpdateIssue = async (issueId: number, updates: any) => {
         try {
-            await updateTask({
-                taskId,
+            await updateIssue({
+                issueId,
                 updates
             }).unwrap()
         } catch (err) {
-            console.error("Failed to update task:", err)
+            console.error("Failed to update issue:", err)
         }
     }
 
-    const handleDeleteTask = async (taskId: number) => {
-        const t = tasks?.find(task => task.id === taskId)
+    const handleDeleteIssue = async (issueId: number) => {
+        const t = issues?.find(issue => issue.id === issueId)
         if (!t) return
         try {
-            await deleteTask({
-                taskId,
+            await deleteIssue({
+                issueId,
                 projectId: t.project_id
             }).unwrap()
         } catch (err) {
-            console.error("Failed to delete task:", err)
+            console.error("Failed to delete issue:", err)
         }
     }
 
@@ -259,7 +259,7 @@ export default function TeamIssuesPage() {
     }
 
     // Apply Tab filtering & Search filtering concurrently
-    const filteredTasksList = (tasks || []).filter(t => {
+    const filteredIssuesList = (issues || []).filter(t => {
         // 1. Tab Quick View Filtering
         const statusStr = typeof t.status === 'object' && t.status !== null 
             ? (t.status as any).label || (t.status as any).name || JSON.stringify(t.status) 
@@ -346,27 +346,6 @@ export default function TeamIssuesPage() {
                                 </Button>
                             </div>
                             
-                            {/* Right command filter popover panel */}
-                            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground cursor-pointer border border-dashed border-border/60 rounded px-2.5">
-                                        <Filter className="h-3 w-3" />
-                                        <span>Add Filter...</span>
-                                        <ChevronDown className="h-3 w-3" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-60 p-2 space-y-2 bg-popover/95 backdrop-blur-md border border-border/60 rounded-lg shadow-xl" align="start">
-                                    <Input
-                                      ref={filterInputRef}
-                                      value={filterSearch}
-                                      placeholder="Add Filter...  (F)"
-                                      onChange={(e) => setFilterSearch(e.target.value)}
-                                      className="h-8 text-xs bg-background/50 border-border/80 focus:ring-1 focus:ring-primary/20 shadow-none px-2.5"
-                                    />
-                                    {renderFilterContent()}
-                                </PopoverContent>
-                            </Popover>
-
                             {/* Active Filter Badges */}
                             {statusFilter && (
                                 <span className="inline-flex items-center gap-1.5 text-[11px] bg-primary/10 border border-primary/20 text-primary px-2.5 py-0.5 rounded-full font-semibold shadow-sm">
@@ -386,13 +365,33 @@ export default function TeamIssuesPage() {
                             )}
                         </div>
                         
-                        {/* Display options / layouts control */}
+                        {/* Display options & Filter controls */}
                         <div className="flex items-center gap-2">
                             <ViewOptionsDropdown 
                                 entityType="task" 
                                 hiddenColumns={hiddenColumns}
                                 setHiddenColumns={setHiddenColumns}
                             />
+
+                            {/* Command Filter Popover Panel - placed right next of Display options */}
+                            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="gap-2 h-8">
+                                        <ListFilter className="h-4 w-4" />
+                                        <span className="hidden lg:inline">Filter</span>
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-60 p-2 space-y-2 bg-popover/95 backdrop-blur-md border border-border/60 rounded-lg shadow-xl" align="end">
+                                    <Input
+                                      ref={filterInputRef}
+                                      value={filterSearch}
+                                      placeholder="Add Filter...  (F)"
+                                      onChange={(e) => setFilterSearch(e.target.value)}
+                                      className="h-8 text-xs bg-background/50 border-border/80 focus:ring-1 focus:ring-primary/20 shadow-none px-2.5"
+                                    />
+                                    {renderFilterContent()}
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 )}
@@ -414,15 +413,15 @@ export default function TeamIssuesPage() {
                         </div>
                     ) : layout === 'list' ? (
                         <TaskList 
-                            tasks={filteredTasksList}
+                            tasks={filteredIssuesList}
                             projectId={firstProjectId}
                             isLoading={isLoading}
-                            onUpdateTask={handleUpdateTask}
-                            onDeleteTask={handleDeleteTask}
+                            onUpdateTask={handleUpdateIssue}
+                            onDeleteTask={handleDeleteIssue}
                         />
                     ) : (
                         <KanbanBoard
-                            data={filteredTasksList}
+                            data={filteredIssuesList}
                             columns={[]}
                             entityType="task"
                             defaultProjectId={firstProjectId}
@@ -438,7 +437,7 @@ export default function TeamIssuesPage() {
                     open={isCreateModalOpen}
                     onOpenChange={setIsCreateModalOpen}
                     defaultProjectId={firstProjectId}
-                    onSubmit={handleCreateTask}
+                    onSubmit={handleCreateIssue}
                 />
             )}
         </>

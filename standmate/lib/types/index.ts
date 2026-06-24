@@ -14,6 +14,42 @@ export type ProjectUpdate = components['schemas']['ProjectUpdate'];
 export type TaskCreate = components['schemas']['TaskCreate'];
 export type TaskResponse = components['schemas']['TaskResponse'];
 
+export interface IssueResponse {
+    id: number;
+    title: string;
+    description?: string | null;
+    status: string;
+    project_id: number;
+    milestone_id?: number | null;
+    duration_days?: number | null;
+    estimated_start_date?: string | null;
+    estimated_end_date?: string | null;
+    critical_path_flag: boolean;
+    order_index?: number | null;
+    properties?: Record<string, any> | null;
+    parent_id?: number | null;
+    subtasks?: IssueResponse[];
+}
+
+export interface IssueCreate {
+    title: string;
+    description?: string | null;
+    status?: string | null;
+    project_id: number;
+    milestone_id?: number | null;
+    duration_days?: number | null;
+    estimated_start_date?: string | null;
+    estimated_end_date?: string | null;
+    critical_path_flag?: boolean;
+    order_index?: number | null;
+    properties?: Record<string, any> | null;
+    parent_id?: number | null;
+}
+
+export interface Issue extends IssueResponse {
+    properties?: Record<string, any>;
+}
+
 export type MilestoneCreate = components['schemas']['MilestoneCreate'];
 export type MilestoneResponse = components['schemas']['MilestoneResponse'];
 export type MilestoneUpdate = components['schemas']['MilestoneUpdate'];

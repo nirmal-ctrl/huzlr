@@ -1,8 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import date
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
-class TaskBase(BaseModel):
+class IssueBase(BaseModel):
     title: str
     description: Optional[str] = None
     status: Optional[str] = "pending"
@@ -13,16 +13,18 @@ class TaskBase(BaseModel):
     critical_path_flag: bool = False
     order_index: Optional[int] = None
     properties: Optional[Dict[str, Any]] = None
+    parent_id: Optional[int] = None
 
-class TaskCreate(TaskBase):
+class IssueCreate(IssueBase):
     project_id: int
 
-class TaskUpdate(TaskBase):
+class IssueUpdate(IssueBase):
     title: Optional[str] = None
     status: Optional[str] = None
 
-class TaskResponse(TaskBase):
+class IssueResponse(IssueBase):
     id: int
     project_id: int
+    subtasks: List["IssueResponse"] = []
     
     model_config = ConfigDict(from_attributes=True)

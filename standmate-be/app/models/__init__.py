@@ -2,8 +2,7 @@ from .base import Base
 from .user import User
 from .access_code import AccessCode
 from .project import Project
-from .task import Task
-from .task_dependency import TaskDependency
+from .issue import Issue, IssueDependency
 from .risk import Risk
 from .milestone import Milestone
 from .conversation import ConversationLog

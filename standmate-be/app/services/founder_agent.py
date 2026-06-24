@@ -20,9 +20,8 @@ try:
     from models.project import Project
     from models.project_document import ProjectDocument
     from models.milestone import Milestone
-    from models.task import Task
+    from models.issue import Issue, IssueDependency
     from models.risk import Risk, Assumption
-    from models.task_dependency import TaskDependency
     from models.conversation import ConversationLog
     from models.version import ProjectVersion
 except Exception as e:
@@ -160,13 +159,13 @@ class FounderAgent(Agent):
             return "I am sorry, but I am not authenticated or authorized to access the data for that project."
 
     @llm.function_tool
-    async def list_project_tasks(self, project_id: int) -> str:
-        """Call this tool to list all the tasks and items currently in progress or planned under a specific project ID."""
+    async def list_project_issues(self, project_id: int) -> str:
+        """Call this tool to list all the issues and items currently in progress or planned under a specific project ID."""
         if not self.user_id:
             return "I am sorry, but I am not authenticated or authorized to access your data at this point."
         try:
             from core.database import AsyncSessionLocal
-            from models.task import Task
+            from models.issue import Issue
             from models.project import Project
             from models.team_membership import TeamMembership
             from sqlalchemy import select
@@ -183,17 +182,17 @@ class FounderAgent(Agent):
                 if not auth_result.scalars().first():
                     return "I am sorry, but I am not authenticated or authorized to access the data for that project."
 
-                query = select(Task).where(Task.project_id == project_id)
+                query = select(Issue).where(Issue.project_id == project_id)
                 result = await db.execute(query)
-                tasks = result.scalars().all()
+                issues_list = result.scalars().all()
                 
-                if not tasks:
-                    return f"No tasks found for project ID {project_id}."
+                if not issues_list:
+                    return f"No issues found for project ID {project_id}."
                 
-                task_list = [f"- {t.title} (Status: {t.status}, ID: {t.task_id})" for t in tasks]
-                return f"Tasks for project ID {project_id}:\n" + "\n".join(task_list)
+                issue_str_list = [f"- {t.title} (Status: {t.status}, ID: {t.id})" for t in issues_list]
+                return f"Issues for project ID {project_id}:\n" + "\n".join(issue_str_list)
         except Exception as e:
-            logger.error(f"Error querying tasks: {e}")
+            logger.error(f"Error querying issues: {e}")
             return "I am sorry, but I am not authenticated or authorized to access the data for that project."
 
     @llm.function_tool

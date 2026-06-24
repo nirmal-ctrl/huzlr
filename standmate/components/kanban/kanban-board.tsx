@@ -1,14 +1,14 @@
 "use client"
 
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, Plus } from "lucide-react"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { useUpdateTaskMutation, useCreateTaskMutation } from "@/services/tasksApi"
+import { useUpdateIssueMutation as useUpdateTaskMutation, useCreateIssueMutation as useCreateTaskMutation } from "@/services/issuesApi"
 import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector } from "@/components/properties/factory"
 import { Input } from "@/components/ui/input"
 import {
@@ -26,7 +26,7 @@ export interface KanbanBoardProps {
   onItemMove?: (itemId: string, fromColumn: string, toColumn: string) => void
   defaultProjectId?: number
   hiddenColumns?: string[]
-  setHiddenColumns?: React.Dispatch<React.SetStateAction<string[]>>
+  setHiddenColumns?: React.Dispatch<React.SetStateAction<string
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -50,7 +50,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const activeSetHiddenColumns = setHiddenColumns ?? setLocalHiddenColumns
 
   const params = useParams()
+  const router = useRouter()
   const teamId = params.teamId ? parseInt(params.teamId as string) : undefined
+  const projects = useAppSelector((state) => state.projects.items)
+  const itemProjectId = data[0]?.project_id || defaultProjectId
+  const project = projects.find(p => p.project_id === itemProjectId)
+  const resolvedTeamId = teamId || project?.team_id
 
   const [updateTask] = useUpdateTaskMutation()
   const [createTask] = useCreateTaskMutation()
@@ -171,7 +176,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
     try {
       await updateTask({
-        taskId,
+        issueId: taskId,
         updates,
         teamId: teamId || undefined,
         projectId: task.project_id
@@ -364,10 +369,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                               isFocused={focusedCardId === String(item.id)}
                               onFocus={() => setFocusedCardId(String(item.id))}
                               onOpenDetail={(taskItem) => {
-                                setSelectedDetailTask(taskItem)
-                                setIsDetailOpen(true)
+                                const cardProject = projects.find(p => p.project_id === taskItem.project_id)
+                                const cardTeamId = teamId || cardProject?.team_id
+                                if (cardTeamId) {
+                                  router.push(`/teams/${cardTeamId}/issues/${taskItem.id}`)
+                                } else {
+                                  console.error("Could not resolve team ID for issue:", taskItem)
+                                }
                               }}
-                              teamId={teamId}
+                              teamId={teamId || projects.find(p => p.project_id === item.project_id)?.team_id}
                             />
                           ))}
                           {provided.placeholder}
@@ -401,7 +411,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                   
                                   await createTask({
                                     projectId: defaultProjectId,
-                                    task: {
+                                    issue: {
                                       title: inlineTitle.trim(),
                                       description: "",
                                       status: matchedStatus,
@@ -479,7 +489,7 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
 
   const handleUpdateStatus = useCallback((status: string) => {
     updateTask({
-      taskId: item.id,
+      issueId: item.id,
       updates: { status },
       teamId,
       projectId: item.project_id
@@ -488,7 +498,7 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
 
   const handleUpdatePriority = useCallback((priority: string) => {
     updateTask({
-      taskId: item.id,
+      issueId: item.id,
       updates: {
         properties: {
           ...(item.properties || {}),
@@ -502,7 +512,7 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
 
   const handleUpdateLead = useCallback((leadId: string) => {
     updateTask({
-      taskId: item.id,
+      issueId: item.id,
       updates: {
         properties: {
           ...(item.properties || {}),
@@ -551,28 +561,25 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
           tabIndex={0}
           onFocus={onFocus}
           onKeyDown={handleKeyDown}
-          onClick={(e) => {
-            const isClickable = !(e.target as HTMLElement).closest('button, [role="button"], input, select, [data-status-trigger], [data-priority-trigger], [data-lead-trigger]')
-            if (isClickable) {
-              onOpenDetail(item)
-            }
-          }}
           className="outline-none"
         >
           <Card
             ref={cardRef}
-            className={`group cursor-grab active:cursor-grabbing bg-card p-3 rounded-lg border transition-all duration-200 space-y-3 ${
+            className={`group cursor-pointer bg-card p-3 rounded-lg border transition-all duration-200 space-y-3 ${
               snapshot.isDragging
-                ? "scale-[1.02] shadow-xl border-primary/40 bg-card/90"
+                ? "scale-[1.02] shadow-xl border-primary/40 bg-card/90 cursor-grabbing"
                 : isFocused
                 ? "border-primary/50 ring-1 ring-primary/25 bg-accent/20"
                 : "border-border/40 hover:border-primary/20 hover:shadow-md"
             }`}
           >
             <div className="flex flex-col gap-2">
-              <h4 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
+              <button 
+                onClick={() => onOpenDetail(item)}
+                className="font-medium text-sm text-foreground leading-snug line-clamp-2 text-left hover:underline cursor-pointer focus:outline-none"
+              >
                 {item.title || item.properties?.project_title || item.properties?.title || 'Untitled'}
-              </h4>
+              </button>
 
               {/* Lightweight Micro-dropdown Selectors for instant updates */}
               <div className="flex items-center gap-1.5 flex-wrap">

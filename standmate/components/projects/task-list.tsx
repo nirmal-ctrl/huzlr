@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { Task } from "@/lib/types"
 import { DataTable } from "@/components/data-table"
 import { DataTableSkeleton } from "@/components/data-table-skeleton"
@@ -22,11 +23,15 @@ interface TaskListProps {
 
 export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTask }: TaskListProps) {
     const dispatch = useAppDispatch()
+    const params = useParams()
+    const router = useRouter()
+    const teamId = params.teamId as string
     
     // Load schema definitions from Redux
     const entityType = "task"
     const schemaDefinitions = useAppSelector(state => state.meta.propertyDefinitions[entityType])
     const isSchemaLoading = useAppSelector(state => state.meta.loading[entityType])
+    const projects = useAppSelector(state => state.projects.items)
     
     const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
     const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
@@ -67,16 +72,22 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                 cell: ({ row }) => {
                     const t = row.original
                     return (
-                        <input 
-                            type="text"
-                            className={`bg-transparent border-none outline-none focus:ring-0 w-full text-sm ${t.status === "completed" ? "text-muted-foreground line-through" : "text-foreground font-medium"}`}
-                            defaultValue={t.title}
-                            onBlur={(e) => {
-                                if (e.target.value !== t.title) {
-                                    onUpdateTask(t.id!, { title: e.target.value })
+                        <button
+                            onClick={() => {
+                                const project = projects.find(p => p.project_id === t.project_id)
+                                const resolvedTeamId = teamId || project?.team_id
+                                if (resolvedTeamId) {
+                                    router.push(`/teams/${resolvedTeamId}/issues/${t.id}`)
+                                } else {
+                                    console.error("Could not resolve team ID for issue redirect")
                                 }
                             }}
-                        />
+                            className="bg-transparent border-none outline-none focus:ring-0 text-left cursor-pointer block w-full truncate group/title"
+                        >
+                            <span className={`text-sm group-hover/title:underline transition-all ${t.status === "completed" ? "text-muted-foreground line-through" : "text-foreground font-medium"}`}>
+                                {t.title}
+                            </span>
+                        </button>
                     )
                 },
             },
@@ -99,8 +110,11 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                                 size="icon" 
                                 className="h-6 w-6 text-muted-foreground hover:text-foreground"
                                 onClick={() => {
-                                    setSelectedTask(t)
-                                    setIsDrawerOpen(true)
+                                    const project = projects.find(p => p.project_id === t.project_id)
+                                    const resolvedTeamId = teamId || project?.team_id
+                                    if (resolvedTeamId) {
+                                        router.push(`/teams/${resolvedTeamId}/issues/${t.id}`)
+                                    }
                                 }}
                             >
                                 <Maximize2 className="w-3.5 h-3.5" />

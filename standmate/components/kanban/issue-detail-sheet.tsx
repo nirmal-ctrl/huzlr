@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { useUpdateTaskMutation } from "@/services/tasksApi"
+import { useUpdateIssueMutation as useUpdateTaskMutation } from "@/services/issuesApi"
 import { InlineEditor } from "@/components/editor/inline-editor"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
 import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector } from "@/components/properties/factory"
@@ -38,7 +38,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     setTitle(newTitle)
     try {
       await updateTask({
-        taskId: task.id,
+        issueId: task.id,
         updates: { title: newTitle },
         teamId,
         projectId: task.project_id
@@ -53,7 +53,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     setDescription(newDesc)
     try {
       await updateTask({
-        taskId: task.id,
+        issueId: task.id,
         updates: { description: newDesc },
         teamId,
         projectId: task.project_id
@@ -67,7 +67,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     if (!task) return
     try {
       await updateTask({
-        taskId: task.id,
+        issueId: task.id,
         updates: { status },
         teamId,
         projectId: task.project_id
@@ -81,7 +81,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     if (!task) return
     try {
       await updateTask({
-        taskId: task.id,
+        issueId: task.id,
         updates: {
           properties: {
             ...(task.properties || {}),
@@ -100,7 +100,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     if (!task) return
     try {
       await updateTask({
-        taskId: task.id,
+        issueId: task.id,
         updates: {
           properties: {
             ...(task.properties || {}),

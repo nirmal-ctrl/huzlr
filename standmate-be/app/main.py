@@ -25,10 +25,10 @@ from models.user import User
 # Let's import everything.
 from models.risk import Risk, Assumption
 from models.milestone import Milestone
-from models.task_dependency import TaskDependency
+from models.issue import IssueDependency
 from models.conversation import ConversationLog
 from models.version import ProjectVersion
-from models.task import Task
+from models.issue import Issue
 from models.project import Project
 # Add other models if needed
 

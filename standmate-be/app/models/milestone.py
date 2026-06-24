@@ -16,4 +16,4 @@ class Milestone(Base):
     
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="milestones")
-    tasks: Mapped[list["Task"]] = relationship("Task", back_populates="milestone")
+    issues: Mapped[list["Issue"]] = relationship("Issue", back_populates="milestone")
