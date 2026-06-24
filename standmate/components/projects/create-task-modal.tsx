@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks"
 import { fetchProjects } from "@/lib/redux/slices/projectSlice"
 import { TaskCreate } from "@/lib/types"
+import { ProjectStatusSelector, ProjectPrioritySelector } from "@/components/properties/factory"
 
 interface CreateTaskModalProps {
     open: boolean
@@ -27,6 +28,8 @@ export function CreateTaskModal({
     onSubmit
 }: CreateTaskModalProps) {
     const dispatch = useAppDispatch()
+    const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+    const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
     const { items: projects } = useAppSelector((state) => state.projects)
     
     const [title, setTitle] = useState("")
@@ -37,15 +40,15 @@ export function CreateTaskModal({
 
     useEffect(() => {
         if (open) {
-            if (projects.length === 0) {
-                dispatch(fetchProjects())
+            if (projects.length === 0 && activeWorkspaceId) {
+                dispatch(fetchProjects({ workspaceId: activeWorkspaceId, teamId: activeTeamId }))
             }
             setStatus(defaultStatus)
             setTitle("")
             setDescription("")
             setPriority("medium")
         }
-    }, [open, defaultStatus, dispatch, projects.length])
+    }, [open, defaultStatus, dispatch, projects.length, activeWorkspaceId, activeTeamId])
 
     useEffect(() => {
         if (open) {
@@ -76,23 +79,24 @@ export function CreateTaskModal({
                     <DialogTitle>Create New Task</DialogTitle>
                 </DialogHeader>
                 
-                <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="title">Task Title</Label>
+                <div className="space-y-5 py-4">
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="title" className="text-xs text-muted-foreground">Issue Title</Label>
                         <Input 
                             id="title" 
                             value={title} 
                             onChange={(e) => setTitle(e.target.value)} 
                             placeholder="E.g. Setup database schema"
                             autoFocus
+                            className="text-base font-medium h-10 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/25 bg-background shadow-none"
                         />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label>Project</Label>
+                    <div className="grid grid-cols-3 gap-4 border-y border-border/40 py-3.5 -mx-1">
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs text-muted-foreground">Project</Label>
                             <Select value={projectId} onValueChange={setProjectId}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-8 text-xs border-transparent hover:bg-muted/40 bg-transparent shadow-none px-2 justify-start gap-1">
                                     <SelectValue placeholder="Select project" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -105,44 +109,33 @@ export function CreateTaskModal({
                             </Select>
                         </div>
                         
-                        <div className="grid gap-2">
-                            <Label>Status</Label>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="capitalize">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="in-progress">In Progress</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs text-muted-foreground">Status</Label>
+                            <ProjectStatusSelector 
+                                value={status} 
+                                onChange={setStatus} 
+                                className="justify-start px-2 bg-transparent hover:bg-muted/40 border-transparent h-8 w-full"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <Label className="text-xs text-muted-foreground">Priority</Label>
+                            <ProjectPrioritySelector 
+                                value={priority} 
+                                onChange={setPriority} 
+                                className="justify-start px-2 bg-transparent hover:bg-muted/40 border-transparent h-8 w-full"
+                            />
                         </div>
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label>Priority</Label>
-                        <Select value={priority} onValueChange={setPriority}>
-                            <SelectTrigger className="capitalize">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label>Description</Label>
-                        <div className="border border-input rounded-md overflow-hidden bg-background shadow-sm">
+                    <div className="grid gap-1.5">
+                        <Label className="text-xs text-muted-foreground">Description</Label>
+                        <div className="border border-border/80 rounded-lg overflow-hidden bg-background focus-within:ring-1 focus-within:ring-primary/25 focus-within:border-primary/50">
                             <TiptapEditor 
                                 value={description} 
                                 onChange={setDescription} 
                                 placeholder="Add any extra details here..."
-                                className="p-3"
+                                className="p-3.5 prose-sm max-w-none"
                             />
                         </div>
                     </div>

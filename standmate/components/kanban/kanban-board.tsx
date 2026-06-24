@@ -1,136 +1,631 @@
 "use client"
 
-import type React from "react"
-import { useMemo } from "react"
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react"
+import { useParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, Plus } from "lucide-react"
 import { useAppSelector } from "@/lib/redux/hooks"
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
+import { useUpdateTaskMutation, useCreateTaskMutation } from "@/services/tasksApi"
+import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector } from "@/components/properties/factory"
+import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { IssueDetailSheet } from "./issue-detail-sheet"
 
 export interface KanbanBoardProps {
   data: any[]
-  columns: any[] // We pass table columns here, though we might not fully use them yet, good for property definition
+  columns: any[]
   entityType: string
   onItemMove?: (itemId: string, fromColumn: string, toColumn: string) => void
+  defaultProjectId?: number
+  hiddenColumns?: string[]
+  setHiddenColumns?: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   data,
   columns,
   entityType,
-  onItemMove
+  onItemMove,
+  defaultProjectId,
+  hiddenColumns,
+  setHiddenColumns
 }) => {
+  const [mounted, setMounted] = useState(false)
+  const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
+  const [activeAddColumnId, setActiveAddColumnId] = useState<string | null>(null)
+  const [inlineTitle, setInlineTitle] = useState("")
+  const [selectedDetailTask, setSelectedDetailTask] = useState<any | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  
+  const [localHiddenColumns, setLocalHiddenColumns] = useState<string[]>([])
+  const activeHiddenColumns = hiddenColumns ?? localHiddenColumns
+  const activeSetHiddenColumns = setHiddenColumns ?? setLocalHiddenColumns
+
+  const params = useParams()
+  const teamId = params.teamId ? parseInt(params.teamId as string) : undefined
+
+  const [updateTask] = useUpdateTaskMutation()
+  const [createTask] = useCreateTaskMutation()
+
   const viewState = useAppSelector((state) => state.view.views[entityType])
-  const groupBy = viewState?.groupBy || 'status' // Default grouping
+  const groupBy = viewState?.groupBy || 'status'
   const visibleProperties = viewState?.visibleProperties || []
+
+  const schemaDefinitions = useAppSelector((state) => state.meta.propertyDefinitions[entityType])
+  const groupDef = schemaDefinitions?.find(def => def.key === groupBy)
+
+  // Ensure client-only rendering for drag and drop to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Group data by the current groupBy field
   const groupedData = useMemo(() => {
     const groups: Record<string, any[]> = {}
-    
-    // Determine the groups based on data
+
+    // Initialize columns based on schema definitions or standard fallbacks
+    if (groupDef?.options && Array.isArray(groupDef.options)) {
+      groupDef.options.forEach(opt => {
+        const label = typeof opt === 'string' ? opt : (opt as any).label || (opt as any).name || (opt as any).value;
+        if (label) {
+          groups[label.toLowerCase()] = []
+        }
+      })
+    } else if (groupBy === 'status') {
+      groups['backlog'] = []
+      groups['planning'] = []
+      groups['in progress'] = []
+      groups['paused'] = []
+      groups['done'] = []
+      groups['canceled'] = []
+    } else if (groupBy === 'priority') {
+      groups['urgent'] = []
+      groups['high'] = []
+      groups['medium'] = []
+      groups['low'] = []
+      groups['none'] = []
+    }
+
+    // Populate data
     data.forEach(item => {
-      // Find the value. If it's nested in properties (like standmate backend often does)
-      let groupValue = 'Uncategorized'
-      
+      let groupValue = 'uncategorized'
+
       if (item[groupBy]) {
         groupValue = item[groupBy]
       } else if (item.properties && item.properties[groupBy]) {
         groupValue = item.properties[groupBy]
       }
-      
-      // Stringify if it's an object (e.g. status object)
+
       if (typeof groupValue === 'object' && groupValue !== null) {
          groupValue = (groupValue as any).label || (groupValue as any).name || JSON.stringify(groupValue)
       }
 
-      if (!groups[groupValue]) {
-        groups[groupValue] = []
+      const lookupKey = String(groupValue).toLowerCase()
+      if (!groups[lookupKey]) {
+        groups[lookupKey] = []
       }
-      groups[groupValue].push(item)
+      groups[lookupKey].push(item)
     })
 
     return Object.entries(groups).map(([title, items]) => ({
       id: title,
-      title,
+      title: title.charAt(0).toUpperCase() + title.slice(1),
       items
     }))
-  }, [data, groupBy])
+  }, [data, groupBy, groupDef])
 
+  // Handle Drag and Drop
+  const onDragEnd = useCallback(async (result: any) => {
+    const { destination, source, draggableId } = result
+    if (!destination) return
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return
+    }
+
+    const taskId = parseInt(draggableId)
+    if (isNaN(taskId)) return
+
+    const task = data.find(t => t.id === taskId)
+    if (!task) return
+
+    const updates: any = {}
+    
+    // Dynamically format column values to match exactly case sensitivies/structures expected by API
+    let destinationVal = destination.droppableId
+    if (groupBy === 'status') {
+      // Find original option matching lowercase
+      const matched = ['Backlog', 'Planning', 'In Progress', 'Paused', 'Done', 'Canceled'].find(
+        s => s.toLowerCase() === destinationVal.toLowerCase()
+      )
+      updates.status = matched || destinationVal
+    } else if (groupBy === 'priority') {
+      const matched = ['Urgent', 'High', 'Medium', 'Low', 'None'].find(
+        p => p.toLowerCase() === destinationVal.toLowerCase()
+      )
+      updates.properties = {
+        ...(task.properties || {}),
+        priority: matched || destinationVal
+      }
+    } else {
+      updates.properties = {
+        ...(task.properties || {}),
+        [groupBy]: destinationVal
+      }
+    }
+
+    if (onItemMove) {
+      onItemMove(draggableId, source.droppableId, destination.droppableId)
+    }
+
+    try {
+      await updateTask({
+        taskId,
+        updates,
+        teamId: teamId || undefined,
+        projectId: task.project_id
+      }).unwrap()
+    } catch (err) {
+      console.error("Failed to move item optimistically:", err)
+    }
+  }, [data, groupBy, teamId, updateTask, onItemMove])
+
+  // Focus a card by its ID
+  const focusCard = useCallback((cardId: string) => {
+    setFocusedCardId(cardId)
+    const element = document.getElementById(`card-${cardId}`)
+    if (element) {
+      element.focus()
+    }
+  }, [])
+
+  // Handle Keyboard Navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const target = e.target as HTMLElement
+    if (
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.hasAttribute("contenteditable")
+    ) {
+      return
+    }
+
+    // Find the flat structure of all cards
+    const flatCards = groupedData.flatMap(col => col.items)
+    if (flatCards.length === 0) return
+
+    // If no card is focused, focus the first one on Arrow press
+    if (!focusedCardId) {
+      if (['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault()
+        focusCard(String(flatCards[0].id))
+      }
+      return
+    }
+
+    // Find current position
+    let colIdx = -1
+    let itemIdx = -1
+    for (let c = 0; c < groupedData.length; c++) {
+      const idx = groupedData[c].items.findIndex(item => String(item.id) === String(focusedCardId))
+      if (idx !== -1) {
+        colIdx = c
+        itemIdx = idx
+        break
+      }
+    }
+
+    if (colIdx === -1 || itemIdx === -1) return
+
+    const currentCol = groupedData[colIdx]
+
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault()
+        if (itemIdx < currentCol.items.length - 1) {
+          focusCard(String(currentCol.items[itemIdx + 1].id))
+        }
+        break
+      }
+      case 'ArrowUp': {
+        e.preventDefault()
+        if (itemIdx > 0) {
+          focusCard(String(currentCol.items[itemIdx - 1].id))
+        }
+        break
+      }
+      case 'ArrowRight': {
+        e.preventDefault()
+        if (colIdx < groupedData.length - 1) {
+          const nextCol = groupedData[colIdx + 1]
+          if (nextCol.items.length > 0) {
+            const targetIdx = Math.min(itemIdx, nextCol.items.length - 1)
+            focusCard(String(nextCol.items[targetIdx].id))
+          }
+        }
+        break
+      }
+      case 'ArrowLeft': {
+        e.preventDefault()
+        if (colIdx > 0) {
+          const prevCol = groupedData[colIdx - 1]
+          if (prevCol.items.length > 0) {
+            const targetIdx = Math.min(itemIdx, prevCol.items.length - 1)
+            focusCard(String(prevCol.items[targetIdx].id))
+          }
+        }
+        break
+      }
+      default:
+        break
+    }
+  }, [groupedData, focusedCardId, focusCard])
+
+  // Attach global keyboard listener for board focus navigation
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown])
+
+  if (!mounted) return null
+
+  const visibleColumns = groupedData.filter(col => !activeHiddenColumns.includes(col.id))
 
   return (
     <div className="w-full h-full bg-background flex flex-col">
-      {/* Board Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-x-auto overflow-y-hidden">
-          <div className="p-4 h-full">
-            <div className="flex gap-4 h-full min-w-max items-start">
-              {groupedData.map((column) => (
-                <div key={column.id} className="flex flex-col w-80 flex-shrink-0 max-h-full">
-                  {/* Column Header */}
-                  <div className="mb-3 flex items-center justify-between px-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-semibold text-foreground text-sm">{column.title}</h2>
-                      <Badge variant="secondary" className="text-xs font-medium">
-                        {column.items.length}
-                      </Badge>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+      {/* Hidden columns info bar */}
+      {activeHiddenColumns.length > 0 && (
+        <div className="mx-6 mt-1 mb-2 p-2 bg-muted/30 border border-border/40 rounded-lg flex items-center justify-between shadow-none">
+          <span className="text-xs text-muted-foreground">
+            {activeHiddenColumns.length} column{activeHiddenColumns.length > 1 ? "s" : ""} hidden from display.
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => activeSetHiddenColumns([])}
+            className="h-6 text-xs text-primary font-medium hover:bg-primary/10 cursor-pointer"
+          >
+            Show all columns
+          </Button>
+        </div>
+      )}
 
-                  {/* Items Container */}
-                  <div className="flex-1 bg-muted/20 rounded-lg p-3 border border-border/30 overflow-y-auto space-y-2">
-                    {column.items.map((item) => (
-                      <Card
-                        key={item.id || item.project_id || item.task_id || Math.random().toString()}
-                        className="group cursor-grab active:cursor-grabbing bg-card p-3 rounded-lg border border-border/40 hover:border-primary/20 transition-all duration-200 space-y-3"
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="p-4 h-full">
+              {/* Flexible spacing with gap, no fixed horizontal scroll when columns fit screen */}
+              <div className="flex gap-3 h-full w-full items-start overflow-hidden justify-between">
+                {visibleColumns.map((column) => (
+                  <div key={column.id} className="flex flex-col flex-1 min-w-[150px] max-w-[270px] max-h-full">
+                    {/* Column Header */}
+                    <div className="mb-3 flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2">
+                        <h2 className="font-semibold text-foreground text-sm">{column.title}</h2>
+                        <Badge variant="secondary" className="text-xs font-medium">
+                          {column.items.length}
+                        </Badge>
+                      </div>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground cursor-pointer">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={() => activeSetHiddenColumns(prev => [...prev, column.id])}
+                            className="text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
+                          >
+                            Hide column
+                          </DropdownMenuItem>
+                          {activeHiddenColumns.length > 0 && (
+                            <DropdownMenuItem
+                              onClick={() => activeSetHiddenColumns([])}
+                              className="text-xs cursor-pointer"
+                            >
+                              Show all columns
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Droppable Column Container to prevent CLS */}
+                    <Droppable droppableId={column.id}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={`flex-1 bg-muted/20 rounded-lg p-3 border overflow-y-auto space-y-2 min-h-[400px] max-h-[calc(100vh-220px)] transition-colors duration-200 ${
+                            snapshot.isDraggingOver ? "bg-muted/40 border-primary/30" : "border-border/30"
+                          }`}
+                        >
+                          {column.items.map((item, index) => (
+                            <DraggableCard
+                              key={String(item.id)}
+                              item={item}
+                              index={index}
+                              visibleProperties={visibleProperties}
+                              isFocused={focusedCardId === String(item.id)}
+                              onFocus={() => setFocusedCardId(String(item.id))}
+                              onOpenDetail={(taskItem) => {
+                                setSelectedDetailTask(taskItem)
+                                setIsDetailOpen(true)
+                              }}
+                              teamId={teamId}
+                            />
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+
+                    {/* Fast Creation Inline Input */}
+                    {activeAddColumnId === column.id ? (
+                      <div className="mt-3">
+                        <Input
+                          autoFocus
+                          value={inlineTitle}
+                          placeholder="What needs to be done?"
+                          onChange={(e) => setInlineTitle(e.target.value)}
+                          onBlur={() => {
+                            // Small delay to allow clicking or hitting Enter without instant blur layout shift
+                            setTimeout(() => {
+                              setActiveAddColumnId(null)
+                              setInlineTitle("")
+                            }, 200)
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              if (inlineTitle.trim() && defaultProjectId) {
+                                try {
+                                  const matchedStatus = ['Backlog', 'Planning', 'In Progress', 'Paused', 'Done', 'Canceled'].find(
+                                    s => s.toLowerCase() === column.id.toLowerCase()
+                                  ) || "Planning"
+                                  
+                                  await createTask({
+                                    projectId: defaultProjectId,
+                                    task: {
+                                      title: inlineTitle.trim(),
+                                      description: "",
+                                      status: matchedStatus,
+                                      project_id: defaultProjectId,
+                                      properties: {
+                                        priority: "Medium"
+                                      },
+                                      critical_path_flag: false
+                                    }
+                                  }).unwrap()
+                                } catch (err) {
+                                  console.error("Failed to fast create task inline:", err)
+                                }
+                              }
+                              setActiveAddColumnId(null)
+                              setInlineTitle("")
+                            } else if (e.key === 'Escape') {
+                              setActiveAddColumnId(null)
+                              setInlineTitle("")
+                            }
+                          }}
+                          className="h-8 text-xs bg-background border-border/80 focus:ring-1 focus:ring-primary/20 shadow-none px-2"
+                        />
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        onClick={() => setActiveAddColumnId(column.id)}
+                        className="mt-3 w-full gap-2 text-xs h-8 text-muted-foreground hover:text-foreground justify-start px-2"
                       >
-                        <h4 className="font-medium text-sm text-foreground leading-snug">
-                          {item.title || item.properties?.project_title || item.properties?.title || 'Untitled'}
-                        </h4>
-                        
-                        {/* Render visible properties dynamically */}
-                        {visibleProperties.length > 0 && (
-                          <div className="flex flex-col gap-1 pt-2 border-t border-border/20">
-                            {visibleProperties.filter(p => p !== 'project_title' && p !== 'title').map(propKey => {
-                               const val = item[propKey] ?? item.properties?.[propKey]
-                               if (val === undefined || val === null || val === '') return null;
-                               
-                               let displayVal = val;
-                               if (typeof val === 'object') {
-                                 displayVal = val.label || val.name || JSON.stringify(val)
-                               }
-                               
-                               return (
-                                 <div key={propKey} className="flex justify-between items-center text-xs">
-                                   <span className="text-muted-foreground">{propKey.replace(/_/g, ' ')}</span>
-                                   <span className="font-medium max-w-[120px] truncate">{displayVal}</span>
-                                 </div>
-                               )
-                            })}
-                          </div>
-                        )}
-                      </Card>
-                    ))}
+                        <Plus className="h-3.5 w-3.5" />
+                        Add Item
+                      </Button>
+                    )}
                   </div>
-                  
-                  {/* Add Item Button */}
-                  <Button
-                    variant="ghost"
-                    className="mt-3 w-full gap-2 text-xs h-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add Item
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </DragDropContext>
+
+      <IssueDetailSheet
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        task={selectedDetailTask}
+        teamId={teamId}
+      />
     </div>
   )
 }
+
+// Separate component for Card to optimize re-renders with React.memo
+interface DraggableCardProps {
+  item: any
+  index: number
+  visibleProperties: string[]
+  isFocused: boolean
+  onFocus: () => void
+  onOpenDetail: (item: any) => void
+  teamId?: number
+}
+
+const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
+  item,
+  index,
+  visibleProperties,
+  isFocused,
+  onFocus,
+  onOpenDetail,
+  teamId
+}) => {
+  const [updateTask] = useUpdateTaskMutation()
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  const handleUpdateStatus = useCallback((status: string) => {
+    updateTask({
+      taskId: item.id,
+      updates: { status },
+      teamId,
+      projectId: item.project_id
+    })
+  }, [item.id, item.project_id, teamId, updateTask])
+
+  const handleUpdatePriority = useCallback((priority: string) => {
+    updateTask({
+      taskId: item.id,
+      updates: {
+        properties: {
+          ...(item.properties || {}),
+          priority
+        }
+      },
+      teamId,
+      projectId: item.project_id
+    })
+  }, [item.id, item.properties, item.project_id, teamId, updateTask])
+
+  const handleUpdateLead = useCallback((leadId: string) => {
+    updateTask({
+      taskId: item.id,
+      updates: {
+        properties: {
+          ...(item.properties || {}),
+          lead_id: leadId
+        }
+      },
+      teamId,
+      projectId: item.project_id
+    })
+  }, [item.id, item.properties, item.project_id, teamId, updateTask])
+
+  // Custom keydown handler for single keypress hotkeys when focused
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement
+    if (
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.hasAttribute("contenteditable")
+    ) {
+      return
+    }
+
+    if (e.key === 's' || e.key === 'S') {
+      e.preventDefault()
+      const trigger = cardRef.current?.querySelector('[data-status-trigger]') as HTMLElement
+      trigger?.click()
+    } else if (e.key === 'a' || e.key === 'A' || e.key === 'e' || e.key === 'E') {
+      e.preventDefault()
+      const trigger = cardRef.current?.querySelector('[data-lead-trigger]') as HTMLElement
+      trigger?.click()
+    } else if (e.key === 'p' || e.key === 'P') {
+      e.preventDefault()
+      const trigger = cardRef.current?.querySelector('[data-priority-trigger]') as HTMLElement
+      trigger?.click()
+    }
+  }, [])
+
+  return (
+    <Draggable draggableId={String(item.id)} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          id={`card-${item.id}`}
+          tabIndex={0}
+          onFocus={onFocus}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => {
+            const isClickable = !(e.target as HTMLElement).closest('button, [role="button"], input, select, [data-status-trigger], [data-priority-trigger], [data-lead-trigger]')
+            if (isClickable) {
+              onOpenDetail(item)
+            }
+          }}
+          className="outline-none"
+        >
+          <Card
+            ref={cardRef}
+            className={`group cursor-grab active:cursor-grabbing bg-card p-3 rounded-lg border transition-all duration-200 space-y-3 ${
+              snapshot.isDragging
+                ? "scale-[1.02] shadow-xl border-primary/40 bg-card/90"
+                : isFocused
+                ? "border-primary/50 ring-1 ring-primary/25 bg-accent/20"
+                : "border-border/40 hover:border-primary/20 hover:shadow-md"
+            }`}
+          >
+            <div className="flex flex-col gap-2">
+              <h4 className="font-medium text-sm text-foreground leading-snug line-clamp-2">
+                {item.title || item.properties?.project_title || item.properties?.title || 'Untitled'}
+              </h4>
+
+              {/* Lightweight Micro-dropdown Selectors for instant updates */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <div data-status-trigger>
+                  <ProjectStatusSelector
+                    value={item.status}
+                    onChange={handleUpdateStatus}
+                    className="h-6 px-1.5 text-[11px]"
+                  />
+                </div>
+                <div data-priority-trigger>
+                  <ProjectPrioritySelector
+                    value={item.properties?.priority || "None"}
+                    onChange={handleUpdatePriority}
+                    className="h-6 px-1.5 text-[11px]"
+                  />
+                </div>
+                <div data-lead-trigger>
+                  <MemberSelector
+                    value={item.properties?.lead_id}
+                    onChange={handleUpdateLead}
+                    className="h-6 px-1.5 text-[11px]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Render visible properties dynamically */}
+            {visibleProperties.length > 0 && (
+              <div className="flex flex-col gap-1 pt-2 border-t border-border/20">
+                {visibleProperties.filter(p => p !== 'project_title' && p !== 'title' && p !== 'status' && p !== 'priority' && p !== 'lead_id').map(propKey => {
+                   const val = item[propKey] ?? item.properties?.[propKey]
+                   if (val === undefined || val === null || val === '') return null;
+
+                   let displayVal = val;
+                   if (typeof val === 'object') {
+                     displayVal = val.label || val.name || JSON.stringify(val)
+                   }
+
+                   return (
+                     <div key={propKey} className="flex justify-between items-center text-xs">
+                       <span className="text-muted-foreground">{propKey.replace(/_/g, ' ')}</span>
+                       <span className="font-medium max-w-[120px] truncate">{displayVal}</span>
+                     </div>
+                   )
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+    </Draggable>
+  )
+})
+
+DraggableCard.displayName = "DraggableCard"

@@ -6,9 +6,11 @@ from sqlalchemy.orm.attributes import flag_modified
 from core.database import get_db
 from models.task import Task
 from models.project import Project
+from models.team_membership import TeamMembership
 from schemas.task import TaskResponse, TaskCreate, TaskUpdate
 from models.user import User
 from api.deps import get_current_user
+from core.access import assert_can_access_project
 
 router = APIRouter()
 
@@ -17,12 +19,13 @@ async def get_all_tasks(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Get all tasks for all projects owned by the current user."""
+    """Get all tasks for all projects owned/accessed by the current user."""
     result = await db.execute(
         select(Task)
         .options(selectinload(Task._property_record))
         .join(Project, Task.project_id == Project.project_id)
-        .where(Project.user_id == current_user.id)
+        .join(TeamMembership, TeamMembership.team_id == Project.team_id)
+        .where(TeamMembership.user_id == current_user.id)
         .order_by(Task.order_index)
     )
     tasks = result.scalars().all()
@@ -39,13 +42,32 @@ async def list_project_tasks(
     project = result.scalars().first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     result = await db.execute(
         select(Task)
         .options(selectinload(Task._property_record))
         .where(Task.project_id == project_id)
+        .order_by(Task.order_index)
+    )
+    tasks = result.scalars().all()
+    return tasks
+
+@router.get("/team/{team_id}", response_model=list[TaskResponse])
+async def list_team_tasks(
+    team_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all tasks for all projects belonging to a specific team owned/accessed by the current user."""
+    result = await db.execute(
+        select(Task)
+        .options(selectinload(Task._property_record))
+        .join(Project, Task.project_id == Project.project_id)
+        .join(TeamMembership, TeamMembership.team_id == Project.team_id)
+        .where(Project.team_id == team_id)
+        .where(TeamMembership.user_id == current_user.id)
         .order_by(Task.order_index)
     )
     tasks = result.scalars().all()
@@ -66,8 +88,8 @@ async def create_project_task(
     project = result.scalars().first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    if project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     task_data = task.model_dump()
     properties = task_data.pop("properties", None)
@@ -101,11 +123,13 @@ async def update_task(
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # Verify user owns the project this task belongs to
+    # Verify user owns/accesses the project this task belongs to
     result = await db.execute(select(Project).where(Project.project_id == db_task.project_id))
     project = result.scalars().first()
-    if not project or project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     update_data = task_update.model_dump(exclude_unset=True)
     properties = update_data.pop("properties", None)
@@ -139,11 +163,13 @@ async def delete_task(
     if not db_task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # Verify user owns the project
+    # Verify user owns/accesses the project
     result = await db.execute(select(Project).where(Project.project_id == db_task.project_id))
     project = result.scalars().first()
-    if not project or project.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+        
+    await assert_can_access_project(current_user.id, project.team_id, db)
 
     await db.delete(db_task)
     await db.commit()

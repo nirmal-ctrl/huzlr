@@ -34,17 +34,40 @@ import {
 
 interface ViewOptionsDropdownProps {
     entityType: string
+    hiddenColumns?: string[]
+    setHiddenColumns?: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export function ViewOptionsDropdown({ entityType }: ViewOptionsDropdownProps) {
+export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumns }: ViewOptionsDropdownProps) {
     const dispatch = useAppDispatch()
     const properties = useAppSelector((state) => state.meta.propertyDefinitions[entityType] || [])
     
     // Fallback to defaults if view state is not initialized for this entityType
     const viewState = useAppSelector((state) => state.view.views[entityType])
     const currentLayout = viewState?.layout || 'list'
-    const currentGroupBy = viewState?.groupBy || null
+    const currentGroupBy = viewState?.groupBy || 'status'
     const visibleProperties = viewState?.visibleProperties || []
+
+    const boardColumns = React.useMemo(() => {
+        if (currentGroupBy === 'priority') {
+            return [
+                { id: 'urgent', label: 'Urgent' },
+                { id: 'high', label: 'High' },
+                { id: 'medium', label: 'Medium' },
+                { id: 'low', label: 'Low' },
+                { id: 'none', label: 'No Priority' }
+            ]
+        }
+        // Default to status
+        return [
+            { id: 'backlog', label: 'Backlog' },
+            { id: 'planning', label: 'Planning' },
+            { id: 'in progress', label: 'In Progress' },
+            { id: 'paused', label: 'Paused' },
+            { id: 'done', label: 'Done' },
+            { id: 'canceled', label: 'Canceled' }
+        ]
+    }, [currentGroupBy])
 
     const displayableProperties = React.useMemo(() => {
         return properties.filter(p => p.key !== 'project_title') // Title is always visible
@@ -125,6 +148,44 @@ export function ViewOptionsDropdown({ entityType }: ViewOptionsDropdownProps) {
                             </div>
                         </CommandGroup>
                         <CommandSeparator />
+
+                        {currentLayout === 'board' && setHiddenColumns && hiddenColumns && (
+                            <>
+                                <CommandGroup heading="Board Columns">
+                                    <div className="p-2 space-y-1">
+                                        {boardColumns.map((col) => {
+                                            const isVisible = !hiddenColumns.includes(col.id)
+                                            return (
+                                                <div key={col.id} className="flex items-center space-x-2 py-1 px-2 hover:bg-muted/50 rounded-sm">
+                                                    <Checkbox
+                                                        id={`col-pref-${col.id}`}
+                                                        checked={isVisible}
+                                                        onCheckedChange={(checked) => {
+                                                            if (checked) {
+                                                                setHiddenColumns(prev => prev.filter(id => id !== col.id))
+                                                            } else {
+                                                                // Prevent hiding all columns
+                                                                const visibleCount = boardColumns.length - hiddenColumns.length
+                                                                if (visibleCount > 1) {
+                                                                    setHiddenColumns(prev => [...prev, col.id])
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`col-pref-${col.id}`}
+                                                        className="flex-1 cursor-pointer text-xs font-medium leading-none"
+                                                    >
+                                                        {col.label}
+                                                    </Label>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </CommandGroup>
+                                <CommandSeparator />
+                            </>
+                        )}
 
                         <CommandGroup heading="Properties">
                             <CommandInput placeholder="Search properties..." className="h-8" />

@@ -89,3 +89,110 @@ async def get_team(
          raise HTTPException(status_code=404, detail="Team not found")
          
     return team
+
+@router.post("/{team_id}/members/{user_id}", response_model=TeamWithMembersResponse)
+async def add_team_member(
+    team_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Add a user to a team.
+    Current user must be an admin of the parent workspace.
+    """
+    result = await db.execute(select(Team).where(Team.id == team_id))
+    team = result.scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+        
+    await assert_admin(current_user.id, team.workspace_id, db)
+    
+    # Check if user is a workspace member first
+    from models.workspace_membership import WorkspaceMembership
+    ws_mem_result = await db.execute(
+        select(WorkspaceMembership)
+        .where(
+            and_(
+                WorkspaceMembership.user_id == user_id,
+                WorkspaceMembership.workspace_id == team.workspace_id
+            )
+        )
+    )
+    if not ws_mem_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User must be a member of the workspace first."
+        )
+        
+    # Check if membership already exists
+    mem_result = await db.execute(
+        select(TeamMembership)
+        .where(
+            and_(
+                TeamMembership.user_id == user_id,
+                TeamMembership.team_id == team_id
+            )
+        )
+    )
+    existing_mem = mem_result.scalar_one_or_none()
+    if existing_mem:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already a member of this team."
+        )
+        
+    membership = TeamMembership(
+        user_id=user_id,
+        team_id=team_id
+    )
+    db.add(membership)
+    await db.commit()
+    
+    result = await db.execute(
+        select(Team)
+        .options(selectinload(Team.memberships))
+        .where(Team.id == team_id)
+    )
+    return result.scalar_one()
+
+@router.delete("/{team_id}/members/{user_id}", response_model=TeamWithMembersResponse)
+async def remove_team_member(
+    team_id: int,
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Remove a user from a team.
+    Current user must be an admin of the parent workspace.
+    """
+    result = await db.execute(select(Team).where(Team.id == team_id))
+    team = result.scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+        
+    await assert_admin(current_user.id, team.workspace_id, db)
+    
+    mem_result = await db.execute(
+        select(TeamMembership)
+        .where(
+            and_(
+                TeamMembership.user_id == user_id,
+                TeamMembership.team_id == team_id
+            )
+        )
+    )
+    membership = mem_result.scalar_one_or_none()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Team membership not found")
+        
+    await db.delete(membership)
+    await db.commit()
+    
+    result = await db.execute(
+        select(Team)
+        .options(selectinload(Team.memberships))
+        .where(Team.id == team_id)
+    )
+    return result.scalar_one()

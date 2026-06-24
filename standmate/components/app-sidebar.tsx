@@ -20,6 +20,7 @@ import {
 
 import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
+import { NavTeams } from "@/components/nav-teams"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -33,6 +34,7 @@ import { WorkspaceSwitcher } from "@/components/workspace-switcher"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchCurrentUser } from "@/lib/redux/slices/authSlice"
 import { fetchWorkspaces, fetchTeams } from "@/lib/redux/slices/workspaceSlice"
+import { sanitizeIdentity } from "@/components/properties/factory"
 
 const data = {
   navMain: [
@@ -188,7 +190,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [dispatch, activeWorkspaceId])
 
   const userData = user ? {
-    name: user.username || user.email.split('@')[0],
+    name: sanitizeIdentity(user.username || user.email),
     email: user.email,
     avatar: "/huzlr-no-bg.png", // Fallback avatar
   } : {
@@ -204,6 +206,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <NavTeams />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

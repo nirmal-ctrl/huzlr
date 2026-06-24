@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { InviteMembersModal } from "@/components/teams/invite-members-modal"
 import { CreateWorkspaceModal } from "@/components/teams/create-workspace-modal"
 import { CreateTeamModal } from "@/components/teams/create-team-modal"
+import { AddTeamMemberModal } from "@/components/teams/add-team-member-modal"
 import { useToast } from "@/hooks/use-toast"
 import {
     Table,
@@ -54,6 +55,8 @@ export default function TeamsPage() {
     const [isInviteOpen, setIsInviteOpen] = useState(false)
     const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
+    const [selectedTeam, setSelectedTeam] = useState<{ id: number; name: string } | null>(null)
     const [activeRemindingId, setActiveRemindingId] = useState<number | null>(null)
     const [remindInvite] = useRemindInviteMutation()
 
@@ -352,7 +355,8 @@ export default function TeamsPage() {
                                             <TableHead className="h-10 pl-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Team Name</TableHead>
                                             <TableHead className="h-10 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</TableHead>
                                             <TableHead className="h-10 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</TableHead>
-                                            <TableHead className="h-10 pr-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Created Date</TableHead>
+                                            <TableHead className="h-10 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created Date</TableHead>
+                                            <TableHead className="h-10 pr-6 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Action</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -380,12 +384,25 @@ export default function TeamsPage() {
                                                         </Badge>
                                                     )}
                                                 </TableCell>
-                                                <TableCell className="py-4 pr-6 text-right text-muted-foreground text-sm">
+                                                <TableCell className="py-4 text-muted-foreground text-sm">
                                                     {new Date(team.created_at).toLocaleDateString(undefined, {
                                                         year: 'numeric',
                                                         month: 'long',
                                                         day: 'numeric'
                                                     })}
+                                                </TableCell>
+                                                <TableCell className="py-4 pr-6 text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => {
+                                                            setSelectedTeam(team)
+                                                            setIsAddMemberOpen(true)
+                                                        }}
+                                                        className="h-7 text-xs font-semibold px-3 border border-transparent hover:border-border/40 text-primary hover:text-primary hover:bg-primary/5 cursor-pointer"
+                                                    >
+                                                        Add Member
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -609,6 +626,12 @@ export default function TeamsPage() {
             <InviteMembersModal open={isInviteOpen} onOpenChange={setIsInviteOpen} />
             <CreateWorkspaceModal open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
             <CreateTeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
+            <AddTeamMemberModal 
+                open={isAddMemberOpen} 
+                onOpenChange={setIsAddMemberOpen} 
+                team={selectedTeam} 
+                workspaceData={workspaceData} 
+            />
             </div>
         </>
     )

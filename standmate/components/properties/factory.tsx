@@ -26,6 +26,15 @@ import { Badge } from "@/components/ui/badge"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { useGetWorkspaceWithMembersQuery } from "@/services/invitesApi"
 
+export function sanitizeIdentity(nameOrEmail: string): string {
+    if (!nameOrEmail) return "Guest"
+    const text = nameOrEmail.includes("@") ? nameOrEmail.split("@")[0] : nameOrEmail
+    return text
+        .split(/[._+\-]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+}
+
 export interface SelectorProps {
     value: string | string[] | undefined // Changed to support multi-select and dates
     onChange: (value: any) => void
@@ -207,13 +216,14 @@ export function MemberSelector({ value, onChange, className, multiple = false }:
 
     const USERS = React.useMemo(() => {
         if (!workspaceData?.memberships || workspaceData.memberships.length === 0) {
-            return STATIC_USERS
+            return STATIC_USERS.map(u => ({ ...u, name: sanitizeIdentity(u.name) }))
         }
         return workspaceData.memberships.map((m) => {
             const u = m.user || { id: m.user_id, username: "Unknown User", email: "Unknown Email" }
+            const identityName = u.username && u.username !== "Unknown User" ? u.username : u.email
             return {
                 id: u.id.toString(),
-                name: u.username,
+                name: sanitizeIdentity(identityName || "Unknown User"),
                 username: u.username,
                 avatar: "/huzlr-no-bg.png" // Use workspace icon placeholder for avatar fallback
             }

@@ -28,6 +28,19 @@ export const tasksApi = baseApi.injectEndpoints({
                     : [{ type: 'ProjectTasks', id: projectId }],
         }),
 
+        // Query to get all tasks for a team
+        getTeamTasks: builder.query<TaskResponse[], number>({
+            query: (teamId) => `/tasks/team/${teamId}`,
+            providesTags: (result, error, teamId) =>
+                result
+                    ? [
+                          ...result.map(({ id }) => ({ type: 'Tasks' as const, id })),
+                          { type: 'TeamTasks', id: teamId },
+                          { type: 'Tasks', id: 'LIST' },
+                      ]
+                    : [{ type: 'TeamTasks', id: teamId }, { type: 'Tasks', id: 'LIST' }],
+        }),
+
         // Mutation to create a new task
         createTask: builder.mutation<TaskResponse, { projectId: number; task: TaskCreate }>({
             query: ({ projectId, task }) => ({
@@ -42,7 +55,7 @@ export const tasksApi = baseApi.injectEndpoints({
         }),
 
         // Mutation to update an existing task
-        updateTask: builder.mutation<TaskResponse, { taskId: number; updates: any }>({
+        updateTask: builder.mutation<TaskResponse, { taskId: number; updates: any; teamId?: number; projectId?: number }>({
             query: ({ taskId, updates }) => ({
                 url: `/tasks/${taskId}`,
                 method: 'PUT',
@@ -53,6 +66,61 @@ export const tasksApi = baseApi.injectEndpoints({
                 { type: 'Tasks', id: 'LIST' },
                 ...(result ? [{ type: 'ProjectTasks' as const, id: result.project_id }] : []),
             ],
+            async onQueryStarted({ taskId, updates, teamId, projectId }, { dispatch, queryFulfilled }) {
+                const patches: any[] = []
+                
+                if (teamId) {
+                    const patchResult = dispatch(
+                        tasksApi.util.updateQueryData('getTeamTasks', teamId, (draft) => {
+                            const task = draft.find(t => t.id === taskId)
+                            if (task) {
+                                if (updates.status) task.status = updates.status
+                                if (updates.properties) {
+                                    task.properties = {
+                                        ...(task.properties || {}),
+                                        ...updates.properties
+                                    }
+                                }
+                                Object.keys(updates).forEach(key => {
+                                    if (key !== 'properties' && key !== 'status') {
+                                        (task as any)[key] = updates[key]
+                                    }
+                                })
+                            }
+                        })
+                    )
+                    patches.push(patchResult)
+                }
+
+                if (projectId) {
+                    const patchResult = dispatch(
+                        tasksApi.util.updateQueryData('getProjectTasks', projectId, (draft) => {
+                            const task = draft.find(t => t.id === taskId)
+                            if (task) {
+                                if (updates.status) task.status = updates.status
+                                if (updates.properties) {
+                                    task.properties = {
+                                        ...(task.properties || {}),
+                                        ...updates.properties
+                                    }
+                                }
+                                Object.keys(updates).forEach(key => {
+                                    if (key !== 'properties' && key !== 'status') {
+                                        (task as any)[key] = updates[key]
+                                    }
+                                })
+                            }
+                        })
+                    )
+                    patches.push(patchResult)
+                }
+
+                try {
+                    await queryFulfilled
+                } catch {
+                    patches.forEach((patch) => patch.undo())
+                }
+            }
         }),
 
         // Mutation to delete a task
@@ -75,6 +143,7 @@ export const tasksApi = baseApi.injectEndpoints({
 export const {
     useGetAllTasksQuery,
     useGetProjectTasksQuery,
+    useGetTeamTasksQuery,
     useCreateTaskMutation,
     useUpdateTaskMutation,
     useDeleteTaskMutation,
