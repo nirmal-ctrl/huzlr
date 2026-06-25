@@ -47,12 +47,13 @@ export default function TeamIssuesPage() {
     const [deleteIssue] = useDeleteIssueMutation()
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+    const [createModalStatus, setCreateModalStatus] = useState<string>("Planning")
     
     // Quick-View and Filtering States (Linear benchmark)
     const [activeTab, setActiveTab] = useState<'all' | 'active' | 'backlog'>('all')
     const [statusFilter, setStatusFilter] = useState<string | null>(null)
     const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
-    const [hiddenColumns, setHiddenColumns] = useState<string[]>([])
+    const [hiddenColumns, setHiddenColumns] = useState<string[]>(['planning', 'paused', 'canceled'])
     
     // Nested Searchable Filter Panel States
     const [isFilterOpen, setIsFilterOpen] = useState(false)
@@ -145,6 +146,14 @@ export default function TeamIssuesPage() {
         } catch (err) {
             console.error("Failed to delete issue:", err)
         }
+    }
+
+    const handleCreateClick = (statusTitle: string) => {
+        const matched = ["Backlog", "Planning", "In Progress", "Paused", "Done", "Canceled"].find(
+            s => s.toLowerCase() === statusTitle.toLowerCase()
+        ) || "Planning"
+        setCreateModalStatus(matched)
+        setIsCreateModalOpen(true)
     }
 
     if (isNaN(teamId)) {
@@ -313,7 +322,7 @@ export default function TeamIssuesPage() {
                 </div>
             </SiteHeader>
 
-            <div className="flex flex-1 flex-col gap-4 py-6 px-8">
+            <div className="flex flex-col gap-4 py-6 px-8 h-[calc(100vh-80px)] overflow-hidden bg-background">
                 {/* Sub Header Action Bar (Linear benchmark design) */}
                 {teamProjects.length > 0 && (
                     <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2 flex-wrap gap-2">
@@ -396,9 +405,29 @@ export default function TeamIssuesPage() {
                     </div>
                 )}
 
-                <div className="flex flex-1 flex-col">
-                    {teamProjects.length === 0 ? (
-                        <div className="flex flex-1 flex-col items-center justify-center border border-dashed rounded-lg p-8 text-center min-h-[300px]">
+                <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+                    {isLoading ? (
+                        layout === 'list' ? (
+                            <TaskList 
+                                tasks={[]}
+                                projectId={firstProjectId}
+                                isLoading={true}
+                                onUpdateTask={handleUpdateIssue}
+                                onDeleteTask={handleDeleteIssue}
+                            />
+                        ) : (
+                            <KanbanBoard
+                                data={[]}
+                                columns={[]}
+                                entityType="task"
+                                defaultProjectId={firstProjectId}
+                                hiddenColumns={hiddenColumns}
+                                setHiddenColumns={setHiddenColumns}
+                                isLoading={true}
+                            />
+                        )
+                    ) : teamProjects.length === 0 ? (
+                        <div className="flex flex-1 flex-col items-center justify-center p-8 text-center min-h-[300px]">
                             <h3 className="text-base font-medium tracking-tight">No active projects</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mt-1">
                                 Create a project in this team first before you can manage issues/tasks here.
@@ -427,6 +456,8 @@ export default function TeamIssuesPage() {
                             defaultProjectId={firstProjectId}
                             hiddenColumns={hiddenColumns}
                             setHiddenColumns={setHiddenColumns}
+                            isLoading={isLoading}
+                            onCreateClick={handleCreateClick}
                         />
                     )}
                 </div>
@@ -436,6 +467,7 @@ export default function TeamIssuesPage() {
                 <CreateTaskModal 
                     open={isCreateModalOpen}
                     onOpenChange={setIsCreateModalOpen}
+                    defaultStatus={createModalStatus}
                     defaultProjectId={firstProjectId}
                     onSubmit={handleCreateIssue}
                 />

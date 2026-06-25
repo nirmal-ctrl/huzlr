@@ -25,6 +25,8 @@ async def get_all_issues(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .join(Project, Issue.project_id == Project.project_id)
@@ -54,6 +56,8 @@ async def list_project_issues(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .where(Issue.project_id == project_id)
@@ -74,6 +78,8 @@ async def list_team_issues(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .join(Project, Issue.project_id == Project.project_id)
@@ -96,6 +102,8 @@ async def get_issue(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .where(Issue.id == issue_id)
@@ -146,6 +154,8 @@ async def create_project_issue(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .where(Issue.id == db_issue.id)
@@ -195,6 +205,8 @@ async def update_issue(
         select(Issue)
         .options(
             selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue._property_record),
+            selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue._property_record),
             selectinload(Issue.subtasks).selectinload(Issue.subtasks).selectinload(Issue.subtasks)
         )
         .where(Issue.id == db_issue.id)

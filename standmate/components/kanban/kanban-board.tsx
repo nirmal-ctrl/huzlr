@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { IssueDetailSheet } from "./issue-detail-sheet"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export interface KanbanBoardProps {
   data: any[]
@@ -27,6 +28,8 @@ export interface KanbanBoardProps {
   defaultProjectId?: number
   hiddenColumns?: string[]
   setHiddenColumns?: React.Dispatch<React.SetStateAction<string[]>>
+  isLoading?: boolean
+  onCreateClick?: (status: string) => void
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -36,7 +39,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onItemMove,
   defaultProjectId,
   hiddenColumns,
-  setHiddenColumns
+  setHiddenColumns,
+  isLoading,
+  onCreateClick
 }) => {
   const [mounted, setMounted] = useState(false)
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null)
@@ -287,35 +292,52 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   if (!mounted) return null
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-full bg-background flex flex-col animate-pulse">
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="p-4 h-full">
+            <div className="flex gap-3 h-full w-full items-start overflow-hidden justify-between">
+              {[1, 2, 3].map((colId) => (
+                <div key={colId} className="flex flex-col flex-1 min-w-[150px] max-w-[270px]">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-24" />
+                      <Skeleton className="h-5 w-6 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="flex-1 bg-muted/20 rounded-lg p-3 border border-border/30 space-y-2 min-h-[400px]">
+                    {[1, 2].map((cardId) => (
+                      <div key={cardId} className="bg-card p-3 rounded-lg border border-border/40 space-y-3">
+                        <Skeleton className="h-4 w-5/6" />
+                        <div className="flex gap-1.5">
+                          <Skeleton className="h-5 w-12 rounded-full" />
+                          <Skeleton className="h-5 w-12 rounded-full" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const visibleColumns = groupedData.filter(col => !activeHiddenColumns.includes(col.id))
 
   return (
-    <div className="w-full h-full bg-background flex flex-col">
-      {/* Hidden columns info bar */}
-      {activeHiddenColumns.length > 0 && (
-        <div className="mx-6 mt-1 mb-2 p-2 bg-muted/30 border border-border/40 rounded-lg flex items-center justify-between shadow-none">
-          <span className="text-xs text-muted-foreground">
-            {activeHiddenColumns.length} column{activeHiddenColumns.length > 1 ? "s" : ""} hidden from display.
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => activeSetHiddenColumns([])}
-            className="h-6 text-xs text-primary font-medium hover:bg-primary/10 cursor-pointer"
-          >
-            Show all columns
-          </Button>
-        </div>
-      )}
-
+    <div className="w-full h-full min-h-0 bg-background flex flex-col">
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-x-auto overflow-y-hidden">
-            <div className="p-4 h-full">
-              {/* Flexible spacing with gap, no fixed horizontal scroll when columns fit screen */}
-              <div className="flex gap-3 h-full w-full items-start overflow-hidden justify-between">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden flex flex-col">
+            <div className="p-4 flex-1 min-h-0 flex flex-col">
+              {/* Flexible spacing with gap, columns next to each other, scrollable horizontally if overflowing */}
+              <div className="flex gap-3 flex-1 min-h-0 items-stretch justify-start">
                 {visibleColumns.map((column) => (
-                  <div key={column.id} className="flex flex-col flex-1 min-w-[150px] max-w-[270px] max-h-full">
+                  <div key={column.id} className="flex flex-col w-72 shrink-0 h-full min-h-0">
                     {/* Column Header */}
                     <div className="mb-3 flex items-center justify-between px-1">
                       <div className="flex items-center gap-2">
@@ -325,38 +347,54 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         </Badge>
                       </div>
                       
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground cursor-pointer">
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onClick={() => activeSetHiddenColumns(prev => [...prev, column.id])}
-                            className="text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
-                          >
-                            Hide column
-                          </DropdownMenuItem>
-                          {activeHiddenColumns.length > 0 && (
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-foreground cursor-pointer rounded-md"
+                          onClick={() => {
+                            if (onCreateClick) {
+                              onCreateClick(column.title)
+                            }
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground cursor-pointer">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
                             <DropdownMenuItem
-                              onClick={() => activeSetHiddenColumns([])}
-                              className="text-xs cursor-pointer"
+                              onClick={() => activeSetHiddenColumns(prev => [...prev, column.id])}
+                              className="text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
                             >
-                              Show all columns
+                              Hide column
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {activeHiddenColumns.length > 0 && (
+                              <DropdownMenuItem
+                                onClick={() => activeSetHiddenColumns([])}
+                                className="text-xs cursor-pointer"
+                              >
+                                Show all columns
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
 
-                    {/* Droppable Column Container to prevent CLS */}
+                    {/* Droppable Column Container to prevent CLS, fixed height column scrolling */}
                     <Droppable droppableId={column.id}>
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.droppableProps}
-                          className={`flex-1 bg-muted/20 rounded-lg p-3 border overflow-y-auto space-y-2 min-h-[400px] max-h-[calc(100vh-220px)] transition-colors duration-200 ${
+                          data-lenis-prevent
+                          className={`flex-1 bg-muted/20 rounded-lg p-3 border overflow-y-auto space-y-2 min-h-0 transition-colors duration-200 ${
                             snapshot.isDraggingOver ? "bg-muted/40 border-primary/30" : "border-border/30"
                           }`}
                         >
@@ -385,67 +423,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       )}
                     </Droppable>
 
-                    {/* Fast Creation Inline Input */}
-                    {activeAddColumnId === column.id ? (
-                      <div className="mt-3">
-                        <Input
-                          autoFocus
-                          value={inlineTitle}
-                          placeholder="What needs to be done?"
-                          onChange={(e) => setInlineTitle(e.target.value)}
-                          onBlur={() => {
-                            // Small delay to allow clicking or hitting Enter without instant blur layout shift
-                            setTimeout(() => {
-                              setActiveAddColumnId(null)
-                              setInlineTitle("")
-                            }, 200)
-                          }}
-                          onKeyDown={async (e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              if (inlineTitle.trim() && defaultProjectId) {
-                                try {
-                                  const matchedStatus = ['Backlog', 'Planning', 'In Progress', 'Paused', 'Done', 'Canceled'].find(
-                                    s => s.toLowerCase() === column.id.toLowerCase()
-                                  ) || "Planning"
-                                  
-                                  await createTask({
-                                    projectId: defaultProjectId,
-                                    issue: {
-                                      title: inlineTitle.trim(),
-                                      description: "",
-                                      status: matchedStatus,
-                                      project_id: defaultProjectId,
-                                      properties: {
-                                        priority: "Medium"
-                                      },
-                                      critical_path_flag: false
-                                    }
-                                  }).unwrap()
-                                } catch (err) {
-                                  console.error("Failed to fast create task inline:", err)
-                                }
-                              }
-                              setActiveAddColumnId(null)
-                              setInlineTitle("")
-                            } else if (e.key === 'Escape') {
-                              setActiveAddColumnId(null)
-                              setInlineTitle("")
-                            }
-                          }}
-                          className="h-8 text-xs bg-background border-border/80 focus:ring-1 focus:ring-primary/20 shadow-none px-2"
-                        />
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        onClick={() => setActiveAddColumnId(column.id)}
-                        className="mt-3 w-full gap-2 text-xs h-8 text-muted-foreground hover:text-foreground justify-start px-2"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        Add Item
-                      </Button>
-                    )}
+                    {/* Fast Creation replaced with clean unified creation modal trigger */}
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        if (onCreateClick) {
+                          onCreateClick(column.title)
+                        }
+                      }}
+                      className="mt-3 w-full gap-2 text-xs h-8 text-muted-foreground hover:text-foreground justify-start px-2 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Item
+                    </Button>
                   </div>
                 ))}
               </div>

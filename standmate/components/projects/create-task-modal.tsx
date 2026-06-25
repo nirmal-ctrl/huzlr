@@ -4,13 +4,12 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks"
 import { fetchProjects } from "@/lib/redux/slices/projectSlice"
 import { TaskCreate } from "@/lib/types"
-import { ProjectStatusSelector, ProjectPrioritySelector } from "@/components/properties/factory"
+import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector } from "@/components/properties/factory"
 
 interface CreateTaskModalProps {
     open: boolean
@@ -23,7 +22,7 @@ interface CreateTaskModalProps {
 export function CreateTaskModal({
     open,
     onOpenChange,
-    defaultStatus = "pending",
+    defaultStatus = "Planning",
     defaultProjectId,
     onSubmit
 }: CreateTaskModalProps) {
@@ -35,7 +34,8 @@ export function CreateTaskModal({
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [status, setStatus] = useState(defaultStatus)
-    const [priority, setPriority] = useState("medium")
+    const [priority, setPriority] = useState("Medium")
+    const [leadId, setLeadId] = useState<string | undefined>(undefined)
     const [projectId, setProjectId] = useState<string>("")
 
     useEffect(() => {
@@ -46,7 +46,8 @@ export function CreateTaskModal({
             setStatus(defaultStatus)
             setTitle("")
             setDescription("")
-            setPriority("medium")
+            setPriority("Medium")
+            setLeadId(undefined)
         }
     }, [open, defaultStatus, dispatch, projects.length, activeWorkspaceId, activeTeamId])
 
@@ -66,7 +67,8 @@ export function CreateTaskModal({
             status,
             project_id: parseInt(projectId),
             properties: {
-                priority
+                priority,
+                lead_id: leadId
             }
         })
         onOpenChange(false)
@@ -74,77 +76,88 @@ export function CreateTaskModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[560px] p-6 gap-0 bg-popover/95 border border-border/60 shadow-2xl backdrop-blur-md rounded-xl">
+                {/* Hidden header title for screen readers only */}
+                <DialogHeader className="sr-only">
                     <DialogTitle>Create New Task</DialogTitle>
                 </DialogHeader>
                 
-                <div className="space-y-5 py-4">
-                    <div className="grid gap-1.5">
-                        <Label htmlFor="title" className="text-xs text-muted-foreground">Issue Title</Label>
+                <div className="space-y-4">
+                    {/* Borderless bold title */}
+                    <div className="w-full">
                         <Input 
                             id="title" 
                             value={title} 
                             onChange={(e) => setTitle(e.target.value)} 
-                            placeholder="E.g. Setup database schema"
+                            placeholder="Issue title"
                             autoFocus
-                            className="text-base font-medium h-10 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/25 bg-background shadow-none"
+                            className="text-lg font-semibold placeholder:text-muted-foreground/50 border-none focus-visible:ring-0 focus-visible:outline-none p-0 bg-transparent shadow-none w-full"
                         />
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4 border-y border-border/40 py-3.5 -mx-1">
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground">Project</Label>
-                            <Select value={projectId} onValueChange={setProjectId}>
-                                <SelectTrigger className="h-8 text-xs border-transparent hover:bg-muted/40 bg-transparent shadow-none px-2 justify-start gap-1">
-                                    <SelectValue placeholder="Select project" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {projects.map(p => (
-                                        <SelectItem key={p.project_id} value={p.project_id?.toString() || ""}>
-                                            {p.properties?.project_title || `Project ${p.project_id}`}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground">Status</Label>
-                            <ProjectStatusSelector 
-                                value={status} 
-                                onChange={setStatus} 
-                                className="justify-start px-2 bg-transparent hover:bg-muted/40 border-transparent h-8 w-full"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground">Priority</Label>
-                            <ProjectPrioritySelector 
-                                value={priority} 
-                                onChange={setPriority} 
-                                className="justify-start px-2 bg-transparent hover:bg-muted/40 border-transparent h-8 w-full"
-                            />
-                        </div>
+                    {/* Completely borderless inline Tiptap editor */}
+                    <div className="w-full">
+                        <TiptapEditor 
+                            value={description} 
+                            onChange={setDescription} 
+                            placeholder="Add description..."
+                            className="prose-sm max-w-none text-sm placeholder:text-muted-foreground/40 bg-transparent focus-visible:outline-none min-h-[140px]"
+                        />
                     </div>
 
-                    <div className="grid gap-1.5">
-                        <Label className="text-xs text-muted-foreground">Description</Label>
-                        <div className="border border-border/80 rounded-lg overflow-hidden bg-background focus-within:ring-1 focus-within:ring-primary/25 focus-within:border-primary/50">
-                            <TiptapEditor 
-                                value={description} 
-                                onChange={setDescription} 
-                                placeholder="Add any extra details here..."
-                                className="p-3.5 prose-sm max-w-none"
-                            />
-                        </div>
+                    {/* Inline micro-selector row resembling Linear screenshot exactly */}
+                    <div className="flex items-center gap-1.5 flex-wrap border-b border-border/40 pb-4 mb-2">
+                        <ProjectStatusSelector 
+                            value={status} 
+                            onChange={setStatus} 
+                        />
+                        <ProjectPrioritySelector 
+                            value={priority} 
+                            onChange={setPriority} 
+                        />
+                        <MemberSelector
+                            value={leadId}
+                            onChange={setLeadId}
+                        />
+                        <Select value={projectId} onValueChange={setProjectId}>
+                            <SelectTrigger className="h-7 text-xs font-medium text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 gap-1.5 border border-transparent hover:border-border/40 transition-all rounded-md px-2 bg-transparent shadow-none w-auto">
+                                <SelectValue placeholder="Select project" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {projects.map(p => (
+                                    <SelectItem key={p.project_id} value={p.project_id?.toString() || ""}>
+                                        {p.properties?.project_title || `Project ${p.project_id}`}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                    <Button onClick={handleSubmit} disabled={!title.trim() || !projectId}>Create Task</Button>
-                </DialogFooter>
+                <div className="flex items-center justify-between mt-4">
+                    {/* Left: Optional shortcuts context info matching Linear style */}
+                    <span className="text-[11px] text-muted-foreground/50 font-medium select-none hidden sm:inline">
+                        Press <kbd className="font-semibold bg-muted/60 px-1 py-0.5 rounded text-[10px]">C</kbd> to open
+                    </span>
+                    
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="ghost" 
+                            className="h-8 text-xs font-semibold px-3 cursor-pointer rounded-lg hover:bg-muted/50"
+                            onClick={() => onOpenChange(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={handleSubmit} 
+                            disabled={!title.trim() || !projectId}
+                            className="h-8 text-xs font-semibold px-4 cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                        >
+                            Create Issue
+                        </Button>
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     )

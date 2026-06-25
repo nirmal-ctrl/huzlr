@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { SpinnerEmpty } from "@/components/spinner-empty"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function IssueDetailsPage() {
     const params = useParams()
@@ -136,8 +137,64 @@ export default function IssueDetailsPage() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-1 items-center justify-center min-h-[300px]">
-                <SpinnerEmpty />
+            <div className="flex flex-col h-full bg-background animate-pulse">
+                <SiteHeader>
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-4 w-12" />
+                        <span className="text-muted-foreground/30">/</span>
+                        <Skeleton className="h-4 w-8" />
+                    </div>
+                </SiteHeader>
+
+                <div className="flex-1 px-8 py-6 max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content Area */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="space-y-2">
+                            <Skeleton className="h-9 w-3/4 rounded-md" />
+                        </div>
+
+                        <Separator className="border-border/30" />
+
+                        {/* Description */}
+                        <div className="flex flex-col gap-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-[210px] w-full rounded-lg" />
+                        </div>
+
+                        <Separator className="border-border/30" />
+
+                        {/* Recursive Subtasks Area */}
+                        <div className="space-y-4">
+                            <Skeleton className="h-4 w-20" />
+                            <div className="space-y-3">
+                                <Skeleton className="h-12 w-full rounded-lg" />
+                                <Skeleton className="h-12 w-full rounded-lg" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Sidebar Properties */}
+                    <div className="space-y-6 bg-muted/10 border border-border/30 rounded-xl p-5 h-fit">
+                        <Skeleton className="h-4 w-24 mb-4" />
+                        <div className="space-y-4">
+                            <div className="flex flex-col gap-1.5">
+                                <Skeleton className="h-3 w-12" />
+                                <Skeleton className="h-9 w-full rounded-md" />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <Skeleton className="h-3 w-12" />
+                                <Skeleton className="h-9 w-full rounded-md" />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <Skeleton className="h-3 w-16" />
+                                <Skeleton className="h-9 w-full rounded-md" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }

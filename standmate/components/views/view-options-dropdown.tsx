@@ -1,36 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { Check, SlidersHorizontal, List, Columns, LayoutGrid } from "lucide-react"
+import { Check, SlidersHorizontal, List, Columns, User, Calendar, AlertCircle, CircleDot, Tag, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandSeparator,
-} from "@/components/ui/command"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { updatePropertyPreference } from "@/lib/redux/slices/metaSlice"
 import { setLayout, setGroupBy, togglePropertyVisibility, LayoutType } from "@/lib/redux/slices/viewSlice"
 import { toast } from "sonner"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
-
 
 interface ViewOptionsDropdownProps {
     entityType: string
@@ -42,35 +22,14 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
     const dispatch = useAppDispatch()
     const properties = useAppSelector((state) => state.meta.propertyDefinitions[entityType] || [])
     
-    // Fallback to defaults if view state is not initialized for this entityType
     const viewState = useAppSelector((state) => state.view.views[entityType])
     const currentLayout = viewState?.layout || 'list'
     const currentGroupBy = viewState?.groupBy || 'status'
     const visibleProperties = viewState?.visibleProperties || []
 
-    const boardColumns = React.useMemo(() => {
-        if (currentGroupBy === 'priority') {
-            return [
-                { id: 'urgent', label: 'Urgent' },
-                { id: 'high', label: 'High' },
-                { id: 'medium', label: 'Medium' },
-                { id: 'low', label: 'Low' },
-                { id: 'none', label: 'No Priority' }
-            ]
-        }
-        // Default to status
-        return [
-            { id: 'backlog', label: 'Backlog' },
-            { id: 'planning', label: 'Planning' },
-            { id: 'in progress', label: 'In Progress' },
-            { id: 'paused', label: 'Paused' },
-            { id: 'done', label: 'Done' },
-            { id: 'canceled', label: 'Canceled' }
-        ]
-    }, [currentGroupBy])
-
     const displayableProperties = React.useMemo(() => {
-        return properties.filter(p => p.key !== 'project_title') // Title is always visible
+        // Exclude project title as it's always displayed on cards/rows
+        return properties.filter(p => p.key !== 'project_title')
     }, [properties])
 
     const handleLayoutChange = (layout: LayoutType) => {
@@ -82,137 +41,119 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
     }
 
     const handleToggleProperty = (key: string, currentVisible: boolean) => {
-        // Toggle in view slice
         dispatch(togglePropertyVisibility({ entityType, property: key }))
         
-        // Also update backend preference via metaSlice to persist (if desired, keeping old logic)
         const newVisible = !currentVisible
         toast.promise(
             dispatch(updatePropertyPreference({ entityType, key, visible: newVisible })).unwrap(),
             {
                 loading: `${newVisible ? "Showing" : "Hiding"} property...`,
-                success: `${newVisible ? "Shown" : "Hidden"}`,
+                success: `${newVisible ? "Updated property visibility" : "Updated property visibility"}`,
                 error: "Failed to update property visibility",
             }
         )
     }
 
+    // Helper to render property specific icons for the premium view list
+    const getPropertyIcon = (key: string) => {
+        switch (key) {
+            case "assignee":
+            case "lead_id":
+                return <User className="h-3.5 w-3.5 text-muted-foreground/80" />
+            case "due_date":
+            case "target_date":
+            case "start_date":
+                return <Calendar className="h-3.5 w-3.5 text-muted-foreground/80" />
+            case "priority":
+                return <AlertCircle className="h-3.5 w-3.5 text-muted-foreground/80" />
+            case "status":
+                return <CircleDot className="h-3.5 w-3.5 text-muted-foreground/80" />
+            default:
+                return <Tag className="h-3.5 w-3.5 text-muted-foreground/80" />
+        }
+    }
+
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2 h-8">
+                <Button variant="ghost" size="sm" className="gap-2 h-8 text-xs font-semibold hover:bg-muted/50 rounded-lg">
                     <SlidersHorizontal className="h-4 w-4" />
-                    <span className="hidden lg:inline">Display</span>
+                    <span>Display</span>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-72 p-0" align="end">
-                <Command>
-                    <CommandList>
-                        <CommandGroup heading="Layout">
-                            <div className="flex items-center gap-2 p-2">
-                                <Button 
-                                    variant={currentLayout === 'list' ? 'secondary' : 'ghost'} 
-                                    size="sm" 
-                                    className="flex-1 justify-start"
-                                    onClick={() => handleLayoutChange('list')}
-                                >
-                                    <List className="h-4 w-4 mr-2" />
-                                    List
-                                </Button>
-                                <Button 
-                                    variant={currentLayout === 'board' ? 'secondary' : 'ghost'} 
-                                    size="sm" 
-                                    className="flex-1 justify-start"
-                                    onClick={() => handleLayoutChange('board')}
-                                >
-                                    <Columns className="h-4 w-4 mr-2" />
-                                    Board
-                                </Button>
-                            </div>
-                        </CommandGroup>
-                        <CommandSeparator />
-                        
-                        <CommandGroup heading="Grouping">
-                            <div className="p-2">
-                                <Select value={currentGroupBy || 'none'} onValueChange={handleGroupByChange}>
-                                    <SelectTrigger className="h-8 w-full text-xs">
-                                        <SelectValue placeholder="Group by..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">None</SelectItem>
-                                        <SelectItem value="status">Status</SelectItem>
-                                        <SelectItem value="priority">Priority</SelectItem>
-                                        <SelectItem value="assignee">Assignee</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </CommandGroup>
-                        <CommandSeparator />
+            <PopoverContent 
+                className="w-80 p-4 max-h-[calc(100vh-140px)] overflow-y-auto border border-border/60 bg-popover/95 backdrop-blur-md rounded-xl shadow-2xl overscroll-contain flex flex-col gap-4" 
+                align="end"
+            >
+                {/* 1. Layout View selector */}
+                <div className="flex items-center justify-between gap-4">
+                    <span className="text-xs font-semibold text-muted-foreground">View</span>
+                    <div className="flex items-center bg-muted/40 p-0.5 rounded-lg border border-border/40">
+                        <Button 
+                            variant={currentLayout === 'list' ? 'secondary' : 'ghost'} 
+                            size="sm" 
+                            className="h-7 text-xs font-semibold px-3 rounded-md cursor-pointer shadow-none"
+                            onClick={() => handleLayoutChange('list')}
+                        >
+                            <List className="h-3.5 w-3.5 mr-1.5" />
+                            List
+                        </Button>
+                        <Button 
+                            variant={currentLayout === 'board' ? 'secondary' : 'ghost'} 
+                            size="sm" 
+                            className="h-7 text-xs font-semibold px-3 rounded-md cursor-pointer shadow-none"
+                            onClick={() => handleLayoutChange('board')}
+                        >
+                            <Columns className="h-3.5 w-3.5 mr-1.5" />
+                            Board
+                        </Button>
+                    </div>
+                </div>
 
-                        {currentLayout === 'board' && setHiddenColumns && hiddenColumns && (
-                            <>
-                                <CommandGroup heading="Board Columns">
-                                    <div className="p-2 space-y-1">
-                                        {boardColumns.map((col) => {
-                                            const isVisible = !hiddenColumns.includes(col.id)
-                                            return (
-                                                <div key={col.id} className="flex items-center space-x-2 py-1 px-2 hover:bg-muted/50 rounded-sm">
-                                                    <Checkbox
-                                                        id={`col-pref-${col.id}`}
-                                                        checked={isVisible}
-                                                        onCheckedChange={(checked) => {
-                                                            if (checked) {
-                                                                setHiddenColumns(prev => prev.filter(id => id !== col.id))
-                                                            } else {
-                                                                // Prevent hiding all columns
-                                                                const visibleCount = boardColumns.length - hiddenColumns.length
-                                                                if (visibleCount > 1) {
-                                                                    setHiddenColumns(prev => [...prev, col.id])
-                                                                }
-                                                            }
-                                                        }}
-                                                    />
-                                                    <Label
-                                                        htmlFor={`col-pref-${col.id}`}
-                                                        className="flex-1 cursor-pointer text-xs font-medium leading-none"
-                                                    >
-                                                        {col.label}
-                                                    </Label>
-                                                </div>
-                                            )
-                                        })}
+                {/* 2. Group by Selector */}
+                <div className="flex items-center justify-between gap-4 border-t border-border/30 pt-3">
+                    <span className="text-xs font-semibold text-muted-foreground">Group by</span>
+                    <Select value={currentGroupBy || 'none'} onValueChange={handleGroupByChange}>
+                        <SelectTrigger className="h-7 text-xs font-semibold border-border/60 bg-background/50 hover:bg-muted/40 shadow-none w-32 px-2 justify-between">
+                            <SelectValue placeholder="Group by..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="status">Status</SelectItem>
+                            <SelectItem value="priority">Priority</SelectItem>
+                            <SelectItem value="assignee">Assignee</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* 3. Properties Segment with custom Switch Toggles (matches Linear screenshot perfectly) */}
+                <div className="space-y-2 border-t border-border/30 pt-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Properties</span>
+                    <div className="space-y-1">
+                        {displayableProperties.map((prop) => {
+                            const isVisible = visibleProperties.includes(prop.key) || prop.visible !== false;
+                            return (
+                                <div key={prop.key} className="flex items-center justify-between py-1.5 hover:bg-muted/20 px-2 rounded-lg transition-colors">
+                                    <div className="flex items-center gap-2">
+                                        {getPropertyIcon(prop.key)}
+                                        <Label
+                                            htmlFor={`prop-${prop.key}`}
+                                            className="cursor-pointer text-xs font-semibold text-foreground/95 select-none"
+                                        >
+                                            {prop.label}
+                                        </Label>
                                     </div>
-                                </CommandGroup>
-                                <CommandSeparator />
-                            </>
-                        )}
-
-                        <CommandGroup heading="Properties">
-                            <CommandInput placeholder="Search properties..." className="h-8" />
-                            <CommandEmpty>No property found.</CommandEmpty>
-                            <div className="p-2 max-h-[200px] overflow-y-auto">
-                                {displayableProperties.map((prop) => {
-                                    const isVisible = visibleProperties.includes(prop.key) || prop.visible !== false;
-                                    return (
-                                        <div key={prop.key} className="flex items-center space-x-2 py-1.5 px-2 hover:bg-muted/50 rounded-sm">
-                                            <Checkbox
-                                                id={`prop-${prop.key}`}
-                                                checked={isVisible}
-                                                onCheckedChange={() => handleToggleProperty(prop.key, isVisible)}
-                                            />
-                                            <Label
-                                                htmlFor={`prop-${prop.key}`}
-                                                className="flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                            >
-                                                {prop.label}
-                                            </Label>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
+                                    <Switch
+                                        id={`prop-${prop.key}`}
+                                        checked={isVisible}
+                                        onCheckedChange={() => handleToggleProperty(prop.key, isVisible)}
+                                        className="scale-75 origin-right cursor-pointer"
+                                    />
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
             </PopoverContent>
         </Popover>
     )
