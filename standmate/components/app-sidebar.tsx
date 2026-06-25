@@ -49,16 +49,6 @@ const data = {
       icon: IconFolder,
     },
     {
-      title: "Board",
-      url: "/boards",
-      icon: IconDashboard,
-    },
-    {
-      title: "Brainstorms",
-      url: "/brainstorms",
-      icon: Brain as unknown as Icon,
-    },
-    {
       title: "Workspace & Teams",
       url: "/teams",
       icon: IconUsers,
