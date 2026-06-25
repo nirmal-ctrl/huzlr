@@ -129,6 +129,60 @@ export const createTeam = createAsyncThunk(
     }
 );
 
+export const updateTeam = createAsyncThunk(
+    'workspace/updateTeam',
+    async ({ teamId, name, description, workspaceId }: { teamId: number; name: string; description?: string; workspaceId: number }, { getState, rejectWithValue, dispatch }) => {
+        try {
+            const state = getState() as any;
+            const token = state.auth.token || localStorage.getItem('token');
+            if (!token) return rejectWithValue('No token found');
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teams/${teamId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ name, description }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Failed to update team');
+            
+            await dispatch(fetchTeams(workspaceId));
+            return data as Team;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
+export const deleteTeam = createAsyncThunk(
+    'workspace/deleteTeam',
+    async ({ teamId, workspaceId }: { teamId: number; workspaceId: number }, { getState, rejectWithValue, dispatch }) => {
+        try {
+            const state = getState() as any;
+            const token = state.auth.token || localStorage.getItem('token');
+            if (!token) return rejectWithValue('No token found');
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teams/${teamId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.detail || 'Failed to delete team');
+            }
+            
+            await dispatch(fetchTeams(workspaceId));
+            return teamId;
+        } catch (error: any) {
+            return rejectWithValue(error.message);
+        }
+    }
+);
+
 export const fetchTeams = createAsyncThunk(
     'workspace/fetchTeams',
     async (workspaceId: number, { getState, rejectWithValue }) => {

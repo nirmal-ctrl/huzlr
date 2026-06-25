@@ -8,7 +8,7 @@ from api.deps import get_db, get_current_user
 from models.user import User
 from models.team import Team
 from models.team_membership import TeamMembership
-from schemas.team import TeamCreate, TeamResponse, TeamWithMembersResponse
+from schemas.team import TeamCreate, TeamResponse, TeamWithMembersResponse, TeamUpdate
 from core.access import assert_workspace_member, assert_admin, assert_team_member
 
 router = APIRouter()
@@ -155,6 +155,71 @@ async def add_team_member(
         .where(Team.id == team_id)
     )
     return result.scalar_one()
+
+@router.put("/{team_id}", response_model=TeamResponse)
+async def update_team(
+    team_id: int,
+    team_in: TeamUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update team details.
+    Current user must be an admin of the parent workspace.
+    """
+    result = await db.execute(select(Team).where(Team.id == team_id))
+    team = result.scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+        
+    await assert_admin(current_user.id, team.workspace_id, db)
+    
+    if team_in.name is not None:
+        team.name = team_in.name
+    if team_in.description is not None:
+        team.description = team_in.description
+        
+    await db.commit()
+    await db.refresh(team)
+    return team
+
+@router.delete("/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_team(
+    team_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Delete a team.
+    Current user must be an admin of the parent workspace.
+    Default team cannot be deleted.
+    """
+    result = await db.execute(select(Team).where(Team.id == team_id))
+    team = result.scalar_one_or_none()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+        
+    await assert_admin(current_user.id, team.workspace_id, db)
+    
+    if team.is_default:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The default team cannot be deleted."
+        )
+        
+    # Delete team memberships first
+    await db.execute(
+        select(TeamMembership)
+        .where(TeamMembership.team_id == team_id)
+    )
+    # SQLAlchemy will handle cascade or we can manually delete memberships or rely on cascade.
+    # Let's delete the team memberships manually to be perfectly safe
+    from sqlalchemy import delete
+    await db.execute(delete(TeamMembership).where(TeamMembership.team_id == team_id))
+    
+    await db.delete(team)
+    await db.commit()
+    return None
 
 @router.delete("/{team_id}/members/{user_id}", response_model=TeamWithMembersResponse)
 async def remove_team_member(

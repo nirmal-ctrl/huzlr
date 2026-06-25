@@ -12,7 +12,9 @@ import { Button } from "@/components/ui/button"
 import { InviteMembersModal } from "@/components/teams/invite-members-modal"
 import { CreateWorkspaceModal } from "@/components/teams/create-workspace-modal"
 import { CreateTeamModal } from "@/components/teams/create-team-modal"
-import { AddTeamMemberModal } from "@/components/teams/add-team-member-modal"
+import { EditTeamModal } from "@/components/teams/edit-team-modal"
+import { ManageTeamMembersModal } from "@/components/teams/manage-team-members-modal"
+import { deleteTeam } from "@/lib/redux/slices/workspaceSlice"
 import { useToast } from "@/hooks/use-toast"
 import {
     Table,
@@ -27,6 +29,12 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { 
     UserPlus, 
     Mail, 
@@ -38,7 +46,10 @@ import {
     Users, 
     Calendar, 
     Plus,
-    Lock
+    Lock,
+    Edit,
+    Trash2,
+    MoreHorizontal
 } from "lucide-react"
 
 export default function TeamsPage() {
@@ -55,10 +66,30 @@ export default function TeamsPage() {
     const [isInviteOpen, setIsInviteOpen] = useState(false)
     const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false)
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
+    const [isEditTeamOpen, setIsEditTeamOpen] = useState(false)
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false)
-    const [selectedTeam, setSelectedTeam] = useState<{ id: number; name: string } | null>(null)
+    const [selectedTeam, setSelectedTeam] = useState<{ id: number; name: string; description: string | null; workspace_id: number } | null>(null)
     const [activeRemindingId, setActiveRemindingId] = useState<number | null>(null)
     const [remindInvite] = useRemindInviteMutation()
+
+    const handleDeleteTeam = async (teamId: number, teamName: string) => {
+        if (!confirm(`Are you sure you want to delete the team "${teamName}"? This action cannot be undone.`)) {
+            return
+        }
+        try {
+            await dispatch(deleteTeam({ teamId, workspaceId: activeWorkspaceId! })).unwrap()
+            toast({
+                title: "Team Deleted",
+                description: `Successfully deleted team "${teamName}".`,
+            })
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Failed to delete team",
+                description: error || "Something went wrong.",
+            })
+        }
+    }
 
     const {
         data: workspaceData,
@@ -392,17 +423,54 @@ export default function TeamsPage() {
                                                     })}
                                                 </TableCell>
                                                 <TableCell className="py-4 pr-6 text-right">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => {
-                                                            setSelectedTeam(team)
-                                                            setIsAddMemberOpen(true)
-                                                        }}
-                                                        className="h-7 text-xs font-semibold px-3 border border-transparent hover:border-border/40 text-primary hover:text-primary hover:bg-primary/5 cursor-pointer"
-                                                    >
-                                                        Add Member
-                                                    </Button>
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => {
+                                                                setSelectedTeam(team)
+                                                                setIsAddMemberOpen(true)
+                                                            }}
+                                                            className="h-7 text-xs font-semibold px-3 border border-transparent hover:border-border/40 text-primary hover:text-primary hover:bg-primary/5 cursor-pointer"
+                                                        >
+                                                            Add Member
+                                                        </Button>
+
+                                                        {isUserWorkspaceAdmin && (
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button
+                                                                        size="icon"
+                                                                        variant="ghost"
+                                                                        className="size-7 border border-transparent hover:border-border/40 text-muted-foreground hover:text-foreground rounded-md cursor-pointer"
+                                                                    >
+                                                                        <MoreHorizontal className="size-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="w-36 bg-background border border-border rounded-lg shadow-lg">
+                                                                    <DropdownMenuItem
+                                                                        onClick={() => {
+                                                                            setSelectedTeam(team)
+                                                                            setIsEditTeamOpen(true)
+                                                                        }}
+                                                                        className="text-xs font-medium text-foreground flex items-center gap-2 cursor-pointer focus:bg-muted/50"
+                                                                    >
+                                                                        <Edit className="size-3.5" />
+                                                                        Edit Team
+                                                                    </DropdownMenuItem>
+                                                                    {!team.is_default && (
+                                                                        <DropdownMenuItem
+                                                                            onClick={() => handleDeleteTeam(team.id, team.name)}
+                                                                            className="text-xs font-medium text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer focus:bg-destructive/5"
+                                                                        >
+                                                                            <Trash2 className="size-3.5" />
+                                                                            Delete Team
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -626,11 +694,13 @@ export default function TeamsPage() {
             <InviteMembersModal open={isInviteOpen} onOpenChange={setIsInviteOpen} />
             <CreateWorkspaceModal open={isWorkspaceModalOpen} onOpenChange={setIsWorkspaceModalOpen} />
             <CreateTeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
-            <AddTeamMemberModal 
+            <EditTeamModal open={isEditTeamOpen} onOpenChange={setIsEditTeamOpen} team={selectedTeam} />
+            <ManageTeamMembersModal 
                 open={isAddMemberOpen} 
                 onOpenChange={setIsAddMemberOpen} 
                 team={selectedTeam} 
                 workspaceData={workspaceData} 
+                isUserWorkspaceAdmin={isUserWorkspaceAdmin}
             />
             </div>
         </>

@@ -21,24 +21,29 @@ export interface TeamWithMembers {
 
 export const teamsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        getTeam: builder.query<TeamWithMembers, number>({
+            query: (teamId) => `/teams/${teamId}`,
+            providesTags: (result, error, teamId) => [{ type: 'Dashboard', id: `team-${teamId}` }],
+        }),
         addTeamMember: builder.mutation<TeamWithMembers, { teamId: number; userId: number }>({
             query: ({ teamId, userId }) => ({
                 url: `/teams/${teamId}/members/${userId}`,
                 method: 'POST',
             }),
-            invalidatesTags: ['Dashboard'],
+            invalidatesTags: (result, error, { teamId }) => ['Dashboard', { type: 'Dashboard', id: `team-${teamId}` }],
         }),
         removeTeamMember: builder.mutation<TeamWithMembers, { teamId: number; userId: number }>({
             query: ({ teamId, userId }) => ({
                 url: `/teams/${teamId}/members/${userId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: ['Dashboard'],
+            invalidatesTags: (result, error, { teamId }) => ['Dashboard', { type: 'Dashboard', id: `team-${teamId}` }],
         }),
     }),
 })
 
 export const {
+    useGetTeamQuery,
     useAddTeamMemberMutation,
     useRemoveTeamMemberMutation,
 } = teamsApi
