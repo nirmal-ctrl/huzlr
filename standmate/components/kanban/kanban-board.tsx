@@ -26,7 +26,7 @@ export interface KanbanBoardProps {
   onItemMove?: (itemId: string, fromColumn: string, toColumn: string) => void
   defaultProjectId?: number
   hiddenColumns?: string[]
-  setHiddenColumns?: React.Dispatch<React.SetStateAction<string
+  setHiddenColumns?: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
