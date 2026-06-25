@@ -322,7 +322,7 @@ export default function TeamIssuesPage() {
                 </div>
             </SiteHeader>
 
-            <div className="flex flex-col gap-4 py-6 px-8 h-[calc(100vh-80px)] overflow-hidden bg-background">
+            <div className="flex flex-col gap-4 py-6 px-8 h-[calc(100vh-80px)] overflow-hidden bg-background w-full max-w-full min-w-0">
                 {/* Sub Header Action Bar (Linear benchmark design) */}
                 {teamProjects.length > 0 && (
                     <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2 flex-wrap gap-2">
@@ -405,7 +405,7 @@ export default function TeamIssuesPage() {
                     </div>
                 )}
 
-                <div className="flex flex-1 flex-col min-h-0 overflow-hidden">
+                <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden">
                     {isLoading ? (
                         layout === 'list' ? (
                             <TaskList 

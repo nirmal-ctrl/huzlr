@@ -32,6 +32,39 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
         return properties.filter(p => p.key !== 'project_title')
     }, [properties])
 
+    const availableColumns = React.useMemo(() => {
+        if (currentLayout !== 'board') return []
+        if (currentGroupBy === 'status') {
+            return [
+                { id: 'backlog', label: 'Backlog' },
+                { id: 'planning', label: 'Planning' },
+                { id: 'in progress', label: 'In Progress' },
+                { id: 'paused', label: 'Paused' },
+                { id: 'done', label: 'Done' },
+                { id: 'canceled', label: 'Canceled' }
+            ]
+        }
+        if (currentGroupBy === 'priority') {
+            return [
+                { id: 'urgent', label: 'Urgent' },
+                { id: 'high', label: 'High' },
+                { id: 'medium', label: 'Medium' },
+                { id: 'low', label: 'Low' },
+                { id: 'none', label: 'None' }
+            ]
+        }
+        return []
+    }, [currentLayout, currentGroupBy])
+
+    const handleToggleColumn = (colId: string) => {
+        if (!setHiddenColumns || !hiddenColumns) return
+        if (hiddenColumns.includes(colId)) {
+            setHiddenColumns(hiddenColumns.filter(id => id !== colId))
+        } else {
+            setHiddenColumns([...hiddenColumns, colId])
+        }
+    }
+
     const handleLayoutChange = (layout: LayoutType) => {
         dispatch(setLayout({ entityType, layout }))
     }
@@ -125,6 +158,31 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
                         </SelectContent>
                     </Select>
                 </div>
+
+                {/* Visible Columns toggle section (Kanban Board layout only) */}
+                {currentLayout === 'board' && availableColumns.length > 0 && setHiddenColumns && hiddenColumns && (
+                    <div className="space-y-2 border-t border-border/30 pt-3">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Visible Columns</span>
+                        <div className="space-y-1">
+                            {availableColumns.map((col) => {
+                                const isVisible = !hiddenColumns.includes(col.id);
+                                return (
+                                    <div key={col.id} className="flex items-center justify-between py-1.5 hover:bg-muted/20 px-2 rounded-lg transition-colors">
+                                        <div className="flex items-center gap-2">
+                                            <Columns className="h-3.5 w-3.5 text-muted-foreground/80" />
+                                            <span className="text-xs font-semibold text-foreground/95 select-none">{col.label}</span>
+                                        </div>
+                                        <Switch
+                                            checked={isVisible}
+                                            onCheckedChange={() => handleToggleColumn(col.id)}
+                                            className="scale-75 origin-right cursor-pointer"
+                                        />
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* 3. Properties Segment with custom Switch Toggles (matches Linear screenshot perfectly) */}
                 <div className="space-y-2 border-t border-border/30 pt-3">

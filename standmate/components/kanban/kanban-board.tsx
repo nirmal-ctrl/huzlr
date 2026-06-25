@@ -331,11 +331,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <div className="w-full h-full min-h-0 bg-background flex flex-col">
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden flex flex-col">
-            <div className="p-4 flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 min-w-0 overflow-hidden flex flex-col w-full max-w-full">
+          <div className="flex-1 min-h-0 min-w-0 overflow-x-auto overflow-y-hidden flex flex-col w-full max-w-full">
+            <div className="p-4 flex-1 min-h-0 min-w-0 flex flex-col w-full max-w-full">
               {/* Flexible spacing with gap, columns next to each other, scrollable horizontally if overflowing */}
-              <div className="flex gap-3 flex-1 min-h-0 items-stretch justify-start">
+              <div className="flex gap-3 flex-1 min-h-0 items-stretch justify-start w-full max-w-full">
                 {visibleColumns.map((column) => (
                   <div key={column.id} className="flex flex-col w-72 shrink-0 h-full min-h-0">
                     {/* Column Header */}

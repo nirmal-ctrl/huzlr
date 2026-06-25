@@ -4,6 +4,13 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -250,4 +257,30 @@ html {
 .no-scrollbar {
   -ms-overflow-style: none !important;  /* IE and Edge */
   scrollbar-width: none !important;  /* Firefox */
+}
+
+/* Global Aesthetic Theme Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Firefox scrollbar standard support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
