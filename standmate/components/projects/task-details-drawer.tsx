@@ -96,6 +96,7 @@ export function TaskDetailsDrawer({ task, open, onOpenChange, onUpdateTask }: Ta
                             value={value?.toString()} 
                             onChange={(val) => handlePropertyChange(prop.key, val)}
                             className="w-full justify-start h-9"
+                            placeholder={prop.label}
                         />
                     </div>
                 )

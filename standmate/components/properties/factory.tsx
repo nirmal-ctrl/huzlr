@@ -205,7 +205,7 @@ interface MemberSelectorProps extends Omit<SelectorProps, 'value'> {
     multiple?: boolean
 }
 
-export function MemberSelector({ value, onChange, className, multiple = false }: MemberSelectorProps) {
+export function MemberSelector({ value, onChange, className, multiple = false, placeholder }: MemberSelectorProps) {
     const [open, setOpen] = React.useState(false)
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
 
@@ -264,7 +264,7 @@ export function MemberSelector({ value, onChange, className, multiple = false }:
                     {selectedUsers.length === 0 ? (
                         <>
                             <UserIcon className="w-3.5 h-3.5" />
-                            <span>{multiple ? "Members" : "Lead"}</span>
+                            <span>{placeholder || (multiple ? "Members" : "Lead")}</span>
                         </>
                     ) : (
                         <div className="flex items-center gap-1">

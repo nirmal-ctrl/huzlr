@@ -265,12 +265,15 @@ export const ChatSimulation = ({ onPhaseChange, className }: ChatSimulationProps
                         ? "border-primary/20 ring-1 ring-primary/10 bg-background"
                         : "border-border/40 hover:border-border/60"
                 )}>
-                    <input
-                        value={inputValue}
-                        readOnly
-                        className="bg-transparent border-none outline-none text-sm flex-1 placeholder:text-muted-foreground/50 font-medium"
-                        placeholder="Ask anything..."
-                    />
+                    <div
+                        className="bg-transparent border-none outline-none text-sm flex-1 font-medium flex items-center"
+                    >
+                        {inputValue ? (
+                            <span>{inputValue}</span>
+                        ) : (
+                            <span className="text-muted-foreground/50">Ask anything...</span>
+                        )}
+                    </div>
                     <div className={cn(
                         "p-1.5 rounded-lg transition-all duration-200",
                         inputValue

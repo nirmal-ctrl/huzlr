@@ -74,8 +74,7 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
     }
 
     const handleToggleProperty = (key: string, currentVisible: boolean) => {
-        dispatch(togglePropertyVisibility({ entityType, property: key }))
-        
+        // Only rely on metaSlice preference to avoid contradictory local state in viewSlice
         const newVisible = !currentVisible
         toast.promise(
             dispatch(updatePropertyPreference({ entityType, key, visible: newVisible })).unwrap(),
@@ -189,7 +188,7 @@ export function ViewOptionsDropdown({ entityType, hiddenColumns, setHiddenColumn
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Properties</span>
                     <div className="space-y-1">
                         {displayableProperties.map((prop) => {
-                            const isVisible = visibleProperties.includes(prop.key) || prop.visible !== false;
+                            const isVisible = prop.visible !== false;
                             return (
                                 <div key={prop.key} className="flex items-center justify-between py-1.5 hover:bg-muted/20 px-2 rounded-lg transition-colors">
                                     <div className="flex items-center gap-2">

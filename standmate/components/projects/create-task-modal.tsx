@@ -35,7 +35,7 @@ export function CreateTaskModal({
     const [description, setDescription] = useState("")
     const [status, setStatus] = useState(defaultStatus)
     const [priority, setPriority] = useState("Medium")
-    const [leadId, setLeadId] = useState<string | undefined>(undefined)
+    const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined)
     const [projectId, setProjectId] = useState<string>("")
 
     useEffect(() => {
@@ -47,7 +47,7 @@ export function CreateTaskModal({
             setTitle("")
             setDescription("")
             setPriority("Medium")
-            setLeadId(undefined)
+            setAssigneeId(undefined)
         }
     }, [open, defaultStatus, dispatch, projects.length, activeWorkspaceId, activeTeamId])
 
@@ -68,7 +68,7 @@ export function CreateTaskModal({
             project_id: parseInt(projectId),
             properties: {
                 priority,
-                lead_id: leadId
+                assignee: assigneeId
             }
         })
         onOpenChange(false)
@@ -116,8 +116,9 @@ export function CreateTaskModal({
                             onChange={setPriority} 
                         />
                         <MemberSelector
-                            value={leadId}
-                            onChange={setLeadId}
+                            value={assigneeId}
+                            onChange={setAssigneeId}
+                            placeholder="Assignee"
                         />
                         <Select value={projectId} onValueChange={setProjectId}>
                             <SelectTrigger className="h-7 text-xs font-medium text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 gap-1.5 border border-transparent hover:border-border/40 transition-all rounded-md px-2 bg-transparent shadow-none w-auto">

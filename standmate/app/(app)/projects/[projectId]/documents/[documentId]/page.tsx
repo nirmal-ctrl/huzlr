@@ -9,6 +9,7 @@ import { fetchProjectById } from "@/lib/redux/slices/projectSlice"
 import { SpinnerEmpty } from "@/components/spinner-empty"
 import { Button } from "@/components/ui/button"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
+import { InlineEditor } from "@/components/editor/inline-editor"
 import { EmojiSelector, DocIcon } from "@/components/ui/emoji-selector"
 import { useUpdateDocumentMutation, useDeleteDocumentMutation, useGetProjectDocumentsQuery } from "@/services/documentsApi"
 import { ChevronLeft, Trash2, Calendar, FileText } from "lucide-react"
@@ -152,13 +153,11 @@ export default function DocumentPage() {
                         triggerClassName="h-10 w-10 text-2xl rounded-md bg-muted/20 hover:bg-muted/50 border border-border/20" 
                     />
                     <div className="space-y-1 flex-1">
-                        <input
-                            type="text"
+                        <InlineEditor
                             value={title}
-                            onChange={(e) => handleTitleChange(e.target.value)}
+                            onChange={(val) => handleTitleChange(val)}
                             placeholder="Untitled document"
                             className="text-3xl font-bold border-none outline-none focus:ring-0 p-0 shadow-none bg-transparent placeholder:text-muted-foreground/30 w-full h-auto"
-                            required
                         />
                         <div className="flex items-center gap-2 text-xs text-muted-foreground select-none">
                             <Calendar className="w-3 h-3 opacity-60" />

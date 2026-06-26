@@ -1,19 +1,25 @@
 "use client"
 
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Plus, ChevronRight, CornerDownRight, Check, Trash2 } from "lucide-react"
+import { ArrowLeft, Plus, ChevronRight, CornerDownRight, Check, Trash2, MoreHorizontal, Link as LinkIcon, Box, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { useGetIssueQuery, useUpdateIssueMutation, useCreateIssueMutation, useDeleteIssueMutation } from "@/services/issuesApi"
 import { InlineEditor } from "@/components/editor/inline-editor"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
-import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector } from "@/components/properties/factory"
+import { ProjectStatusSelector, ProjectPrioritySelector, MemberSelector, DateSelector, LabelSelector } from "@/components/properties/factory"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { SpinnerEmpty } from "@/components/spinner-empty"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
+import {
+    ResizableHandle,
+    ResizablePanel,
+    ResizablePanelGroup
+} from "@/components/ui/resizable"
 
 export default function IssueDetailsPage() {
     const params = useParams()
@@ -33,17 +39,24 @@ export default function IssueDetailsPage() {
 
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
+    const [propertiesExpanded, setPropertiesExpanded] = useState(true)
+    const [descriptionExpanded, setDescriptionExpanded] = useState(true)
+
+    // We use a ref for high-frequency text updates (title/description) to avoid massive React re-renders on every keystroke
+    const textUpdatesRef = useRef<Partial<any>>({})
 
     useEffect(() => {
         if (issue) {
             setTitle(issue.title || "")
             setDescription(issue.description || "")
+            textUpdatesRef.current = {}
         }
     }, [issue])
 
     const handleUpdateTitle = useCallback(async (newTitle: string) => {
         if (!issue || !newTitle.trim()) return
         setTitle(newTitle)
+        textUpdatesRef.current.title = newTitle;
         try {
             await updateIssue({
                 issueId: issue.id,
@@ -59,6 +72,7 @@ export default function IssueDetailsPage() {
     const handleUpdateDescription = useCallback(async (newDesc: string) => {
         if (!issue) return
         setDescription(newDesc)
+        textUpdatesRef.current.description = newDesc;
         try {
             await updateIssue({
                 issueId: issue.id,
@@ -104,7 +118,7 @@ export default function IssueDetailsPage() {
         }
     }, [issue, teamId, updateIssue])
 
-    const handleUpdateLead = useCallback(async (leadId: string) => {
+    const handleUpdateAssignee = useCallback(async (assigneeId: string) => {
         if (!issue) return
         try {
             await updateIssue({
@@ -112,14 +126,49 @@ export default function IssueDetailsPage() {
                 updates: {
                     properties: {
                         ...(issue.properties || {}),
-                        lead_id: leadId
+                        assignee: assigneeId
                     }
                 },
                 teamId,
                 projectId: issue.project_id
             }).unwrap()
         } catch (err) {
-            console.error("Failed to update lead:", err)
+            console.error("Failed to update assignee:", err)
+        }
+    }, [issue, teamId, updateIssue])
+
+    const handleUpdateLabels = useCallback(async (labels: any[]) => {
+        if (!issue) return
+        try {
+            await updateIssue({
+                issueId: issue.id,
+                updates: {
+                    properties: {
+                        ...(issue.properties || {}),
+                        labels
+                    }
+                },
+                teamId,
+                projectId: issue.project_id
+            }).unwrap()
+        } catch (err) {
+            console.error("Failed to update labels:", err)
+        }
+    }, [issue, teamId, updateIssue])
+
+    const handleUpdateDueDate = useCallback(async (dateStr: string | undefined) => {
+        if (!issue) return
+        try {
+            await updateIssue({
+                issueId: issue.id,
+                updates: {
+                    estimated_end_date: dateStr ? dateStr.split("T")[0] : null
+                },
+                teamId,
+                projectId: issue.project_id
+            }).unwrap()
+        } catch (err) {
+            console.error("Failed to update due date:", err)
         }
     }, [issue, teamId, updateIssue])
 
@@ -137,62 +186,23 @@ export default function IssueDetailsPage() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col h-full bg-background animate-pulse">
+            <div className="flex flex-col h-screen overflow-hidden animate-pulse">
                 <SiteHeader>
                     <div className="flex items-center gap-3">
                         <Skeleton className="h-8 w-8 rounded-full" />
                         <Skeleton className="h-4 w-12" />
-                        <span className="text-muted-foreground/30">/</span>
-                        <Skeleton className="h-4 w-8" />
                     </div>
                 </SiteHeader>
 
-                <div className="flex-1 px-8 py-6 max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Content Area */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="space-y-2">
-                            <Skeleton className="h-9 w-3/4 rounded-md" />
-                        </div>
-
-                        <Separator className="border-border/30" />
-
-                        {/* Description */}
-                        <div className="flex flex-col gap-2">
-                            <Skeleton className="h-4 w-24" />
-                            <Skeleton className="h-[210px] w-full rounded-lg" />
-                        </div>
-
-                        <Separator className="border-border/30" />
-
-                        {/* Recursive Subtasks Area */}
-                        <div className="space-y-4">
-                            <Skeleton className="h-4 w-20" />
-                            <div className="space-y-3">
-                                <Skeleton className="h-12 w-full rounded-lg" />
-                                <Skeleton className="h-12 w-full rounded-lg" />
-                            </div>
-                        </div>
+                <div className="flex-1 flex px-8 py-6 gap-8">
+                    <div className="flex-1 space-y-6">
+                        <Skeleton className="h-9 w-3/4 rounded-md" />
+                        <Skeleton className="h-[210px] w-full rounded-lg" />
                     </div>
-
-                    {/* Sidebar Properties */}
-                    <div className="space-y-6 bg-muted/10 border border-border/30 rounded-xl p-5 h-fit">
-                        <Skeleton className="h-4 w-24 mb-4" />
-                        <div className="space-y-4">
-                            <div className="flex flex-col gap-1.5">
-                                <Skeleton className="h-3 w-12" />
-                                <Skeleton className="h-9 w-full rounded-md" />
-                            </div>
-
-                            <div className="flex flex-col gap-1.5">
-                                <Skeleton className="h-3 w-12" />
-                                <Skeleton className="h-9 w-full rounded-md" />
-                            </div>
-
-                            <div className="flex flex-col gap-1.5">
-                                <Skeleton className="h-3 w-16" />
-                                <Skeleton className="h-9 w-full rounded-md" />
-                            </div>
-                        </div>
+                    <div className="w-[300px] space-y-6">
+                        <Skeleton className="h-9 w-full rounded-md" />
+                        <Skeleton className="h-9 w-full rounded-md" />
+                        <Skeleton className="h-9 w-full rounded-md" />
                     </div>
                 </div>
             </div>
@@ -209,7 +219,7 @@ export default function IssueDetailsPage() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-background">
+        <div className="flex flex-col h-screen overflow-hidden bg-background">
             <SiteHeader>
                 <div className="flex items-center gap-3">
                     <Button 
@@ -232,83 +242,132 @@ export default function IssueDetailsPage() {
                 </div>
             </SiteHeader>
 
-            <div className="flex-1 overflow-y-auto px-8 py-6 max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content Area */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="space-y-2">
-                        <div className="text-2xl font-bold tracking-tight text-foreground">
-                            <InlineEditor
-                                value={title}
-                                onChange={handleUpdateTitle}
-                                placeholder="Issue title"
-                                className="text-2xl font-bold tracking-tight text-foreground w-full"
-                            />
+            <div className="flex flex-1 overflow-hidden h-full">
+                <ResizablePanelGroup direction="horizontal" className="flex-1 h-full">
+                    <ResizablePanel defaultSize={75} className="h-full overflow-y-auto">
+                        <div className="w-full max-w-5xl px-8 py-6 space-y-8">
+                            {/* Title Area */}
+                            <div>
+                                <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                                    <div className="w-10 h-10 border border-dashed rounded-md flex items-center justify-center bg-muted/30">
+                                        <Check className="w-5 h-5 text-muted-foreground/50" />
+                                    </div>
+                                </div>
+                                <InlineEditor
+                                    value={textUpdatesRef.current.title ?? title ?? ""}
+                                    onChange={handleUpdateTitle}
+                                    placeholder="Issue title"
+                                    className="text-4xl font-semibold leading-tight tracking-tight mt-2"
+                                />
+                            </div>
+
+                            {/* Inline Properties Row */}
+                            <div className="flex flex-wrap items-center gap-2 -ml-2 py-2">
+                                <span className="text-sm text-muted-foreground mr-2 ml-2">Properties</span>
+                                <ProjectStatusSelector value={issue.status} onChange={handleUpdateStatus} />
+                                <ProjectPrioritySelector value={issue.properties?.priority || "None"} onChange={handleUpdatePriority} />
+                                <MemberSelector value={issue.properties?.assignee?.toString()} onChange={(v) => handleUpdateAssignee(v as string)} placeholder="Assignee" />
+
+                                <DateSelector
+                                    value={issue.estimated_end_date ? String(issue.estimated_end_date) : undefined}
+                                    onChange={handleUpdateDueDate}
+                                    placeholder="Due date"
+                                    className="ml-1"
+                                />
+
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium rounded-md text-muted-foreground/70 hover:text-foreground hover:bg-muted/50 gap-1.5 border border-transparent hover:border-border/40 transition-all">
+                                    <MoreHorizontal className="w-3.5 h-3.5" />
+                                </Button>
+                            </div>
+
+                            <Separator className="border-border/40" />
+
+                            {/* Description Editor */}
+                            <div className="mt-8">
+                                <div 
+                                    onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                                    className="flex items-center gap-2 mb-4 group cursor-pointer w-fit select-none"
+                                >
+                                    <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">Description</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-transform duration-200 ${descriptionExpanded ? "" : "-rotate-90"}`} />
+                                </div>
+                                {descriptionExpanded && (
+                                    <div className="min-h-[200px] animate-in fade-in duration-200">
+                                        <TiptapEditor
+                                            value={textUpdatesRef.current.description ?? description ?? ""}
+                                            onChange={handleUpdateDescription}
+                                            placeholder="Add a detailed description..."
+                                            className="prose-lg text-foreground/90 max-w-none"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <Separator className="border-border/40" />
+
+                            {/* Subtasks Section */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-foreground tracking-wide">Subtasks</h3>
+                                <SubtaskTreeSection 
+                                    parentIssue={issue} 
+                                    teamId={teamId} 
+                                    projectId={issue.project_id} 
+                                    createIssue={createIssue}
+                                    updateIssue={updateIssue}
+                                    router={router}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    </ResizablePanel>
 
-                    <Separator className="border-border/30" />
+                    <ResizableHandle withHandle className="hidden md:flex bg-border/40" />
 
-                    {/* Description */}
-                    <div className="flex flex-col gap-2">
-                        <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Description</Label>
-                        <div className="border border-border/50 rounded-lg overflow-hidden bg-background/50 focus-within:ring-1 focus-within:ring-primary/25 focus-within:border-primary/50">
-                            <TiptapEditor
-                                value={description}
-                                onChange={handleUpdateDescription}
-                                placeholder="Add rich description with slash commands..."
-                                className="p-4 prose prose-sm max-w-none min-h-[180px] focus:outline-none"
-                            />
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full hidden md:block border-l bg-accent/5">
+                        <div className="h-full overflow-y-auto">
+                            <div className="p-6 space-y-8">
+                                {/* Properties Section */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between group mb-4 select-none">
+                                        <h4 
+                                            onClick={() => setPropertiesExpanded(!propertiesExpanded)}
+                                            className="text-sm font-medium flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
+                                        >
+                                            Properties <ChevronDown className={`w-3.5 h-3.5 opacity-50 transition-transform duration-200 ${propertiesExpanded ? "" : "-rotate-90"}`} />
+                                        </h4>
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Plus className="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+
+                                    {propertiesExpanded && (
+                                        <div className="space-y-4 animate-in fade-in duration-200">
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span className="text-muted-foreground text-xs w-20">Status</span>
+                                                <ProjectStatusSelector value={issue.status} onChange={handleUpdateStatus} className="flex-1 justify-start h-8 px-2 bg-transparent hover:bg-muted border border-transparent hover:border-border/40" />
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span className="text-muted-foreground text-xs w-20">Priority</span>
+                                                <ProjectPrioritySelector value={issue.properties?.priority || "None"} onChange={handleUpdatePriority} className="flex-1 justify-start h-8 px-2 bg-transparent hover:bg-muted border border-transparent hover:border-border/40" />
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span className="text-muted-foreground text-xs w-20">Assignee</span>
+                                                <MemberSelector value={issue.properties?.assignee?.toString()} onChange={(v) => handleUpdateAssignee(v as string)} placeholder="Assignee" className="flex-1 justify-start h-8 px-2 bg-transparent hover:bg-muted border border-transparent hover:border-border/40" />
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span className="text-muted-foreground text-xs w-20">Due date</span>
+                                                <DateSelector value={issue.estimated_end_date ? String(issue.estimated_end_date) : undefined} onChange={handleUpdateDueDate} placeholder="Due date" className="flex-1 justify-start h-8 px-2 bg-transparent hover:bg-muted border border-transparent hover:border-border/40" />
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span className="text-muted-foreground text-xs w-20">Labels</span>
+                                                <LabelSelector value={((issue.properties?.labels || []) as any[]).map(l => l.toString())} onChange={(v) => handleUpdateLabels(Array.isArray(v) ? v : [v])} className="flex-1 justify-start h-8 px-2 bg-transparent hover:bg-muted border border-transparent hover:border-border/40" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
-                    <Separator className="border-border/30" />
-
-                    {/* Recursive Subtasks Area */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">Subtasks</h3>
-                        <SubtaskTreeSection 
-                            parentIssue={issue} 
-                            teamId={teamId} 
-                            projectId={issue.project_id} 
-                            createIssue={createIssue}
-                            updateIssue={updateIssue}
-                            router={router}
-                        />
-                    </div>
-                </div>
-
-                {/* Sidebar Properties */}
-                <div className="space-y-6 bg-muted/10 border border-border/30 rounded-xl p-5 h-fit">
-                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Properties</h3>
-                    <div className="space-y-4">
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground font-medium">Status</Label>
-                            <ProjectStatusSelector
-                                value={issue.status}
-                                onChange={handleUpdateStatus}
-                                className="justify-start px-2 bg-background hover:bg-muted/40 border-border/30 h-9 w-full"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground font-medium">Priority</Label>
-                            <ProjectPrioritySelector
-                                value={issue.properties?.priority || "None"}
-                                onChange={handleUpdatePriority}
-                                className="justify-start px-2 bg-background hover:bg-muted/40 border-border/30 h-9 w-full"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                            <Label className="text-xs text-muted-foreground font-medium">Assignee</Label>
-                            <MemberSelector
-                                value={issue.properties?.lead_id}
-                                onChange={handleUpdateLead}
-                                className="justify-start px-2 bg-background hover:bg-muted/40 border-border/30 h-9 w-full"
-                            />
-                        </div>
-                    </div>
-                </div>
+                    </ResizablePanel>
+                </ResizablePanelGroup>
             </div>
         </div>
     )

@@ -96,7 +96,7 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
     }
   }, [task, teamId, updateTask])
 
-  const handleUpdateLead = useCallback(async (leadId: string) => {
+  const handleUpdateAssignee = useCallback(async (assigneeId: string) => {
     if (!task) return
     try {
       await updateTask({
@@ -104,14 +104,14 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
         updates: {
           properties: {
             ...(task.properties || {}),
-            lead_id: leadId
+            assignee: assigneeId
           }
         },
         teamId,
         projectId: task.project_id
       }).unwrap()
     } catch (err) {
-      console.error("Failed to update lead:", err)
+      console.error("Failed to update assignee:", err)
     }
   }, [task, teamId, updateTask])
 
@@ -163,9 +163,10 @@ export const IssueDetailSheet: React.FC<IssueDetailSheetProps> = ({
             <div className="flex flex-col gap-1.5 col-span-2">
               <Label className="text-xs text-muted-foreground font-medium">Assignee</Label>
               <MemberSelector
-                value={task.properties?.lead_id}
-                onChange={handleUpdateLead}
+                value={task.properties?.assignee}
+                onChange={handleUpdateAssignee}
                 className="justify-start px-2 bg-transparent hover:bg-muted/40 border-border/30 h-8 w-full"
+                placeholder="Assignee"
               />
             </div>
           </div>

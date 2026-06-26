@@ -358,17 +358,16 @@ export default function ProjectDetailsPage() {
                                                         </button>
 
                                                         {/* Inline Input Title */}
-                                                        <input 
-                                                            type="text"
+                                                        <InlineEditor
+                                                            value={m.title}
+                                                            onChange={(val) => {
+                                                                if (val !== m.title) {
+                                                                    updateMilestone({ milestoneId: m.milestone_id, updates: { title: val } });
+                                                                }
+                                                            }}
                                                             className={`bg-transparent border-none outline-none focus:ring-0 flex-1 text-xs font-normal transition-all duration-200 ${
                                                                 isCompleted ? "line-through text-muted-foreground/50" : "text-foreground/90"
                                                             }`}
-                                                            defaultValue={m.title}
-                                                            onBlur={(e) => {
-                                                                if (e.target.value !== m.title) {
-                                                                    updateMilestone({ milestoneId: m.milestone_id, updates: { title: e.target.value } });
-                                                                }
-                                                            }}
                                                         />
 
                                                         {/* Delete Button */}

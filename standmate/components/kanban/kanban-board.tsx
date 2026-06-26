@@ -67,10 +67,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   const viewState = useAppSelector((state) => state.view.views[entityType])
   const groupBy = viewState?.groupBy || 'status'
-  const visibleProperties = viewState?.visibleProperties || []
-
-  const schemaDefinitions = useAppSelector((state) => state.meta.propertyDefinitions[entityType])
+  
+  const schemaDefinitions = useAppSelector((state) => state.meta.propertyDefinitions[entityType]) || []
   const groupDef = schemaDefinitions?.find(def => def.key === groupBy)
+
+  const visibleProperties = useMemo(() => {
+    return schemaDefinitions
+      .filter(def => def.visible !== false)
+      .map(def => def.key)
+  }, [schemaDefinitions])
 
   // Ensure client-only rendering for drag and drop to avoid hydration mismatch
   useEffect(() => {
@@ -500,13 +505,13 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
     })
   }, [item.id, item.properties, item.project_id, teamId, updateTask])
 
-  const handleUpdateLead = useCallback((leadId: string) => {
+  const handleUpdateAssignee = useCallback((assigneeId: string) => {
     updateTask({
       issueId: item.id,
       updates: {
         properties: {
           ...(item.properties || {}),
-          lead_id: leadId
+          assignee: assigneeId
         }
       },
       teamId,
@@ -531,7 +536,7 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
       trigger?.click()
     } else if (e.key === 'a' || e.key === 'A' || e.key === 'e' || e.key === 'E') {
       e.preventDefault()
-      const trigger = cardRef.current?.querySelector('[data-lead-trigger]') as HTMLElement
+      const trigger = cardRef.current?.querySelector('[data-assignee-trigger]') as HTMLElement
       trigger?.click()
     } else if (e.key === 'p' || e.key === 'P') {
       e.preventDefault()
@@ -573,34 +578,47 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
 
               {/* Lightweight Micro-dropdown Selectors for instant updates */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <div data-status-trigger>
-                  <ProjectStatusSelector
-                    value={item.status}
-                    onChange={handleUpdateStatus}
-                    className="h-6 px-1.5 text-[11px]"
-                  />
-                </div>
-                <div data-priority-trigger>
-                  <ProjectPrioritySelector
-                    value={item.properties?.priority || "None"}
-                    onChange={handleUpdatePriority}
-                    className="h-6 px-1.5 text-[11px]"
-                  />
-                </div>
-                <div data-lead-trigger>
-                  <MemberSelector
-                    value={item.properties?.lead_id}
-                    onChange={handleUpdateLead}
-                    className="h-6 px-1.5 text-[11px]"
-                  />
-                </div>
+                {visibleProperties.includes("status") && (
+                  <div data-status-trigger>
+                    <ProjectStatusSelector
+                      value={item.status}
+                      onChange={handleUpdateStatus}
+                      className="h-6 px-1.5 text-[11px]"
+                    />
+                  </div>
+                )}
+                {visibleProperties.includes("priority") && (
+                  <div data-priority-trigger>
+                    <ProjectPrioritySelector
+                      value={item.properties?.priority || "None"}
+                      onChange={handleUpdatePriority}
+                      className="h-6 px-1.5 text-[11px]"
+                    />
+                  </div>
+                )}
+                {visibleProperties.includes("assignee") && (
+                  <div data-assignee-trigger>
+                    <MemberSelector
+                      value={item.properties?.assignee}
+                      onChange={handleUpdateAssignee}
+                      placeholder="Assignee"
+                      className="h-6 px-1.5 text-[11px]"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
+            {visibleProperties.includes("description") && item.description && (
+              <div className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                {item.description.replace(/<[^>]*>?/gm, '')}
+              </div>
+            )}
+
             {/* Render visible properties dynamically */}
             {visibleProperties.length > 0 && (
-              <div className="flex flex-col gap-1 pt-2 border-t border-border/20">
-                {visibleProperties.filter(p => p !== 'project_title' && p !== 'title' && p !== 'status' && p !== 'priority' && p !== 'lead_id').map(propKey => {
+              <div className="flex flex-col gap-1 pt-2 border-t border-border/20 mt-3">
+                {visibleProperties.filter(p => p !== 'project_title' && p !== 'title' && p !== 'status' && p !== 'priority' && p !== 'assignee' && p !== 'description').map(propKey => {
                    const val = item[propKey] ?? item.properties?.[propKey]
                    if (val === undefined || val === null || val === '') return null;
 

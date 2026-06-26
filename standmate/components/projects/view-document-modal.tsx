@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
+import { InlineEditor } from "@/components/editor/inline-editor"
 import { useUpdateDocumentMutation, useDeleteDocumentMutation, ProjectDocumentResponse } from "@/services/documentsApi"
 import { EmojiSelector } from "@/components/ui/emoji-selector"
 import { Check, Trash2, FileText, Calendar, Edit3, X } from "lucide-react"
@@ -111,13 +112,11 @@ export function ViewDocumentModal({ document, trigger }: ViewDocumentModalProps)
                             triggerClassName="h-10 w-10 text-xl rounded-md bg-muted/20 hover:bg-muted/50 border border-border/20" 
                         />
                         <div className="space-y-1 flex-1">
-                            <input
-                                type="text"
+                            <InlineEditor
                                 value={title}
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={(val) => setTitle(val)}
                                 placeholder="Untitled document"
                                 className="text-2xl font-semibold border-none outline-none focus:ring-0 p-0 shadow-none bg-transparent placeholder:text-muted-foreground/40 w-full h-auto"
-                                required
                             />
                             <div className="flex items-center gap-2 text-xs text-muted-foreground select-none">
                                 <Calendar className="w-3 h-3 opacity-60" />

@@ -92,6 +92,15 @@ PROPERTIES_REGISTRY: Dict[str, List[Dict[str, Any]]] = {
     ],
     "task": [
         {
+            "key": "status",
+            "type": PropertyType.STATUS,
+            "label": "Status",
+            "options": ["Backlog", "Planning", "In Progress", "Paused", "Done", "Canceled"],
+            "default": "Backlog",
+            "required": True,
+            "visible": True
+        },
+        {
             "key": "priority",
             "type": PropertyType.SELECT,
             "label": "Priority",
@@ -118,6 +127,22 @@ PROPERTIES_REGISTRY: Dict[str, List[Dict[str, Any]]] = {
             "key": "description",
             "type": PropertyType.RICH_TEXT,
             "label": "Description"
+        },
+        {
+            "key": "estimated_end_date",
+            "type": PropertyType.DATE,
+            "label": "Due Date"
+        },
+        {
+            "key": "creator",
+            "type": PropertyType.USER,
+            "label": "Creator"
+        },
+        {
+            "key": "links",
+            "type": PropertyType.JSON,
+            "label": "Links",
+            "default": []
         }
     ]
 }

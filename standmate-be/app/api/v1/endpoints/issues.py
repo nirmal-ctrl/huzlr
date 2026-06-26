@@ -139,11 +139,14 @@ async def create_project_issue(
     await assert_can_access_project(current_user.id, project.team_id, db)
 
     issue_data = issue.model_dump()
-    properties = issue_data.pop("properties", None)
+    properties = issue_data.pop("properties", None) or {}
     
+    # Auto-assign creator
+    if "creator" not in properties:
+        properties["creator"] = str(current_user.id)
+        
     db_issue = Issue(**issue_data)
-    if properties is not None:
-        db_issue.properties = properties
+    db_issue.properties = properties
         
     db.add(db_issue)
     await db.commit()
