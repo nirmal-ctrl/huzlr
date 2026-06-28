@@ -109,6 +109,7 @@ async def lifespan(app: FastAPI):
     # Terminate Founder agent worker on shutdown
     if founder_process:
         logger.info("Terminating LiveKit Founder voice agent worker subprocess...")
+        logger.info("Terminating LiveKit Founder voice agent worker subprocess...")
         founder_process.terminate()
         try:
             founder_process.wait(timeout=5)

@@ -33,6 +33,7 @@ from livekit.agents import (
     AutoSubscribe,
     JobContext,
     JobProcess,
+    JobRequest,
     WorkerOptions,
     cli,
     llm,
@@ -330,10 +331,21 @@ async def entrypoint(ctx: JobContext):
     finally:
         logger.info("Leaving LiveKit room...")
 
+
+async def request_fnc(req: JobRequest) -> None:
+    logger.info(f"Received job request for room: {req.room.name}")
+    if req.room.name == "founder-room":
+        logger.info("Accepting founder job request")
+        await req.accept()
+    else:
+        logger.info("Rejecting job request - room name mismatch")
+        await req.reject()
+
 if __name__ == "__main__":
     cli.run_app(
         WorkerOptions(
             entrypoint_fnc=entrypoint,
             prewarm_fnc=prewarm,
+            request_fnc=request_fnc,
         )
     )
