@@ -50,6 +50,14 @@ body {
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.805 0.088 88.5);
+
+  /* Marketing palette (Claude-inspired warm neutrals + clay accent) */
+  --paper: oklch(0.962 0.012 80);
+  --ink: oklch(0.24 0.015 60);
+  --clay: oklch(0.586 0.132 41);
+  --clay-deep: oklch(0.5 0.115 40);
+  --sand: oklch(0.935 0.016 78);
+  --hairline: oklch(0.878 0.015 72);
 }
 
 .dark {
@@ -86,12 +94,28 @@ body {
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.85 0.08 88.5);
+
+  /* Marketing palette — dark (warm charcoal + soft clay) */
+  --paper: oklch(0.19 0.012 60);
+  --ink: oklch(0.93 0.012 82);
+  --clay: oklch(0.672 0.117 43);
+  --clay-deep: oklch(0.586 0.132 41);
+  --sand: oklch(0.235 0.014 62);
+  --hairline: oklch(0.93 0.012 82 / 12%);
 }
 
 @theme inline {
-  /* Updated font-sans to Inter */
-  --font-sans: "Inter", sans-serif;
+  /* Fonts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
   --font-caveat: var(--font-caveat);
+  /* Marketing palette tokens */
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-clay: var(--clay);
+  --color-clay-deep: var(--clay-deep);
+  --color-sand: var(--sand);
+  --color-hairline: var(--hairline);
   --color-background: var(--background);
   --color-dialogbg: var(--dialog-bg);
   --color-foreground: var(--foreground);
@@ -133,30 +157,6 @@ body {
   --animate-appear: appear 0.5s ease-out forwards;
   --color-brand-foreground: var(----brand-foreground);
   --color-brand: var(----brand);
-
-  @keyframes appear-zoom {
-    0% {
-      opacity: 0;
-      transform: scale(0.98);
-    }
-
-    100% {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes appear {
-    0% {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 
   @keyframes appear-zoom {
     0% {

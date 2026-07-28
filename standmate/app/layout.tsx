@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Caveat } from "next/font/google"
+import { Inter, Caveat, Source_Serif_4 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -10,10 +10,16 @@ import { SmoothScroll } from "@/components/smooth-scroll"
 
 import "./globals.css"
 
-const _inter = Inter({
+const inter = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
+})
+
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-source-serif",
 })
 
 const caveat = Caveat({
@@ -23,9 +29,9 @@ const caveat = Caveat({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://huzlr.com"),
-  title: "Huzlr - AI Project Manager | Deliver Projects 10X Faster",
+  title: "Huzlr — Project intelligence that thinks ahead",
   description:
-    "Autonomous AI project management that predicts risks, prevents delays, and accelerates delivery. Smart planning, real-time monitoring, and team optimization. Start free trial.",
+    "Huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail. Join the private beta.",
   keywords: [
     "AI project manager",
     "project management software",
@@ -50,17 +56,17 @@ export const metadata: Metadata = {
     "AI-powered project dashboards",
   ],
   openGraph: {
-    title: "Huzlr - AI Project Manager That Delivers 10X Faster",
+    title: "Huzlr — Project intelligence that thinks ahead",
     description:
-      "Autonomous project intelligence for engineering teams. Predict risks, prevent delays, optimize resources.",
+      "A thinking layer above your existing tools. Predict risks early, surface the signals that matter, and decide before projects derail.",
     images: ["/og-image.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Huzlr - AI Project Manager",
+    title: "Huzlr — Project intelligence that thinks ahead",
     description:
-      "Deliver projects 10X faster with AI-powered project management",
+      "A thinking layer above your existing tools. Signals, not dashboards.",
     images: ["/twitter-image.png"],
   },
   icons: {
@@ -84,13 +90,13 @@ export default function RootLayout({
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "Autonomous AI project management that predicts risks, prevents delays, and accelerates delivery. Smart planning, real-time monitoring, and team optimization.",
-    "featureList": "Risk forecasting, predictive delay warnings, agile planning, automated project intelligence, team resource optimization"
+    "description": "Huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail.",
+    "featureList": "Risk forecasting, predictive delay warnings, async standups, delivery drift detection, automated project intelligence"
   }
 
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <body className={`font-sans antialiased ${caveat.variable}`} suppressHydrationWarning={true}>
+      <body className={`font-sans antialiased ${inter.variable} ${sourceSerif.variable} ${caveat.variable}`} suppressHydrationWarning={true}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

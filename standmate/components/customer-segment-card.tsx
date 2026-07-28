@@ -1,7 +1,6 @@
 import Image from "next/image"
-import { ArrowRight, Calendar, Clock } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface CustomerSegmentCardProps {
@@ -18,7 +17,7 @@ export function CustomerSegmentCard({
   description,
 }: CustomerSegmentCardProps) {
   return (
-    <Card className="group relative flex h-[400px] flex-col overflow-hidden rounded-3xl border-0 bg-transparent shadow-none transition-all duration-500 hover:shadow-2xl">
+    <Card className="group relative flex h-[400px] flex-col overflow-hidden rounded-2xl border border-hairline bg-transparent shadow-none transition-all duration-500 hover:shadow-xl hover:shadow-ink/10">
       <div className="absolute inset-0 z-0">
         <Image
           src={imageSrc}
@@ -32,10 +31,10 @@ export function CustomerSegmentCard({
 
       <CardContent className="relative z-10 flex h-full flex-col justify-end p-6 text-white sm:p-8">
         <div className="transform transition-transform duration-500 ease-out group-hover:-translate-y-2">
-          <span className="mb-4 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-white backdrop-blur-md">
+          <span className="mb-4 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white backdrop-blur-md">
             {category}
           </span>
-          <h3 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-white md:text-3xl">
+          <h3 className="mb-2 font-serif text-2xl leading-tight tracking-tight text-white md:text-3xl">
             {title}
           </h3>
           <p className="line-clamp-3 text-sm leading-relaxed text-gray-300 opacity-90 transition-opacity duration-500 group-hover:opacity-100 group-hover:line-clamp-none">

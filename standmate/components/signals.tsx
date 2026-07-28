@@ -81,22 +81,21 @@ function SignalBubble({
             onMouseLeave={() => setIsHovered(false)}
             className={cn(
                 "absolute rounded-full flex items-center justify-center cursor-pointer",
-                "bg-gradient-to-br from-primary/20 via-primary/30 to-primary/40",
-                "dark:from-primary/30 dark:via-primary/40 dark:to-primary/50",
-                "border border-primary/20 dark:border-primary/30",
+                "bg-gradient-to-br from-clay/15 via-clay/25 to-clay/35",
+                "border border-clay/25",
                 "backdrop-blur-sm shadow-lg",
                 sizeClasses[size],
                 isPulsing && "animate-pulse"
             )}
             style={{
                 boxShadow: isHovered
-                    ? "0 0 30px rgba(22, 81, 139, 0.4), 0 8px 32px rgba(0, 0, 0, 0.15)"
-                    : "0 0 20px rgba(22, 81, 139, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1)",
+                    ? "0 0 30px color-mix(in oklch, var(--clay) 40%, transparent), 0 8px 32px rgba(0, 0, 0, 0.15)"
+                    : "0 0 20px color-mix(in oklch, var(--clay) 20%, transparent), 0 4px 16px rgba(0, 0, 0, 0.1)",
             }}
             whileHover={{ scale: 1.05 }}
         >
             {/* Bubble label */}
-            <span className="text-center font-medium text-foreground/80 dark:text-foreground/90 px-2 leading-tight">
+            <span className="text-center font-medium text-ink/90 px-2 leading-tight">
                 {label}
             </span>
 
@@ -136,7 +135,7 @@ interface ParticleDotProps {
 function ParticleDot({ x, y, delay, opacity }: ParticleDotProps) {
     return (
         <motion.div
-            className="absolute w-1.5 h-1.5 rounded-full bg-primary/40 dark:bg-primary/50"
+            className="absolute w-1.5 h-1.5 rounded-full bg-clay/40"
             initial={{ opacity: 0 }}
             animate={{
                 opacity: opacity,
@@ -222,15 +221,19 @@ export function Signals() {
     return (
         <section
             ref={containerRef}
-            className="relative py-16 md:py-24 border-t border-border overflow-hidden"
+            id="signals"
+            className="relative py-24 md:py-28 border-t border-hairline overflow-hidden"
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Section header */}
-                <div className="mb-12 text-center md:text-left">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
-                        Signals, <span className="text-primary font-caveat">not dashboards</span>
+                <div className="mb-12 text-center md:text-left max-w-2xl">
+                    <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
+                        Judgment over noise
+                    </p>
+                    <h2 className="mt-4 font-serif text-4xl md:text-5xl tracking-tight text-ink text-balance">
+                        Signals, <em className="italic text-clay">not dashboards</em>
                     </h2>
-                    <p className="text-sm text-muted-foreground max-w-2xl">
+                    <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
                         Huzlr continuously reads project intent, execution flow, and people dynamics to
                         surface what deserves your attention.
                     </p>
@@ -244,11 +247,11 @@ export function Signals() {
                         <div className="absolute inset-0 flex items-center justify-center">
                             <motion.div
                                 animate={{
-                                    opacity: activeScene === 0 ? 0.3 : 0.15,
+                                    opacity: activeScene === 0 ? 0.25 : 0.12,
                                     scale: activeScene === 0 ? 1 : 0.8,
                                 }}
                                 transition={{ duration: 1.5 }}
-                                className="w-64 h-64 bg-primary/20 dark:bg-primary/30 rounded-full blur-[80px]"
+                                className="w-64 h-64 bg-clay/20 rounded-full blur-[80px]"
                             />
                         </div>
 
@@ -303,12 +306,12 @@ export function Signals() {
                                 transition={{ duration: 0.5 }}
                                 className="space-y-4"
                             >
-                                <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+                                <h3 className="font-serif text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.15] text-ink">
                                     {currentScene.heading}
                                     <br />
-                                    <span className="text-primary">{currentScene.headingAccent}</span>
+                                    <em className="italic text-clay">{currentScene.headingAccent}</em>
                                 </h3>
-                                <p className="text-base md:text-lg text-muted-foreground max-w-md">
+                                <p className="text-base md:text-lg text-ink/60 max-w-md leading-relaxed">
                                     {currentScene.subtext}
                                 </p>
                             </motion.div>
@@ -323,8 +326,8 @@ export function Signals() {
                                     className={cn(
                                         "h-1.5 rounded-full transition-all duration-300",
                                         activeScene === i
-                                            ? "w-8 bg-primary"
-                                            : "w-4 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                            ? "w-8 bg-clay"
+                                            : "w-4 bg-ink/20 hover:bg-ink/35"
                                     )}
                                     aria-label={`Go to scene ${i + 1}`}
                                 />
@@ -332,7 +335,7 @@ export function Signals() {
                         </div>
 
                         {/* Supporting line */}
-                        <p className="mt-8 text-xs text-muted-foreground/70">
+                        <p className="mt-8 text-xs text-ink/50">
                             No tracking. No micromanagement. Just judgment.
                         </p>
                     </div>

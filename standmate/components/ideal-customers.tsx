@@ -1,53 +1,55 @@
-
 import { CustomerSegmentCard } from "@/components/customer-segment-card"
-import { LogoCloud } from "@/components/logo-cloud"
 
 export function IdealCustomers() {
   const segments = [
     {
       imageSrc: "/segment-enterprise.png",
       category: "Enterprise",
-      title: "Governance & Security",
+      title: "Governance & security",
       description:
-        "Empower your organization with unified portfolio management, advanced security controls, and cross-team dependency tracking. Ensure compliance and alignment at scale.",
+        "Unified portfolio oversight, security controls, and cross-team dependency tracking. Alignment at scale, without the status meetings.",
     },
     {
       imageSrc: "/segment-startups.png",
       category: "Startups",
-      title: "Move Fast & Iterate",
+      title: "Move fast, see clearly",
       description:
-        "Accelerate your product cycles with rapid planning tools and resource optimization. Keep your team focused on shipping features while maintaining code quality and velocity.",
+        "Rapid planning and early risk signals keep your team shipping — while Huzlr watches the dependencies you don't have time to track.",
     },
     {
       imageSrc: "/segment-agencies.png",
       category: "Agencies",
-      title: "Manage Multiple Clients",
+      title: "Every client, one view",
       description:
-        "Streamline client communication and project delivery. Switch contexts effortlessly between different client workspaces while maintaining a unified view of your agency's performance.",
+        "Switch contexts effortlessly between client workspaces while keeping a unified picture of delivery health across your agency.",
     },
     {
       imageSrc: "/segment-solopreneurs.png",
       category: "Solopreneurs",
-      title: "Your AI Co-founder",
+      title: "Your AI co-founder",
       description:
-        "Manage your entire business with an AI partner. From content calendars to product roadmaps, stay accountable and productive without the overhead of a large team.",
+        "From content calendars to product roadmaps, stay accountable and productive with an AI partner — no PM hire required.",
     },
   ]
 
   return (
-    <section className="border-t border-border bg-background py-24 sm:py-32">
+    <section id="who-its-for" className="border-t border-hairline py-24 sm:py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Built for projects of all sizes
+          <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
+            Who it's for
+          </p>
+          <h2 className="mt-4 font-serif text-4xl sm:text-5xl tracking-tight text-ink text-balance">
+            Built for teams of <em className="italic text-clay">every</em> size
           </h2>
-          <p className="mt-4 text-lg leading-8 text-muted-foreground">
-            Whether you're a solo founder or leading a large enterprise, Standmate adapts to your workflow.
+          <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
+            Whether you're a solo founder or leading a large enterprise,
+            Huzlr adapts to your workflow — not the other way around.
           </p>
         </div>
-        <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-6 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-2 xl:grid-cols-4">
-          {segments.map((segment, idx) => (
-            <CustomerSegmentCard key={idx} {...segment} />
+        <div className="mx-auto mt-14 grid max-w-2xl grid-cols-1 gap-5 lg:mx-0 lg:max-w-none lg:grid-cols-2 xl:grid-cols-4">
+          {segments.map((segment) => (
+            <CustomerSegmentCard key={segment.category} {...segment} />
           ))}
         </div>
       </div>

@@ -1,86 +1,65 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { TrendingUp, Clock, Smile, Eye } from "lucide-react"
+import { Radar, MessagesSquare, HeartPulse, Eye } from "lucide-react"
 
 export function Benefits() {
   const benefits = [
     {
-      stat: "10x Faster",
-      desc: "Delivery Speed",
-      icon: Clock,
-      className: "bg-primary text-primary-foreground",
-      iconBg: "bg-primary-foreground/20",
-      arrowBg: "bg-primary-foreground text-primary",
+      title: "Risks surface early",
+      desc: "Dependencies, drifting scope, and stalled work are flagged while there's still time to act — not at the retrospective.",
+      icon: Radar,
     },
     {
-      stat: "85% Reduction",
-      desc: "In Missed Deadlines",
-      icon: TrendingUp,
-      className: "bg-primary text-primary-foreground",
-      iconBg: "bg-primary-foreground/20",
-      arrowBg: "bg-primary-foreground text-primary",
+      title: "Standups run themselves",
+      desc: "Huzlr collects updates asynchronously, follows up on blockers, and summarizes what actually matters.",
+      icon: MessagesSquare,
     },
     {
-      stat: "60% Less",
-      desc: "Team Burnout",
-      icon: Smile,
-      className: "bg-primary text-primary-foreground",
-      iconBg: "bg-primary-foreground/20",
-      arrowBg: "bg-primary-foreground text-primary",
+      title: "Teams stay healthy",
+      desc: "Workload imbalances and morale dips are detected early, so leads can support people before burnout sets in.",
+      icon: HeartPulse,
     },
     {
-      stat: "100% Real-time",
-      desc: "Project Visibility",
+      title: "One honest picture",
+      desc: "A living view of delivery health across every project — no stale dashboards, no manual status chasing.",
       icon: Eye,
-      className: "bg-primary text-primary-foreground",
-      iconBg: "bg-primary-foreground/20",
-      arrowBg: "bg-primary-foreground text-primary",
     },
   ]
 
   return (
-    <section className="relative py-24 px-4 sm:px-6 lg:px-8 border-t border-border bg-background overflow-hidden">
-      <div className="relative max-w-6xl mx-auto space-y-16">
+    <section className="relative py-24 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-hairline overflow-hidden">
+      <div className="relative max-w-6xl mx-auto">
         {/* Header */}
-        <div className="space-y-4 text-left">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            The Huzlr Impact
+        <div className="max-w-2xl">
+          <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
+            Why teams choose huzlr
+          </p>
+          <h2 className="mt-4 font-serif text-4xl sm:text-5xl tracking-tight text-ink text-balance">
+            Less managing. <em className="italic text-clay">More shipping.</em>
           </h2>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Real outcomes driven by autonomous delivery intelligence.
+          <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
+            Huzlr takes on the coordination work that slows teams down, so
+            yours can spend its energy on the work itself.
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {benefits.map((benefit, idx) => {
+        {/* Cards */}
+        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5">
+          {benefits.map((benefit) => {
             const Icon = benefit.icon
             return (
-              <Card
-                key={idx}
-                className={`group relative p-6 border-0 ${benefit.className} rounded-3xl overflow-hidden hover:scale-[1.02] transition-transform duration-200`}
+              <div
+                key={benefit.title}
+                className="group rounded-2xl border border-hairline bg-sand/40 p-7 transition-colors duration-300 hover:bg-sand/70"
               >
-                <CardContent className="p-0 space-y-6">
-                  <div className="flex items-start justify-between">
-                    <div className={`w-10 h-10 rounded-xl ${benefit.iconBg} flex items-center justify-center flex-shrink-0`}>
-                      <Icon size={20} strokeWidth={2} />
-                    </div>
-                    <div className={`w-8 h-8 rounded-full ${benefit.arrowBg} flex items-center justify-center`}>
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 11L11 1M11 1H1M11 1V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="text-xl font-bold tracking-tight">
-                      {benefit.stat}
-                    </div>
-                    <p className="text-xs opacity-80">
-                      {benefit.desc}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className="w-10 h-10 rounded-full bg-clay/10 text-clay flex items-center justify-center">
+                  <Icon size={18} strokeWidth={2} />
+                </div>
+                <h3 className="mt-5 font-serif text-2xl tracking-tight text-ink">
+                  {benefit.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink/60">
+                  {benefit.desc}
+                </p>
+              </div>
             )
           })}
         </div>

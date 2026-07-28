@@ -1,99 +1,71 @@
 import Link from 'next/link';
 
 export function Footer() {
+  const year = new Date().getFullYear();
+
+  const columns = [
+    {
+      heading: "Product",
+      links: [
+        { label: "How it works", href: "/#how-it-works" },
+        { label: "Signals", href: "/#signals" },
+        { label: "Integrations", href: "/integrations" },
+        { label: "Join waitlist", href: "/signup" },
+      ],
+    },
+    {
+      heading: "Resources",
+      links: [
+        { label: "Blog", href: "/blog" },
+        { label: "Case Studies", href: "/case-studies" },
+        { label: "FAQ", href: "/#faq" },
+      ],
+    },
+    {
+      heading: "Company",
+      links: [
+        { label: "Pitch Deck", href: "/pitch-deck" },
+        { label: "Contact", href: "mailto:hello@huzlr.com" },
+      ],
+    },
+  ];
+
   return (
-    <footer className="border-t border-border py-12 px-4 sm:px-6 lg:px-8">
+    <footer className="border-t border-hairline py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Product</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Features
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Pricing
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Security
-                </a>
-              </li>
-            </ul>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+          {/* Brand */}
+          <div className="col-span-2 space-y-4">
+            <Link href="/" className="flex items-baseline">
+              <span className="font-serif text-2xl tracking-tight text-ink">huzlr</span>
+              <span className="font-serif text-2xl text-clay">.</span>
+            </Link>
+            <p className="text-sm leading-relaxed text-ink/50 max-w-xs">
+              Project intelligence that thinks ahead. Signals, not dashboards.
+            </p>
           </div>
-          <div className="space-y-4">
-            <h3 className="font-semibold">Company</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  About
-                </a>
-              </li>
-              <li>
-                <Link href="/blog" className="hover:text-foreground transition">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Careers
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <h3 className="font-semibold">Resources</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/case-studies" className="hover:text-foreground transition">
-                  Case Studies
-                </Link>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Docs
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  API
-                </a>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <h3 className="font-semibold">Legal</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Privacy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Terms
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-foreground transition">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">H</span>
+
+          {columns.map((col) => (
+            <div key={col.heading} className="space-y-4">
+              <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-ink/40">
+                {col.heading}
+              </h3>
+              <ul className="space-y-2.5 text-sm text-ink/60">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="hover:text-clay transition-colors">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <span className="font-semibold">Huzlr</span>
-          </div>
-          <p className="text-sm text-muted-foreground">© 2025 Huzlr. All rights reserved.</p>
+          ))}
+        </div>
+
+        <div className="border-t border-hairline pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-ink/40">© {year} Huzlr. All rights reserved.</p>
+          <p className="text-xs text-ink/40">Currently in private beta.</p>
         </div>
       </div>
     </footer>

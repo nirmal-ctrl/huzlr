@@ -1,7 +1,6 @@
 import { Benefits } from "@/components/benefits"
 import { CTA } from "@/components/cta"
 import { FAQ } from "@/components/faq"
-import { AnimatedBeamFeatures } from "@/components/animated-beam-features"
 import { Footer } from "@/components/footer"
 import Hero from "@/components/hero"
 import { HowItWorks } from "@/components/how-it-works"
@@ -17,21 +16,16 @@ export default function Home() {
     applicationCategory: "ProjectManagement",
     operatingSystem: "Web",
     description:
-      "Autonomous AI project management that predicts risks, prevents delays, and accelerates delivery.",
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "88",
-    },
+      "Project intelligence that predicts risk early, surfaces the signals that matter, and helps teams decide before projects derail.",
     offers: {
       "@type": "Offer",
-      price: "29.00",
+      price: "0",
       priceCurrency: "USD",
     },
   }
 
   return (
-    <main className="bg-background text-foreground">
+    <main className="bg-paper text-ink antialiased">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
