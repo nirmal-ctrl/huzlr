@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const postUrl = `https://huzlr.com/blog/${slug}`;
 
     return {
-      title: `${post.title} | Huzlr Blog`,
+      title: `${post.title} | huzlr Blog`,
       description: post.description,
       openGraph: {
         title: post.title,
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   } catch (error) {
     return {
-      title: 'Huzlr Blog Post',
+      title: 'huzlr Blog Post',
     };
   }
 }
@@ -115,12 +115,12 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
     "dateModified": post.updatedAt || post.publishDate,
     "author": {
       "@type": "Person",
-      "name": post.author?.name || "Huzlr Editor",
-      "jobTitle": post.author?.bio || "Huzlr Editorial Team"
+      "name": post.author?.name || "huzlr Editor",
+      "jobTitle": post.author?.bio || "huzlr Editorial Team"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "Huzlr",
+      "name": "huzlr",
       "logo": {
         "@type": "ImageObject",
         "url": "https://huzlr.com/favicon.png"
@@ -200,8 +200,8 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
                 </div>
               )}
               <div>
-                <p className="text-sm font-bold text-foreground">{post.author?.name || 'Huzlr Editor'}</p>
-                <p className="text-xs text-muted-foreground">{post.author?.bio || 'Huzlr Editorial Team'}</p>
+                <p className="text-sm font-bold text-foreground">{post.author?.name || 'huzlr Editor'}</p>
+                <p className="text-xs text-muted-foreground">{post.author?.bio || 'huzlr Editorial Team'}</p>
               </div>
             </div>
 
@@ -266,7 +266,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
             )}
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground font-medium">WRITTEN BY</p>
-              <h4 className="text-base font-bold text-foreground">{post.author?.name || 'Huzlr Editorial Team'}</h4>
+              <h4 className="text-base font-bold text-foreground">{post.author?.name || 'huzlr Editorial Team'}</h4>
               <p className="text-xs text-muted-foreground max-w-md">{post.author?.bio || 'Writing about autonomous project operations, agent frameworks, and AI workflows.'}</p>
             </div>
           </div>

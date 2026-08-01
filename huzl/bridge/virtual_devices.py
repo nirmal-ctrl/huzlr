@@ -17,29 +17,29 @@ def setup_linux_devices():
         logger.error("pactl command not found. Please install pulseaudio-utils or pipewire-pulse.")
         return False
 
-    # Create Huzlr Speaker
-    logger.info("Creating 'Huzlr Virtual Speaker'...")
+    # Create huzlr Speaker
+    logger.info("Creating 'huzlr Virtual Speaker'...")
     cmd_speaker = [
         "pactl", "load-module", "module-null-sink",
-        "sink_name=Huzlr_Speaker",
-        'sink_properties=device.description="Huzlr_Virtual_Speaker"'
+        "sink_name=huzlr_Speaker",
+        'sink_properties=device.description="huzlr_Virtual_Speaker"'
     ]
     try:
         subprocess.run(cmd_speaker, check=True)
-        logger.info("Successfully loaded Huzlr Virtual Speaker!")
+        logger.info("Successfully loaded huzlr Virtual Speaker!")
     except subprocess.CalledProcessError as e:
         logger.warning(f"Failed to load speaker sink. It might already exist or permission denied: {e}")
 
-    # Create Huzlr Microphone (a null sink, then we loopback or use its monitor)
-    logger.info("Creating 'Huzlr Virtual Microphone'...")
+    # Create huzlr Microphone (a null sink, then we loopback or use its monitor)
+    logger.info("Creating 'huzlr Virtual Microphone'...")
     cmd_mic = [
         "pactl", "load-module", "module-null-sink",
-        "sink_name=Huzlr_Mic",
-        'sink_properties=device.description="Huzlr_Virtual_Microphone"'
+        "sink_name=huzlr_Mic",
+        'sink_properties=device.description="huzlr_Virtual_Microphone"'
     ]
     try:
         subprocess.run(cmd_mic, check=True)
-        logger.info("Successfully loaded Huzlr Virtual Microphone sink!")
+        logger.info("Successfully loaded huzlr Virtual Microphone sink!")
     except subprocess.CalledProcessError as e:
         logger.warning(f"Failed to load microphone sink: {e}")
 

@@ -1,14 +1,14 @@
 # Active Context
 
 ## Current Work Focus
-- **Huzlr Google Meet Bridge Optimization**: Successfully optimized the bridge for production-ready performance, focusing on audio routing and bot stealth.
+- **huzlr Google Meet Bridge Optimization**: Successfully optimized the bridge for production-ready performance, focusing on audio routing and bot stealth.
 - **Audio Pipeline Integration**: Ensuring seamless communication between the browser (PulseAudio) and the AI agent (ALSA/PortAudio) via virtual devices.
 - **Stealth Browser Automation**: Maintaining access to Google Meet by bypassing entry gates and bot detection.
 - **High-Quality Audio Injection**: Providing smooth MP3 playback into meetings using FFmpeg-powered streaming and jitter-robust buffering.
 - Implementing a generic and reusable view system for all entities (Projects, Tasks, etc.).
 
 ## Recent Changes
-- **Fixed Audio Pipeline**: Configured `/etc/asound.conf` to map PulseAudio virtual sinks (`Huzlr_Virtual_Speaker`, `Huzlr_Virtual_Microphone`) to ALSA devices.
+- **Fixed Audio Pipeline**: Configured `/etc/asound.conf` to map PulseAudio virtual sinks (`huzlr_Virtual_Speaker`, `huzlr_Virtual_Microphone`) to ALSA devices.
 - **Bypassed Google Gates**: Implemented custom User-Agents, Stealth scripts, and transitioned to Personal Gmail Meet links to avoid "You can't join this call" blocks.
 - **Optimized MP3 Playback**: Integrated FFmpeg for on-the-fly 16kHz PCM decoding with 100ms pre-load buffering in `audio_injection.py`.
 - Consolidated Workspace and Team switching UI into a single integrated component.

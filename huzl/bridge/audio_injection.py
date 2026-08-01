@@ -10,7 +10,7 @@ logger = logging.getLogger("huzl.audio_injection")
 
 class AudioInjectionPipeline:
     """Injects real-time PCM audio chunks into the designated virtual microphone channel."""
-    def __init__(self, device_name: str = "Huzlr_Virtual_Microphone", sample_rate: int = 16000, channels: int = 1):
+    def __init__(self, device_name: str = "huzlr_Virtual_Microphone", sample_rate: int = 16000, channels: int = 1):
         self.device_name = device_name
         self.sample_rate = sample_rate
         self.channels = channels

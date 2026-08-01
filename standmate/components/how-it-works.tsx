@@ -17,7 +17,7 @@ export const HowItWorks = ({
   bottomSection = {
     title: "A project brain that never forgets.",
     description:
-      "Huzlr reads intent, execution flow, and people dynamics — then surfaces the few things that genuinely need your attention.",
+      "huzlr reads intent, execution flow, and people dynamics  then surfaces the few things that genuinely need your attention.",
   },
 }: HowItWorksProps = {}) => {
   const [simulationState, setSimulationState] = useState<SimulationPhase>("IDLE");
@@ -35,7 +35,7 @@ export const HowItWorks = ({
             How huzlr <em className="italic text-clay">works</em>
           </h2>
           <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
-            Watch a live simulation of Huzlr running a standup, spotting a
+            Watch a live simulation of huzlr running a standup, spotting a
             blocker, and recommending the next move.
           </p>
         </div>

@@ -51,11 +51,11 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className, varian
     const userGlowScale = useTransform(smoothUserVolume, [0, 0.1], [0.8, 1.4])
     const userGlowOpacity = useTransform(smoothUserVolume, [0, 0.05], [0, 0.8]) // Increased from 0.6 to 0.8
 
-    // Unified pastel palette (Periwinkle/Lavender/Blue) for all states as requested
-    const commonGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8) 0%, rgba(186,230,253,1) 20%, rgba(165,180,252,1) 50%, rgba(192,132,252,0.8) 100%)"
-    
-    // Elegant, theme-inspired glowing color palette using custom CSS variables (Huzlr Blue and Huzlr Gold)
-    const founderGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95) 0%, var(--chart-1) 30%, var(--primary) 70%, rgba(22,81,139,0.8) 100%)"
+    // Unified warm palette (clay / sand) for all states
+    const commonGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85) 0%, var(--chart-4) 25%, var(--clay) 60%, var(--clay-deep) 100%)"
+
+    // Elegant, theme-inspired glowing color palette using custom CSS variables
+    const founderGradient = "radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95) 0%, var(--chart-1) 30%, var(--primary) 70%, var(--clay-deep) 100%)"
 
     const selectedGradient = variant === "founder" ? founderGradient : commonGradient
 
@@ -133,7 +133,7 @@ export function Orb({ status, agentVolume = 0, userVolume = 0, className, varian
                                 <motion.div
                                     animate={{ y: [5, -5, 5], rotate: -360 }}
                                     transition={{ y: { duration: 4, repeat: Infinity, ease: "easeInOut" }, rotate: { duration: 25, repeat: Infinity, ease: "linear" } }}
-                                    className="absolute -bottom-6 -left-10 w-16 h-16 rounded-full backdrop-blur-md bg-purple-100/30 border border-white/40 shadow-sm z-0"
+                                    className="absolute -bottom-6 -left-10 w-16 h-16 rounded-full backdrop-blur-md bg-clay/10 border border-white/40 shadow-sm z-0"
                                 />
                             </>
                         )}

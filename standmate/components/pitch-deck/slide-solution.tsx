@@ -40,7 +40,7 @@ export function SlideSolution({
                         </h1>
 
                         <p className="text-xl text-slate-600 leading-relaxed font-light max-w-2xl">
-                            Stop wasting engineering hours. Huzlr automates status tracking to reclaim <span className="font-semibold text-slate-800">20% of your team's capacity</span> while ensuring total alignment.
+                            Stop wasting engineering hours. huzlr automates status tracking to reclaim <span className="font-semibold text-slate-800">20% of your team's capacity</span> while ensuring total alignment.
                         </p>
                     </div>
 

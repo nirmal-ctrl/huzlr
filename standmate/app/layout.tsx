@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Caveat, Source_Serif_4 } from "next/font/google"
+import { Inter, Caveat, Source_Serif_4, Open_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -27,11 +27,17 @@ const caveat = Caveat({
   variable: "--font-caveat",
 })
 
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800"],
+  variable: "--font-open-sans",
+})
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://huzlr.com"),
-  title: "Huzlr — Project intelligence that thinks ahead",
+  title: "huzlr  Project intelligence that thinks ahead",
   description:
-    "Huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail. Join the private beta.",
+    "huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail. Join the private beta.",
   keywords: [
     "AI project manager",
     "project management software",
@@ -56,7 +62,7 @@ export const metadata: Metadata = {
     "AI-powered project dashboards",
   ],
   openGraph: {
-    title: "Huzlr — Project intelligence that thinks ahead",
+    title: "huzlr  Project intelligence that thinks ahead",
     description:
       "A thinking layer above your existing tools. Predict risks early, surface the signals that matter, and decide before projects derail.",
     images: ["/og-image.png"],
@@ -64,7 +70,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Huzlr — Project intelligence that thinks ahead",
+    title: "huzlr  Project intelligence that thinks ahead",
     description:
       "A thinking layer above your existing tools. Signals, not dashboards.",
     images: ["/twitter-image.png"],
@@ -82,7 +88,7 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Huzlr",
+    "name": "huzlr",
     "operatingSystem": "All",
     "applicationCategory": "BusinessApplication",
     "offers": {
@@ -90,13 +96,13 @@ export default function RootLayout({
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "Huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail.",
+    "description": "huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail.",
     "featureList": "Risk forecasting, predictive delay warnings, async standups, delivery drift detection, automated project intelligence"
   }
 
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <body className={`font-sans antialiased ${inter.variable} ${sourceSerif.variable} ${caveat.variable}`} suppressHydrationWarning={true}>
+      <body className={`font-sans antialiased ${inter.variable} ${sourceSerif.variable} ${caveat.variable} ${openSans.variable}`} suppressHydrationWarning={true}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

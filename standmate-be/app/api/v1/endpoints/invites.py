@@ -69,7 +69,7 @@ async def create_invite(
     background_tasks.add_task(
         send_email,
         invite_in.email,
-        f"Invitation to join {workspace.name} on Huzlr",
+        f"Invitation to join {workspace.name} on huzlr",
         "workspace_invite",
         {
             "inviter": current_user.username or current_user.email,
@@ -218,7 +218,7 @@ async def remind_invite(
     background_tasks.add_task(
         send_email,
         invite.email,
-        f"Reminder: Invitation to join {workspace.name} on Huzlr",
+        f"Reminder: Invitation to join {workspace.name} on huzlr",
         "workspace_invite",
         {
             "inviter": current_user.username or current_user.email,

@@ -309,7 +309,7 @@ export default function ProjectDetailsPage() {
                                         <span className="text-muted-foreground text-xs w-20">Teams</span>
                                         <div className="flex-1 flex items-center h-8 px-2 text-xs font-medium rounded-md text-foreground gap-1.5 cursor-pointer hover:bg-muted border border-transparent hover:border-border/40">
                                             <div className="w-3.5 h-3.5 bg-green-500/20 text-green-500 rounded-sm flex items-center justify-center text-[8px]">H</div>
-                                            Huzlr
+                                            huzlr
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
@@ -417,7 +417,7 @@ export default function ProjectDetailsPage() {
                                         </div>
                                         <div className="flex-1 px-2 py-1">
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                                                <div className="w-1.5 h-1.5 rounded-[1px] bg-blue-500" />
+                                                <div className="w-1.5 h-1.5 rounded-[1px] bg-primary" />
                                                 Completed
                                             </div>
                                             <div className="text-sm font-medium ml-3.5">2</div>

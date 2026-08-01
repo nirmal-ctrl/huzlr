@@ -16,7 +16,7 @@ class MeetWorker:
         self.page = None
         self.connected = False
 
-    async def join(self, meeting_url: str, bot_name: str = "Huzlr Agent"):
+    async def join(self, meeting_url: str, bot_name: str = "huzlr Agent"):
         """Navigates to the Google Meet URL, enters name, turns off mic/cam, and joins."""
         if not self.browser_manager.context:
             await self.browser_manager.start()

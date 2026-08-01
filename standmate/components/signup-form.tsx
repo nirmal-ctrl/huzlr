@@ -1,7 +1,7 @@
 'use client'
-import Image from "next/image"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import {
@@ -25,10 +25,8 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex size-8 items-center justify-center rounded-md">
-            <Image src="/favicon.png" alt="Huzlr Logo" width={32} height={32} className="rounded-md" />
-          </div>
-          <h1 className="text-xl font-bold">Welcome to Huzlr.</h1>
+          <Logo size="lg" href={null} />
+          <h1 className="text-xl font-bold">Welcome to huzlr.</h1>
           <FieldDescription>
             Join with your Google account to get started
           </FieldDescription>

@@ -275,7 +275,7 @@ async def callback(request: Request, db: Annotated[AsyncSession, Depends(get_db)
             # Send Welcome Email
             await send_email(
                 to_email=user.email,
-                subject="Welcome to Huzlr",
+                subject="Welcome to huzlr",
                 template_name="welcome",
                 context={"username": user.username}
             )
@@ -380,7 +380,7 @@ async def create_access_code(
     # Send Email
     email_sent = await send_email(
         to_email=payload.email, 
-        subject="Your Huzlr Access Code", 
+        subject="Your huzlr Access Code", 
         template_name="access_code", 
         context={"code": code}
     )

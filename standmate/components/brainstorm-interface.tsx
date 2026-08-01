@@ -91,7 +91,7 @@ export function BrainstormInterface({ onNewProjectClick }: BrainstormInterfacePr
 
                     {/* Bottom Action Area (Offline) */}
                     <div className="absolute bottom-10 w-full max-w-3xl px-4">
-                        <div className="relative rounded-[32px] p-[2px] bg-gradient-to-r from-sky-300 via-indigo-300 to-purple-300 shadow-[0_0_15px_rgba(167,139,250,0.3)] hover:shadow-[0_0_20px_rgba(167,139,250,0.5)] transition-all duration-300">
+                        <div className="relative rounded-[32px] p-[2px] bg-gradient-to-r from-clay/70 via-chart-2/70 to-clay-deep/70 shadow-[0_0_15px_rgba(188,93,57,0.25)] hover:shadow-[0_0_20px_rgba(188,93,57,0.4)] transition-all duration-300">
                             <div className="relative bg-card rounded-[29px] p-4 flex items-center justify-between">
                                 <span className="text-sm font-medium text-muted-foreground pl-2">
                                     Click the microphone to start real-time brainstorming
@@ -214,13 +214,13 @@ function LiveKitAgentContent({ inputValue, setInputValue, onDisconnect, onNewPro
                         <div className="bg-transparent rounded-2xl p-4 w-full text-center px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                             {latestUserTranscript && (
                                 <p className="text-sm text-foreground/80 font-medium leading-relaxed mb-2">
-                                    <span className="italic font-bold mr-1 text-sky-500">You:</span>
+                                    <span className="italic font-bold mr-1 text-primary">You:</span>
                                     {latestUserTranscript.text}
                                 </p>
                             )}
                             {latestTranscript && (
                                 <p className="text-sm text-foreground font-medium leading-relaxed">
-                                    <span className="italic font-bold mr-1 text-purple-500">Agent:</span>
+                                    <span className="italic font-bold mr-1 text-chart-2">Agent:</span>
                                     {latestTranscript.text}
                                 </p>
                             )}
@@ -241,7 +241,7 @@ function LiveKitAgentContent({ inputValue, setInputValue, onDisconnect, onNewPro
 
             {/* Bottom Input Area */}
             <div className="absolute bottom-10 w-full max-w-3xl px-4">
-                <div className="relative rounded-[32px] p-[2px] bg-gradient-to-r from-sky-300 via-indigo-300 to-purple-300 shadow-[0_0_15px_rgba(167,139,250,0.3)] hover:shadow-[0_0_20px_rgba(167,139,250,0.5)] transition-all duration-300">
+                <div className="relative rounded-[32px] p-[2px] bg-gradient-to-r from-clay/70 via-chart-2/70 to-clay-deep/70 shadow-[0_0_15px_rgba(188,93,57,0.25)] hover:shadow-[0_0_20px_rgba(188,93,57,0.4)] transition-all duration-300">
                     <div className="relative bg-card rounded-[29px] p-2 flex flex-col">
                         <div className="px-2 pt-2 pb-0">
                             <Textarea

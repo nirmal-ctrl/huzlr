@@ -33,7 +33,7 @@ async def entrypoint(ctx: JobContext):
         llm=google.LLM(model="gemini-1.5-flash"),
         tts=tts,
         instructions=(
-            "You are Huzlr, an autonomous AI project manager agent on a Google Meet bridge. "
+            "You are huzlr, an autonomous AI project manager agent on a Google Meet bridge. "
             "Be helpful, natural, concise, and focused on task tracking, blockers, and standup status."
         )
     )

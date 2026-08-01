@@ -128,7 +128,7 @@ export default async function BlogIndexPage() {
                         )}
                         <div>
                           <p className="text-sm font-bold text-foreground">
-                            {featuredPost.author?.name || 'Huzlr Editor'}
+                            {featuredPost.author?.name || 'huzlr Editor'}
                           </p>
                           {featuredPost.publishDate && (
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -235,7 +235,7 @@ export default async function BlogIndexPage() {
                             )}
                             <div>
                               <p className="text-xs font-bold text-foreground">
-                                {post.author?.name || 'Huzlr Editor'}
+                                {post.author?.name || 'huzlr Editor'}
                               </p>
                               {post.publishDate && (
                                 <p className="text-[9px] text-muted-foreground flex items-center gap-0.5">

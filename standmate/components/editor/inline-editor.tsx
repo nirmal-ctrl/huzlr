@@ -5,7 +5,7 @@ import { Extension } from "@tiptap/core"
 import StarterKit from "@tiptap/starter-kit"
 import { useEffect } from "react"
 
-// Prevent Enter key from creating new lines — keeps the field single-line
+// Prevent Enter key from creating new lines  keeps the field single-line
 const PreventNewLine = Extension.create({
     name: "preventNewLine",
     addKeyboardShortcuts() {

@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { Logo } from '@/components/logo';
+
 export function Footer() {
   const year = new Date().getFullYear();
 
@@ -36,10 +38,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="flex items-baseline">
-              <span className="font-serif text-2xl tracking-tight text-ink">huzlr</span>
-              <span className="font-serif text-2xl text-clay">.</span>
-            </Link>
+            <Logo size="lg" />
             <p className="text-sm leading-relaxed text-ink/50 max-w-xs">
               Project intelligence that thinks ahead. Signals, not dashboards.
             </p>
@@ -64,7 +63,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-hairline pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-ink/40">© {year} Huzlr. All rights reserved.</p>
+          <p className="text-xs text-ink/40">© {year} huzlr. All rights reserved.</p>
           <p className="text-xs text-ink/40">Currently in private beta.</p>
         </div>
       </div>

@@ -1,52 +1,26 @@
-import Image from "next/image"
-import { ArrowRight } from "lucide-react"
-
-import { Card, CardContent } from "@/components/ui/card"
-
-interface CustomerSegmentCardProps {
-  imageSrc: string
-  category: string
-  title: string
-  description: string
-}
+import type { CustomerSegment } from "@/constants/customer-segments"
 
 export function CustomerSegmentCard({
-  imageSrc,
   category,
   title,
   description,
-}: CustomerSegmentCardProps) {
+  icon: Icon,
+}: CustomerSegment) {
   return (
-    <Card className="group relative flex h-[400px] flex-col overflow-hidden rounded-2xl border border-hairline bg-transparent shadow-none transition-all duration-500 hover:shadow-xl hover:shadow-ink/10">
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={imageSrc}
-          alt={title}
-          fill
-          className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
-        />
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
+    <div className="group relative flex h-full flex-col rounded-2xl border border-hairline bg-sand/40 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-clay/30 hover:bg-sand/70">
+      <div className="flex items-center justify-between">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-clay/10 text-clay transition-colors duration-300 group-hover:bg-clay group-hover:text-white">
+          <Icon size={18} strokeWidth={2} />
+        </div>
+        <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-ink/40 transition-colors duration-300 group-hover:text-clay">
+          {category}
+        </span>
       </div>
 
-      <CardContent className="relative z-10 flex h-full flex-col justify-end p-6 text-white sm:p-8">
-        <div className="transform transition-transform duration-500 ease-out group-hover:-translate-y-2">
-          <span className="mb-4 inline-block rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-white backdrop-blur-md">
-            {category}
-          </span>
-          <h3 className="mb-2 font-serif text-2xl leading-tight tracking-tight text-white md:text-3xl">
-            {title}
-          </h3>
-          <p className="line-clamp-3 text-sm leading-relaxed text-gray-300 opacity-90 transition-opacity duration-500 group-hover:opacity-100 group-hover:line-clamp-none">
-            {description}
-          </p>
-
-          <div className="mt-6 flex translate-y-4 items-center gap-2 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
-            <span className="text-sm font-semibold">Learn more</span>
-            <ArrowRight className="h-4 w-4" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <h3 className="mt-6 font-serif text-2xl tracking-tight text-ink">
+        {title}
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-ink/60">{description}</p>
+    </div>
   )
 }

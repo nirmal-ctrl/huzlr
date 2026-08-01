@@ -21,7 +21,7 @@ export function SlideWhyNow({
                 "The last decade built tools to track work and generate reports",
                 "Jira, Asana, Linear optimize for logging updates",
                 "None reduce PM effort or catch problems early",
-                "The core pain — chaos during execution — stayed unsolved"
+                "The core pain  chaos during execution  stayed unsolved"
             ]
         },
         {

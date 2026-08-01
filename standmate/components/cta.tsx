@@ -13,7 +13,7 @@ export function CTA() {
         </h2>
         <p className="mt-6 text-base sm:text-lg leading-relaxed text-ink/60 max-w-xl mx-auto">
           Join the waitlist and be among the first teams whose projects are
-          watched over by intelligence — not just tracked by tools.
+          watched over by intelligence  not just tracked by tools.
         </p>
         <div className="mt-10 flex flex-col items-center gap-4">
           <Link href="/signup">

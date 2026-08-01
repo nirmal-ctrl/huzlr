@@ -79,7 +79,7 @@ export function AnimatedBeamFeatures() {
     const input5Ref = useRef<HTMLDivElement>(null)
     const input6Ref = useRef<HTMLDivElement>(null)
 
-    // Center - RHuzlr connector
+    // Center - Rhuzlr connector
     const centerRef = useRef<HTMLDivElement>(null)
 
     // Right side - Core Innovations
@@ -117,7 +117,7 @@ export function AnimatedBeamFeatures() {
                         Intelligence Pipeline
                     </h2>
                     <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-                        Huzlr transforms raw project data into actionable intelligence through our autonomous delivery engine
+                        huzlr transforms raw project data into actionable intelligence through our autonomous delivery engine
                     </p>
                 </div>
 
@@ -141,12 +141,12 @@ export function AnimatedBeamFeatures() {
                             ))}
                         </div>
 
-                        {/* Center - RHuzlr Logo/Connector */}
+                        {/* Center - Rhuzlr Logo/Connector */}
                         <div className="flex items-center justify-center flex-shrink-0">
                             <Circle ref={centerRef} className="w-12 h-12 rounded-lg border-2 border-border">
                                 <Image
                                     src="/favicon.png"
-                                    alt="RHuzlr"
+                                    alt="Rhuzlr"
                                     width={36}
                                     height={36}
                                     className="object-contain"

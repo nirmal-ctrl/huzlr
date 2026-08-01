@@ -75,7 +75,7 @@ export function JiraImportDialog({ open, onOpenChange }: JiraImportDialogProps) 
                     completed: 2,
                     progress: 12
                 },
-                teams: ["Huzlr"],
+                teams: ["huzlr"],
                 labels: ["Jira Import", "Backlog"],
                 milestones: [
                     { id: 1, title: "Migration", date: "2024-02-01", status: "pending" }
@@ -97,7 +97,7 @@ export function JiraImportDialog({ open, onOpenChange }: JiraImportDialogProps) 
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">Import from Jira</DialogTitle>
                     <DialogDescription>
-                        Select projects to import into Huzlr. We'll create a new project for each selection.
+                        Select projects to import into huzlr. We'll create a new project for each selection.
                     </DialogDescription>
                 </DialogHeader>
 

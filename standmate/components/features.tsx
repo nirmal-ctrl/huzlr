@@ -13,7 +13,7 @@ export function Features() {
     {
       title: "Autonomous Project Monitoring",
       description:
-        "Huzlr's agents track progress, detect deviations, and recalibrate delivery timelines automatically.",
+        "huzlr's agents track progress, detect deviations, and recalibrate delivery timelines automatically.",
       outcome: "Continuous alignment without manual tracking",
       icon: Gauge,
     },
@@ -34,7 +34,7 @@ export function Features() {
     {
       title: "Knowledge Synchronization",
       description:
-        "Huzlr keeps all project artifacts consistent and updated across your tools automatically.",
+        "huzlr keeps all project artifacts consistent and updated across your tools automatically.",
       outcome: "Everyone always has the same information",
       icon: RefreshCcw,
     },
@@ -48,7 +48,7 @@ export function Features() {
     {
       title: "Continuous Learning & Improvement",
       description:
-        "Every completed project feeds Huzlr's intelligence layer for smarter delivery cycles.",
+        "Every completed project feeds huzlr's intelligence layer for smarter delivery cycles.",
       outcome: "Self-improving project delivery",
       icon: LineChart,
     },
@@ -63,7 +63,7 @@ export function Features() {
             Our Core Innovations
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Each capability represents a leap toward autonomous, intelligent delivery — designed to make modern project execution seamless.
+            Each capability represents a leap toward autonomous, intelligent delivery  designed to make modern project execution seamless.
           </p>
         </div>
 

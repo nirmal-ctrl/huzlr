@@ -39,7 +39,7 @@ export default async function CaseStudiesIndexPage() {
             Real Stories. <br className="hidden md:inline" /> Autonomous Engineering.
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto font-normal">
-            Explore how modern engineering orgs and fast-scaling startups utilize Huzlr’s autonomous project intelligence to ship clean, reliable code with zero administrative lag.
+            Explore how modern engineering orgs and fast-scaling startups utilize huzlr’s autonomous project intelligence to ship clean, reliable code with zero administrative lag.
           </p>
         </div>
       </section>

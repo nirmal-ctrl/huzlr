@@ -82,7 +82,7 @@ export function WaitlistDialog({ open = true }: { open?: boolean }) {
           <TabsContent value="waitlist" className="space-y-4 py-4">
             <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
               <p className="text-muted-foreground">
-                Join our waitlist to get early access to Huzlr. We'll notify you as soon as a spot opens up.
+                Join our waitlist to get early access to huzlr. We'll notify you as soon as a spot opens up.
               </p>
               <Button onClick={() => window.open(waitlistUrl, '_blank')} className="w-full">
                 Go to Waitlist Form <ExternalLink className="ml-2 h-4 w-4" />

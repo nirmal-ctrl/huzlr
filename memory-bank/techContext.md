@@ -17,10 +17,10 @@
 - **Containerization:** Docker (`docker-compose.yml`)
 - **Dependency Management:** `requirements.txt` / Python venv
 
-### Huzlr Bridge
+### huzlr Bridge
 - **Browser Automation:** Playwright with Stealth plugins.
 - **Audio Stack:** 
-    - **PulseAudio:** Manages virtual sinks (`Huzlr_Virtual_Speaker`, `Huzlr_Virtual_Microphone`).
+    - **PulseAudio:** Manages virtual sinks (`huzlr_Virtual_Speaker`, `huzlr_Virtual_Microphone`).
     - **ALSA:** Custom `/etc/asound.conf` mapping for Python/PortAudio visibility.
     - **FFmpeg:** Real-time 16kHz PCM decoding for audio injection.
 - **Python Libraries:** `sounddevice`, `numpy`, `playwright`.

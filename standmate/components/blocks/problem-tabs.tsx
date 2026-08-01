@@ -29,7 +29,7 @@ interface Feature108Props {
 
 const ProblemTabs = ({
   badge = "huzlr",
-  heading = "A Collection of Components Built With Huzlr & Tailwind",
+  heading = "A Collection of Components Built With huzlr & Tailwind",
   description = "Join us to build flawless web solutions.",
   tabs = [
     {

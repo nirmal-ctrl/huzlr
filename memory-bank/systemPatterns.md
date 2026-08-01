@@ -14,7 +14,7 @@
 - **Jitter-Robust Audio Callback**: Buffering pattern (100ms pre-load) for high-quality PCM injection to prevent stream starvation.
 
 ## Component Relationships
-- **Huzlr Bridge Stack**: `BrowserManager` -> `MeetWorker` -> `AudioCapture` / `AudioInjection` -> `VirtualDevices` (PulseAudio/ALSA).
+- **huzlr Bridge Stack**: `BrowserManager` -> `MeetWorker` -> `AudioCapture` / `AudioInjection` -> `VirtualDevices` (PulseAudio/ALSA).
 - Frontend communicates with Backend over HTTP REST APIs.
 - Next.js acts as a BFF (Backend for Frontend) for certain integrations, utilizing route handlers (`app/api/`) for features like Gemini AI interactions, save frames, etc.
 - **Projects**: The central entity. Projects own `Milestones` and `Tasks` directly. Tasks can optionally belong to a Milestone. (The `Scenario` model has been removed).

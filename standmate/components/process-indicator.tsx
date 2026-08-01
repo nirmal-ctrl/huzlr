@@ -156,7 +156,7 @@ export const ProcessIndicator = ({ currentPhase, className }: ProcessIndicatorPr
 
             {/* Bottom Info Section */}
             <div className="px-12 py-4 pt-6 border-t border-border/30">
-                <div className="bg-gradient-to-br from-primary/5 to-violet-500/5 rounded-lg p-4 border border-primary/10">
+                <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/10">
                     <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                             <Zap size={16} className="text-primary" />

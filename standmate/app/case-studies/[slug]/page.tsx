@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const csUrl = `https://huzlr.com/case-studies/${slug}`;
 
     return {
-      title: `${cs.clientName} Case Study: ${cs.title} | Huzlr`,
+      title: `${cs.clientName} Case Study: ${cs.title} | huzlr`,
       description: cs.subtitle,
       openGraph: {
         title: cs.title,
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   } catch (error) {
     return {
-      title: 'Huzlr Case Study',
+      title: 'huzlr Case Study',
     };
   }
 }
@@ -110,12 +110,12 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
     "dateModified": cs.createdAt || cs.publishDate,
     "author": {
       "@type": "Organization",
-      "name": "Huzlr Marketing Team",
+      "name": "huzlr Marketing Team",
       "url": "https://huzlr.com"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "Huzlr",
+      "name": "huzlr",
       "logo": {
         "@type": "ImageObject",
         "url": "https://huzlr.com/favicon.png"

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { NoiseTexture } from "@/components/ui/noise-texture"
 import { ArrowRight } from "lucide-react"
 
 interface HeroWithMockupProps {
@@ -47,6 +48,12 @@ export function HeroWithMockup({
         className,
       )}
     >
+      <NoiseTexture
+        className={cn(
+          "absolute inset-0 opacity-15",
+          "mask-[radial-gradient(420px_circle_at_center,white,transparent)]"
+        )}
+      />
       <div className="relative mx-auto max-w-[1200px] flex flex-col items-center gap-10 text-center">
         {/* Eyebrow */}
         {eyebrow && (

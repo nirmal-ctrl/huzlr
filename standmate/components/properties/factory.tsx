@@ -85,10 +85,10 @@ export const STATIC_USERS = [
 
 export const LABELS = [
     { value: "Bug", label: "Bug", color: "bg-red-500" },
-    { value: "Feature", label: "Feature", color: "bg-blue-500" },
+    { value: "Feature", label: "Feature", color: "bg-primary" },
     { value: "Enhancement", label: "Enhancement", color: "bg-green-500" },
     { value: "Documentation", label: "Documentation", color: "bg-yellow-500" },
-    { value: "Design", label: "Design", color: "bg-purple-500" },
+    { value: "Design", label: "Design", color: "bg-chart-2" },
 ]
 
 // ----------------------------------------------------------------------
@@ -112,7 +112,7 @@ export function ProjectStatusSelector({ value, onChange, className, options }: S
                         className
                     )}
                 >
-                    <selectedStatus.icon className={cn("w-3.5 h-3.5", selectedStatus.value === "In Progress" ? "text-blue-500" : selectedStatus.value === "Done" ? "text-purple-500" : "text-muted-foreground")} />
+                    <selectedStatus.icon className={cn("w-3.5 h-3.5", selectedStatus.value === "In Progress" ? "text-primary" : selectedStatus.value === "Done" ? "text-emerald-600" : "text-muted-foreground")} />
                     <span>{selectedStatus.label}</span>
                 </Button>
             </PopoverTrigger>
@@ -230,7 +230,7 @@ export function MemberSelector({ value, onChange, className, multiple = false, p
         })
     }, [workspaceData])
 
-    // Helper to get user objects — deduplicate incoming IDs to prevent duplicate key warnings
+    // Helper to get user objects  deduplicate incoming IDs to prevent duplicate key warnings
     const selectedUsers = React.useMemo(() => {
         if (!value) return []
         const ids = Array.isArray(value) ? [...new Set(value)] : [value]

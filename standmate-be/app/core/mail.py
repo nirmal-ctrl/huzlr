@@ -98,7 +98,7 @@ def _base_template(content: str) -> str:
                 {content}
             </div>
             <div class="footer">
-                <p>&copy; {year} Huzlr. All rights reserved.</p>
+                <p>&copy; {year} huzlr. All rights reserved.</p>
                 <p>If you didn't request this, please ignore this email.</p>
             </div>
         </div>
@@ -122,7 +122,7 @@ def template_access_code(context: Dict[str, Any]) -> str:
         
         <p>Enter this code on the onboarding screen to get started.</p>
         
-        <a href="{frontend_url}" class="cta-button">Go to Huzlr</a>
+        <a href="{frontend_url}" class="cta-button">Go to huzlr</a>
     """
     return _base_template(content)
 
@@ -134,7 +134,7 @@ def template_welcome(context: Dict[str, Any]) -> str:
         <p class="welcome-text" style="font-size: 18px; color: #52525b; margin-bottom: 24px;">
             Welcome to the team, {username}.
         </p>
-        <p>We're thrilled to have you on board. Huzlr is designed to help you streamline your standups and boost productivity.</p>
+        <p>We're thrilled to have you on board. huzlr is designed to help you streamline your standups and boost productivity.</p>
         
         <p>You can now access your dashboard and start managing your projects.</p>
         
@@ -154,7 +154,7 @@ def template_workspace_invite(context: Dict[str, Any]) -> str:
         <p class="welcome-text" style="font-size: 18px; color: #52525b; margin-bottom: 24px;">
             Join the team.
         </p>
-        <p><strong>{inviter}</strong> has invited you to join the <strong>{workspace_name}</strong> workspace on Standmate (Huzlr).</p>
+        <p><strong>{inviter}</strong> has invited you to join the <strong>{workspace_name}</strong> workspace on Standmate (huzlr).</p>
         
         <p>Click the link below to sign up and join your team:</p>
         
@@ -202,7 +202,7 @@ async def send_email(to_email: str, subject: str, template_name: str, context: D
             {
               "From": {
                 "Email": sender_email,
-                "Name": "Huzlr Team"
+                "Name": "huzlr Team"
               },
               "To": [
                 {

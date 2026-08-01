@@ -71,8 +71,8 @@ export function ConnectedIntegrationsSheet({ onImportClick }: IntegrationsSheetP
             name: "Jira",
             description: "Issues, epics, sprints",
             icon: JiraIcon,
-            color: "text-blue-500",
-            bgColor: "bg-blue-500/10",
+            color: "text-primary",
+            bgColor: "bg-primary/10",
             connected: isJiraConnected,
         },
         {
@@ -80,8 +80,8 @@ export function ConnectedIntegrationsSheet({ onImportClick }: IntegrationsSheetP
             name: "Linear",
             description: "Issues, projects, cycles",
             icon: LinearIcon,
-            color: "text-purple-500",
-            bgColor: "bg-purple-500/10",
+            color: "text-amber-600",
+            bgColor: "bg-amber-500/10",
             connected: false, // Future support
         },
         {

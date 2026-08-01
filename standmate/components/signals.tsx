@@ -9,7 +9,7 @@ const scenes = [
     {
         id: "complexity",
         heading: "Projects generate noise.",
-        headingAccent: "Huzlr looks for meaning.",
+        headingAccent: "huzlr looks for meaning.",
         subtext: "Tasks, people, timelines, and intent are constantly changing.",
     },
     {
@@ -234,7 +234,7 @@ export function Signals() {
                         Signals, <em className="italic text-clay">not dashboards</em>
                     </h2>
                     <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
-                        Huzlr continuously reads project intent, execution flow, and people dynamics to
+                        huzlr continuously reads project intent, execution flow, and people dynamics to
                         surface what deserves your attention.
                     </p>
                 </div>

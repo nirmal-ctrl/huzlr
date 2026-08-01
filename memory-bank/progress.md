@@ -4,7 +4,7 @@
 - Finished implementing Tasks feature with Factory Builder pattern and hierarchical nesting.
 
 ## Completed Tasks
-- **Huzlr Google Meet Bridge**:
+- **huzlr Google Meet Bridge**:
   - **Optimized Infrastructure**: Fully production-ready bridge with automated join/leave and high-quality audio routing.
   - **Audio Pipeline**: Configured custom `/etc/asound.conf` to bridge PulseAudio sinks to ALSA for Python visibility.
   - **Stealth Automation**: Bypassed Google entry gates using custom User-Agents and stealth scripts.

@@ -125,7 +125,7 @@ export function SlideCompetition({
                             ))}
                         </div>
 
-                        {/* Winner: Huzlr */}
+                        {/* Winner: huzlr */}
                         <div className="col-span-1 flex flex-col bg-blue-600 relative overflow-hidden">
                             {/* Decorative glow */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl -mr-32 -mt-32 opacity-50 pointer-events-none"></div>

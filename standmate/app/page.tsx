@@ -12,7 +12,7 @@ export default function Home() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Huzlr",
+    name: "huzlr",
     applicationCategory: "ProjectManagement",
     operatingSystem: "Web",
     description:

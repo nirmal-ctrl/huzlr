@@ -17,39 +17,40 @@ body {
 
 :root {
   --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --dialog-bg: oklch(1 0 0);
-  --sheetbg: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: #16518b;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.805 0.088 88.5);
-  --chart-1: #d7bd7c;
-  --chart-2: oklch(0.75 0.1 88.5);
-  --chart-3: oklch(0.7 0.12 88.5);
-  --chart-4: oklch(0.85 0.08 88.5);
-  --chart-5: oklch(0.9 0.06 88.5);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.43 0.113 252);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.805 0.088 88.5);
+  /* Warm Claude-inspired palette (light) */
+  --background: oklch(0.965 0.01 78);
+  --dialog-bg: oklch(0.99 0.005 82);
+  --sheetbg: oklch(0.99 0.005 82);
+  --foreground: oklch(0.24 0.015 60);
+  --card: oklch(0.99 0.005 82);
+  --card-foreground: oklch(0.24 0.015 60);
+  --popover: oklch(0.99 0.005 82);
+  --popover-foreground: oklch(0.24 0.015 60);
+  --primary: oklch(0.586 0.132 41);
+  --primary-foreground: oklch(0.985 0.005 80);
+  --secondary: oklch(0.935 0.014 76);
+  --secondary-foreground: oklch(0.3 0.02 60);
+  --muted: oklch(0.94 0.012 76);
+  --muted-foreground: oklch(0.5 0.02 65);
+  --accent: oklch(0.93 0.015 75);
+  --accent-foreground: oklch(0.3 0.02 60);
+  --destructive: oklch(0.577 0.215 27.325);
+  --border: oklch(0.885 0.013 72);
+  --input: oklch(0.885 0.013 72);
+  --ring: oklch(0.586 0.132 41);
+  --chart-1: oklch(0.62 0.13 40);
+  --chart-2: oklch(0.72 0.11 70);
+  --chart-3: oklch(0.6 0.07 90);
+  --chart-4: oklch(0.78 0.08 85);
+  --chart-5: oklch(0.5 0.08 50);
+  --sidebar: oklch(0.948 0.012 76);
+  --sidebar-foreground: oklch(0.24 0.015 60);
+  --sidebar-primary: oklch(0.586 0.132 41);
+  --sidebar-primary-foreground: oklch(0.985 0.005 80);
+  --sidebar-accent: oklch(0.93 0.015 75);
+  --sidebar-accent-foreground: oklch(0.3 0.02 60);
+  --sidebar-border: oklch(0.885 0.013 72);
+  --sidebar-ring: oklch(0.586 0.132 41);
 
   /* Marketing palette (Claude-inspired warm neutrals + clay accent) */
   --paper: oklch(0.962 0.012 80);
@@ -61,41 +62,42 @@ body {
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --dialog-bg: rgb(24, 24, 27);
-  --sheetbg: rgb(24, 24, 27);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: hwb(210 9% 45%);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.85 0.08 88.5);
-  --chart-1: oklch(0.85 0.08 88.5);
-  --chart-2: oklch(0.75 0.1 88.5);
-  --chart-3: oklch(0.7 0.12 88.5);
-  --chart-4: oklch(0.85 0.08 88.5);
-  --chart-5: oklch(0.9 0.06 88.5);
-  --sidebar: rgb(24, 24, 27);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.55 0.1 252);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.85 0.08 88.5);
+  /* Warm Claude-inspired palette (dark) */
+  --background: oklch(0.2 0.011 60);
+  --dialog-bg: oklch(0.235 0.012 62);
+  --sheetbg: oklch(0.235 0.012 62);
+  --foreground: oklch(0.93 0.01 82);
+  --card: oklch(0.235 0.012 62);
+  --card-foreground: oklch(0.93 0.01 82);
+  --popover: oklch(0.235 0.012 62);
+  --popover-foreground: oklch(0.93 0.01 82);
+  --primary: oklch(0.672 0.117 43);
+  --primary-foreground: oklch(0.2 0.01 60);
+  --secondary: oklch(0.27 0.013 62);
+  --secondary-foreground: oklch(0.93 0.01 82);
+  --muted: oklch(0.265 0.013 62);
+  --muted-foreground: oklch(0.68 0.02 70);
+  --accent: oklch(0.28 0.014 62);
+  --accent-foreground: oklch(0.93 0.01 82);
+  --destructive: oklch(0.65 0.19 25);
+  --border: oklch(0.93 0.012 82 / 10%);
+  --input: oklch(0.93 0.012 82 / 14%);
+  --ring: oklch(0.672 0.117 43);
+  --chart-1: oklch(0.672 0.117 43);
+  --chart-2: oklch(0.75 0.1 70);
+  --chart-3: oklch(0.65 0.07 90);
+  --chart-4: oklch(0.8 0.07 85);
+  --chart-5: oklch(0.55 0.08 50);
+  --sidebar: oklch(0.18 0.011 58);
+  --sidebar-foreground: oklch(0.93 0.01 82);
+  --sidebar-primary: oklch(0.672 0.117 43);
+  --sidebar-primary-foreground: oklch(0.2 0.01 60);
+  --sidebar-accent: oklch(0.28 0.014 62);
+  --sidebar-accent-foreground: oklch(0.93 0.01 82);
+  --sidebar-border: oklch(0.93 0.012 82 / 10%);
+  --sidebar-ring: oklch(0.672 0.117 43);
 
-  /* Marketing palette — dark (warm charcoal + soft clay) */
+  /* Marketing palette  dark (warm charcoal + soft clay) */
   --paper: oklch(0.19 0.012 60);
   --ink: oklch(0.93 0.012 82);
   --clay: oklch(0.672 0.117 43);
@@ -109,6 +111,7 @@ body {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
   --font-caveat: var(--font-caveat);
+  --font-open-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
   /* Marketing palette tokens */
   --color-paper: var(--paper);
   --color-ink: var(--ink);
@@ -232,7 +235,7 @@ body {
 
 /* Tiptap editor placeholder styles */
 .tiptap p.is-editor-empty:first-child::before {
-  color: oklch(0.552 0.016 285.938 / 50%);
+  color: oklch(0.5 0.02 65 / 50%);
   content: attr(data-placeholder);
   float: left;
   height: 0;

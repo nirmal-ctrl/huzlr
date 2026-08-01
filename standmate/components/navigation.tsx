@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { Logo } from "@/components/logo";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -34,10 +35,7 @@ function Navbar({ className }: { className?: string }) {
     >
       <nav className="relative rounded-full border border-hairline bg-paper/80 shadow-sm shadow-ink/5 flex items-center justify-between gap-6 pl-6 pr-3 py-2.5 backdrop-blur-md">
         {/* Logo */}
-        <Link href="/" className="flex items-baseline hover:opacity-80 transition-opacity">
-          <span className="font-serif text-xl tracking-tight text-ink">huzlr</span>
-          <span className="font-serif text-xl text-clay">.</span>
-        </Link>
+        <Logo />
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-6">

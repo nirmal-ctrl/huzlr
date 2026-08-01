@@ -49,7 +49,7 @@ export function SlideProduct({
                         </div>
 
                         <h1 className="text-4xl font-black tracking-tight text-slate-900">
-                            How Huzlr works: <span className="text-slate-400">Inevitability.</span>
+                            How huzlr works: <span className="text-slate-400">Inevitability.</span>
                         </h1>
                     </div>
                 </div>

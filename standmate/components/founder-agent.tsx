@@ -83,11 +83,11 @@ export function FounderAgentWidget() {
                             <div className="relative flex h-2.5 w-2.5">
                                 <span className={cn(
                                     "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                                    token ? "bg-emerald-400" : "bg-sky-400"
+                                    token ? "bg-emerald-400" : "bg-amber-400"
                                 )}></span>
                                 <span className={cn(
                                     "relative inline-flex rounded-full h-2.5 w-2.5",
-                                    token ? "bg-emerald-500" : "bg-sky-500"
+                                    token ? "bg-emerald-500" : "bg-amber-500"
                                 )}></span>
                             </div>
                             <span className="font-semibold text-sm text-foreground">Talk with Nirmal</span>
@@ -137,7 +137,7 @@ export function FounderAgentWidget() {
                             <div className="flex flex-col gap-1 px-3">
                                 <h4 className="text-sm font-semibold text-foreground">Founder Chat</h4>
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Talk directly with Nirmal, the Founder of Huzlr. Ask questions or let him navigate you around the application live.
+                                    Talk directly with Nirmal, the Founder of huzlr. Ask questions or let him navigate you around the application live.
                                 </p>
                             </div>
                             <Button
@@ -276,13 +276,13 @@ function FounderLiveKitContent({ onDisconnect, router }: FounderLiveKitContentPr
                 )}
                 {latestUserTranscript && (
                     <p className="text-foreground/85 font-medium">
-                        <span className="text-sky-500 font-bold mr-1">You:</span>
+                        <span className="text-primary font-bold mr-1">You:</span>
                         {latestUserTranscript.text}
                     </p>
                 )}
                 {latestTranscript && (
                     <p className="text-foreground leading-relaxed">
-                        <span className="text-purple-500 font-bold mr-1">Nirmal:</span>
+                        <span className="text-chart-2 font-bold mr-1">Nirmal:</span>
                         {latestTranscript.text}
                     </p>
                 )}

@@ -179,7 +179,7 @@ else:
 ```
 
 > [!TIP]
-> **Automatic Model Discovery**: The configuration above automatically imports all models from the `models/` directory. When you create a new model file (e.g., `user.py`), it will be automatically detected—no need to manually update `env.py`!
+> **Automatic Model Discovery**: The configuration above automatically imports all models from the `models/` directory. When you create a new model file (e.g., `user.py`), it will be automatically detectedno need to manually update `env.py`!
 
 ### Step 4: Create Your First Migration
 

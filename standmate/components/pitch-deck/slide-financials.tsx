@@ -64,7 +64,7 @@ export function SlideFinancials({
                             Capital-efficient build phase.
                         </h1>
                         <p className="text-xl text-slate-600 font-medium leading-relaxed max-w-2xl">
-                            We are raising to extend our runway, focusing entirely on product velocity and early customer love—not burn.
+                            We are raising to extend our runway, focusing entirely on product velocity and early customer lovenot burn.
                         </p>
                     </div>
                 </div>

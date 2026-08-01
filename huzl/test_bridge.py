@@ -20,7 +20,7 @@ async def test_integration():
     test_meet_url = os.environ.get("TEST_MEET_URL", "https://meet.google.com/abc-defg-hij")
     
     logger.info("=========================================")
-    logger.info("   HUZLR GOOGLE MEET BRIDGE TEST SUITE   ")
+    logger.info("   huzlr GOOGLE MEET BRIDGE TEST SUITE   ")
     logger.info("=========================================")
     logger.info(f"Target Google Meet URL: {test_meet_url}")
 
@@ -29,13 +29,13 @@ async def test_integration():
     worker = MeetWorker(browser)
 
     # 2. Initialize Audio Capture and Audio Injection Pipelines
-    capture = AudioCapturePipeline(device_name="Huzlr_Virtual_Speaker")
-    injection = AudioInjectionPipeline(device_name="Huzlr_Virtual_Microphone")
+    capture = AudioCapturePipeline(device_name="huzlr_Virtual_Speaker")
+    injection = AudioInjectionPipeline(device_name="huzlr_Virtual_Microphone")
 
     try:
         # 3. Launch and Join
         logger.info("STEP 1: Launching browser & joining Google Meet...")
-        await worker.join(meeting_url=test_meet_url, bot_name="Huzlr Test Bot")
+        await worker.join(meeting_url=test_meet_url, bot_name="huzlr Test Bot")
         
         # Allow extra time to enter and connect
         await asyncio.sleep(8)
