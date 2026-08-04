@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to the standmate-be documentation! This folder contains all guides and setup instructions for the project.
+Welcome to the huzlr-be documentation! This folder contains all guides and setup instructions for the project.
 
 ## 📁 Folder Structure
 

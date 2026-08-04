@@ -1,8 +1,8 @@
 # System Patterns
 
 ## System Architecture
-- **Frontend (`standmate`)**: Next.js (App Router), React, Tailwind CSS. Used for rendering the UI, routing, and providing the interactive user experience.
-- **Backend (`standmate-be`)**: FastAPI framework (Python) providing RESTful APIs, orchestrating AI workflows, and interacting with the database.
+- **Frontend (`huzlr`)**: Next.js (App Router), React, Tailwind CSS. Used for rendering the UI, routing, and providing the interactive user experience.
+- **Backend (`huzlr-be`)**: FastAPI framework (Python) providing RESTful APIs, orchestrating AI workflows, and interacting with the database.
 - **Database**: Likely SQL-based, managed via Alembic migrations as seen in the backend directory.
 
 ## Design Patterns

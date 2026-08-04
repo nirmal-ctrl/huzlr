@@ -1,6 +1,6 @@
-# Standmate Backend Coding Guidelines & Architecture Standards
+# Huzlr Backend Coding Guidelines & Architecture Standards
 
-This document serves as the absolute source of truth for backend development in the `standmate-be` repository. As an AI coding agent, you MUST adhere to these rules. Evaluate these rules contextually against the task at hand.
+This document serves as the absolute source of truth for backend development in the `huzlr-be` repository. As an AI coding agent, you MUST adhere to these rules. Evaluate these rules contextually against the task at hand.
 
 ## 1. Core Framework & Architecture
 

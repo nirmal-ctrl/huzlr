@@ -1,9 +1,9 @@
 # Project Brief
 
 ## Overview
-Standmate is an AI-powered standup and project management assistant. It is structured as a monorepo consisting of:
-- A Next.js front-end (`standmate`)
-- A FastAPI/Python back-end (`standmate-be`)
+Huzlr is an AI-powered standup and project management assistant. It is structured as a monorepo consisting of:
+- A Next.js front-end (`huzlr`)
+- A FastAPI/Python back-end (`huzlr-be`)
 
 ## Core Goals
 - Streamline the agile standup process using AI

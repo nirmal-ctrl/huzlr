@@ -9,7 +9,7 @@ This project uses automatic TypeScript type generation from the FastAPI backend'
 ### Generate Types
 
 ```bash
-cd standmate
+cd huzlr
 pnpm generate-types
 ```
 
@@ -208,7 +208,7 @@ type ListProjectsResponse = ListProjectsOp['responses']['200']['content']['appli
 
 ```bash
 # Make changes to backend
-vim standmate-be/app/core/property_registry.py
+vim huzlr-be/app/core/property_registry.py
 
 # Backend auto-reloads (if using --reload)
 ```
@@ -216,7 +216,7 @@ vim standmate-be/app/core/property_registry.py
 ### 2. Generate Types
 
 ```bash
-cd standmate
+cd huzlr
 pnpm generate-types
 ```
 
@@ -264,7 +264,7 @@ git commit -m "Update types from backend changes"
 **Solution:**
 ```bash
 # Start backend
-cd ../standmate-be
+cd ../huzlr-be
 uvicorn main:app --reload --port 8001
 
 # Or use start-all.sh

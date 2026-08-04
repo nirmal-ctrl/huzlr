@@ -154,7 +154,7 @@ def template_workspace_invite(context: Dict[str, Any]) -> str:
         <p class="welcome-text" style="font-size: 18px; color: #52525b; margin-bottom: 24px;">
             Join the team.
         </p>
-        <p><strong>{inviter}</strong> has invited you to join the <strong>{workspace_name}</strong> workspace on Standmate (huzlr).</p>
+        <p><strong>{inviter}</strong> has invited you to join the <strong>{workspace_name}</strong> workspace on Huzlr (huzlr).</p>
         
         <p>Click the link below to sign up and join your team:</p>
         

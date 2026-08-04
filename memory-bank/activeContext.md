@@ -24,11 +24,11 @@
 - Deprecate/Remove `TeamSwitcher.tsx` if no longer needed as a standalone component.
 
 ## Active Decisions & Considerations
-- Maintaining a strict boundary between frontend (`standmate`) and backend (`standmate-be`) services.
+- Maintaining a strict boundary between frontend (`huzlr`) and backend (`huzlr-be`) services.
 - Ensuring the Next.js app properly connects to FastAPI endpoints.
 - Storing AI conversational state (e.g. Gemini) efficiently.
 
 ## Learnings & Insights
-- Standmate connects multiple data streams (Jira, brainstorms, boards) into a unified view.
+- Huzlr connects multiple data streams (Jira, brainstorms, boards) into a unified view.
 - Always use the reactive text editor (`TiptapEditor` / `InlineEditor`) for input fields that require formatted text or rich content, rather than basic inputs or textareas.
 - **Team Architecture**: The system uses a hierarchical Workspace -> Team -> User structure. Every workspace must have a default 'General' team created on initialization.

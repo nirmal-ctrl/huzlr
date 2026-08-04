@@ -2,7 +2,7 @@
 
 ## Technologies Used
 
-### Frontend (`standmate`)
+### Frontend (`huzlr`)
 - **Framework:** Next.js (App Router)
 - **Language:** TypeScript (`.ts`, `.tsx`)
 - **Styling:** Tailwind CSS (`tailwind.config.mjs`, `globals.css`)
@@ -10,7 +10,7 @@
 - **Package Manager:** pnpm
 - **AI Integration:** Google Gemini SDK integrations (`hooks/use-gemini-live.ts`, `lib/gemini-handlers.ts`)
 
-### Backend (`standmate-be`)
+### Backend (`huzlr-be`)
 - **Framework:** FastAPI
 - **Language:** Python
 - **Database ORM:** SQLAlchemy (managed via Alembic)
@@ -26,8 +26,8 @@
 - **Python Libraries:** `sounddevice`, `numpy`, `playwright`.
 
 ## Development Setup
-- Use `pnpm install` in the `standmate` directory.
-- Use `pip install -r requirements.txt` in the `standmate-be` directory.
+- Use `pnpm install` in the `huzlr` directory.
+- Use `pip install -r requirements.txt` in the `huzlr-be` directory.
 - `start-all.sh` root script used for launching full stack locally.
 - Backend db uses Alembic for migrations: `alembic upgrade head`.
 

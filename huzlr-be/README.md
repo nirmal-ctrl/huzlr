@@ -1,6 +1,6 @@
-# standmate-be
+# huzlr-be
 
-Backend API for the Standmate application built with FastAPI and PostgreSQL.
+Backend API for the Huzlr application built with FastAPI and PostgreSQL.
 
 ## 🔗 Project Links
 
@@ -24,7 +24,7 @@ Comprehensive guides and setup instructions are available in the [`docs/`](docs/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd standmate-be
+   cd huzlr-be
    ```
 
 2. **Set up environment**
@@ -71,7 +71,7 @@ Comprehensive guides and setup instructions are available in the [`docs/`](docs/
 ## 📁 Project Structure
 
 ```
-standmate-be/
+huzlr-be/
 ├── app/
 │   ├── api/              # API routes
 │   ├── core/             # Core configuration

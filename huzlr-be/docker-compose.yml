@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: standmate-postgres
+    container_name: huzlr-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
@@ -19,20 +19,20 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - standmate-network
+      - huzlr-network
 
   # Optional: pgAdmin for database management
   # Uncomment the section below if you want a web UI to manage your database
   pgadmin:
     image: dpage/pgadmin4
-    container_name: standmate-pgadmin
+    container_name: huzlr-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
     ports:
       - "${PGADMIN_PORT:-5050}:80"
     networks:
-      - standmate-network
+      - huzlr-network
     depends_on:
       - postgres
 
@@ -41,5 +41,5 @@ volumes:
     driver: local
 
 networks:
-  standmate-network:
+  huzlr-network:
     driver: bridge

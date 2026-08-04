@@ -278,7 +278,7 @@ async def entrypoint(ctx: JobContext):
         "4. **Projects & Milestone Views**: Track team projects, gantt charts, and milestones. Located at '/projects'.\n"
         "5. **Dynamic Properties (Custom Fields)**: Just like Notion, huzlr allows users to dynamically add, edit, and organize custom fields (like Status, Priority, Tags) on projects and tasks in live tables.\n"
         "6. **Rich Notion-like Editors**: huzlr uses robust, gorgeous TipTap components for editing project titles, details, and briefs natively.\n"
-        "7. **Autonomous Brainstorming Agent (Standmate)**: Users can start a real-time voice brainstorming session with 'Standmate', an AI product manager assistant that live-updates project forms and briefs.\n\n"
+        "7. **Autonomous Brainstorming Agent (Huzlr)**: Users can start a real-time voice brainstorming session with 'Huzlr', an AI product manager assistant that live-updates project forms and briefs.\n\n"
         "**DATA RECOGNITION & NAVIGATION CAPABILITIES**:\n"
         "- You have the ability to read the actual user data from the app. When asked 'what projects do we have?' or similar, call the `list_user_projects` tool to fetch their real list of active projects.\n"
         "- You can find their team memberships via `list_user_teams_and_workspaces`.\n"

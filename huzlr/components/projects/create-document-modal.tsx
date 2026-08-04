@@ -33,7 +33,7 @@ export function CreateDocumentModal({ projectId }: CreateDocumentModalProps) {
     // Load draft on open
     useEffect(() => {
         if (open) {
-            const saved = localStorage.getItem(`standmate:project_draft:${projectId}`)
+            const saved = localStorage.getItem(`huzlr:project_draft:${projectId}`)
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved)
@@ -52,7 +52,7 @@ export function CreateDocumentModal({ projectId }: CreateDocumentModalProps) {
     useEffect(() => {
         if (open && (title.trim() || content.trim() || selectedEmoji !== "📄")) {
             localStorage.setItem(
-                `standmate:project_draft:${projectId}`,
+                `huzlr:project_draft:${projectId}`,
                 JSON.stringify({ title, content, emoji: selectedEmoji })
             )
             setHasDraft(true)
@@ -61,7 +61,7 @@ export function CreateDocumentModal({ projectId }: CreateDocumentModalProps) {
 
     const discardDraft = (e?: React.MouseEvent) => {
         e?.stopPropagation()
-        localStorage.removeItem(`standmate:project_draft:${projectId}`)
+        localStorage.removeItem(`huzlr:project_draft:${projectId}`)
         resetForm()
         setHasDraft(false)
     }
@@ -82,7 +82,7 @@ export function CreateDocumentModal({ projectId }: CreateDocumentModalProps) {
             }).unwrap()
             
             setIsSuccess(true)
-            localStorage.removeItem(`standmate:project_draft:${projectId}`)
+            localStorage.removeItem(`huzlr:project_draft:${projectId}`)
             setHasDraft(false)
             setTimeout(() => {
                 setOpen(false)

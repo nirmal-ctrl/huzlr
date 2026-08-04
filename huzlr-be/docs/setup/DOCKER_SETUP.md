@@ -1,6 +1,6 @@
 # Docker Setup Guide
 
-This guide explains how to run PostgreSQL using Docker Compose for the standmate-be project.
+This guide explains how to run PostgreSQL using Docker Compose for the huzlr-be project.
 
 ## Prerequisites
 

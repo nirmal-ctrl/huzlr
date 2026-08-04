@@ -14,7 +14,7 @@ OUTPUT_FILE="lib/types/generated-api.ts"
 echo "🔍 Checking if backend is running at $BACKEND_URL..."
 if ! curl -s "$BACKEND_URL/openapi.json" > /dev/null; then
   echo "❌ Backend not running at $BACKEND_URL"
-  echo "   Please start the backend first: cd ../standmate-be && uvicorn main:app"
+  echo "   Please start the backend first: cd ../huzlr-be && uvicorn main:app"
   exit 1
 fi
 

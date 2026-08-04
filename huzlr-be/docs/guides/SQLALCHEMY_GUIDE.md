@@ -1,6 +1,6 @@
 # SQLAlchemy ORM Guide
 
-Complete guide to using SQLAlchemy 2.0 with async support in the standmate-be project.
+Complete guide to using SQLAlchemy 2.0 with async support in the huzlr-be project.
 
 ## Table of Contents
 

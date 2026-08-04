@@ -1,6 +1,6 @@
 # Database Migrations Guide
 
-Complete guide to managing database schema changes using Alembic in the standmate-be project.
+Complete guide to managing database schema changes using Alembic in the huzlr-be project.
 
 ## Table of Contents
 
@@ -53,7 +53,7 @@ pip install alembic
 
 ### Step 2: Initialize Alembic
 
-Run this command from your project root (`/Users/gnirmalkumar/Documents/work/standmate-be`):
+Run this command from your project root (`/Users/gnirmalkumar/Documents/work/huzlr-be`):
 
 ```bash
 alembic init alembic
@@ -61,7 +61,7 @@ alembic init alembic
 
 This creates:
 ```
-standmate-be/
+huzlr-be/
 ├── alembic/              # Migration scripts directory
 │   ├── versions/         # Individual migration files go here
 │   ├── env.py           # Alembic environment configuration

@@ -21,7 +21,7 @@
   - **Integrated Switcher**: Consolidated Workspace and Team selection into a single `WorkspaceSwitcher` component in the sidebar header for a cleaner hierarchy.
   - Updated UI on app sidebar ("Boards" to "Board").
   - Cleaned up the Kanban board UI by removing the redundant "Realese" header section.
-  - Refactored task creation modals (`standmate/components/projects/create-task-modal.tsx`) to use the `TiptapEditor` component for description formatting and ensure robust fetching of projects if none are loaded yet.
+  - Refactored task creation modals (`huzlr/components/projects/create-task-modal.tsx`) to use the `TiptapEditor` component for description formatting and ensure robust fetching of projects if none are loaded yet.
   - Updated frontend `.clinerules/01-frontend-standards.md` coding standards to explicitly mandate `TiptapEditor` and `InlineEditor` over standard `textarea` and `input`.
   - Updated Redux `Task` type to include `properties: Record<string, any>`.
   - Integrated `metaSlice` to fetch task property schemas seamlessly.

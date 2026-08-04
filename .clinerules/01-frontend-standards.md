@@ -1,6 +1,6 @@
-# Standmate Frontend Coding Guidelines & Architecture Standards
+# Huzlr Frontend Coding Guidelines & Architecture Standards
 
-This document serves as the absolute source of truth for frontend development in the StanMate repository. As an AI coding agent, you MUST adhere to these rules. Evaluate these rules contextually against the task at hand. Ask yourself: "Does applying this rule improve the architecture of *this specific feature*?"
+This document serves as the absolute source of truth for frontend development in the Huzlr repository. As an AI coding agent, you MUST adhere to these rules. Evaluate these rules contextually against the task at hand. Ask yourself: "Does applying this rule improve the architecture of *this specific feature*?"
 
 ## 1. Core Architecture (SOLID & Polymorphism)
 

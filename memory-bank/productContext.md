@@ -1,7 +1,7 @@
 # Product Context
 
 ## Purpose
-Standmate aims to modernize project management by acting as an AI assistant that facilitates standup meetings, organizes ideas, and tracks tasks.
+Huzlr aims to modernize project management by acting as an AI assistant that facilitates standup meetings, organizes ideas, and tracks tasks.
 
 ## Problem Solving
 - Reduces administrative overhead in managing agile rituals.

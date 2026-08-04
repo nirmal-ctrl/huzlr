@@ -22,14 +22,14 @@ import asyncio
 
 load_dotenv()
 
-logger = logging.getLogger("standmate-voice-agent")
+logger = logging.getLogger("huzlr-voice-agent")
 logger.setLevel(logging.INFO)
 
 def prewarm(proc: JobProcess):
     # ROOT CAUSE RESOLVED: removed 'proc.warm_cache' call because 'JobProcess' does not publish this method in livekit-agents 1.5+
     pass
 
-class StandmateAgent(Agent):
+class HuzlrAgent(Agent):
     def __init__(self, room, **kwargs) -> None:
         super().__init__(**kwargs)
         self.room = room
@@ -75,7 +75,7 @@ async def entrypoint(ctx: JobContext):
 
     # Define standard AI system prompt (Product Manager Assistant)
     initial_prompt = (
-        "You are 'Standmate', an expert AI Product Manager assistant. "
+        "You are 'Huzlr', an expert AI Product Manager assistant. "
         "Your mission is to help the user brainstorm and define a new software project. "
         "To do this, you will collaboratively guide the user through filling out the project details form in a natural, conversational flow.\n"
         "\n"
@@ -86,7 +86,7 @@ async def entrypoint(ctx: JobContext):
         "4. **Flesh out Description**: Interactively brainstorm the user's features, functional requirements, and ideas to build a comprehensive 'Description' (description).\n"
         "\n"
         "**CRITICAL BEHAVIOR FOR UPDATING THE FORM**:\n"
-        "- **ASK BEFORE UPDATING**: You MUST always explicitly ask the user for permission *before* calling the `update_project_details` tool to update any form fields on their screen (e.g. 'Should I update the project title to Standmate on your form?', 'Would you like me to add these features to your project description now?'). Only invoke the tool once they give you confirmation.\n"
+        "- **ASK BEFORE UPDATING**: You MUST always explicitly ask the user for permission *before* calling the `update_project_details` tool to update any form fields on their screen (e.g. 'Should I update the project title to Huzlr on your form?', 'Would you like me to add these features to your project description now?'). Only invoke the tool once they give you confirmation.\n"
         "- **ACKNOWLEDGE THE UPDATE**: Immediately after calling the `update_project_details` tool, verbally acknowledge to the user exactly what you updated and confirm that they can see it live on their screen (e.g., 'Perfect, I\\'ve added those brainstormed requirements to your description! You should see it typed out on your screen now.').\n"
         "- Since the description block is cumulative, your new description updates will automatically be prepended on top of what's already there in the rich-text editor on the screen. Therefore, ONLY send your *new* brainstormed additions, notes, or answers in the `description` parameter, rather than re-sending the entire document, so that you build up the project brief incrementally.\n"
         "- Speak naturally, keep your vocal responses short and conversational, and guide the user dynamically. Never sound like a form-filler; guide them like a collaborative partner."
@@ -106,7 +106,7 @@ async def entrypoint(ctx: JobContext):
     )
 
     # Instantiate the Agent (the workflow unit in 1.x)
-    assistant = StandmateAgent(
+    assistant = HuzlrAgent(
         room=ctx.room,
         vad=vad,
         stt=stt,
@@ -121,7 +121,7 @@ async def entrypoint(ctx: JobContext):
     logger.info("Voice Assistant started successfully!")
 
     # Initial greeting from the agent
-    await session.say("Hi there! I am Standmate, your PM brainstorming partner. What project are we planning today?", allow_interruptions=True)
+    await session.say("Hi there! I am Huzlr, your PM brainstorming partner. What project are we planning today?", allow_interruptions=True)
 
     # Run until disconnected to keep the job/connection alive
     try:

@@ -1,6 +1,6 @@
 # Implementing the Project Data Model - Step-by-Step Guide
 
-Complete walkthrough for implementing the AI project manager data model in standmate-be.
+Complete walkthrough for implementing the AI project manager data model in huzlr-be.
 
 ## 📋 Overview
 
@@ -369,7 +369,7 @@ class Task(Base):
 **Now that all models are created, generate the migration:**
 
 ```bash
-cd /Users/gnirmalkumar/Documents/work/standmate-be
+cd /Users/gnirmalkumar/Documents/work/huzlr-be
 source .venv/bin/activate
 alembic revision --autogenerate -m "add project management data model"
 ```

@@ -30,7 +30,7 @@ This option uses the pgAdmin container already configured in your `docker-compos
 Your `docker-compose.yml` already has pgAdmin configured. Start it with:
 
 ```bash
-cd /Users/gnirmalkumar/Documents/work/standmate-be
+cd /Users/gnirmalkumar/Documents/work/huzlr-be
 docker-compose up -d pgadmin
 ```
 
@@ -56,7 +56,7 @@ Password: admin
 1. **Click "Add New Server"** (or right-click "Servers" → "Register" → "Server")
 
 2. **General Tab:**
-   - **Name:** `Standmate PostgreSQL` (or any name you prefer)
+   - **Name:** `Huzlr PostgreSQL` (or any name you prefer)
 
 3. **Connection Tab:**
    - **Host name/address:** `postgres` (⚠️ Use `postgres`, NOT `localhost` - this is the Docker service name)
@@ -95,7 +95,7 @@ Download from: https://www.pgadmin.org/download/pgadmin-4-macos/
 1. **Right-click "Servers"** → **"Register"** → **"Server"**
 
 2. **General Tab:**
-   - **Name:** `Standmate PostgreSQL`
+   - **Name:** `Huzlr PostgreSQL`
 
 3. **Connection Tab:**
    - **Host name/address:** `localhost` (⚠️ Use `localhost` for desktop pgAdmin)
@@ -124,7 +124,7 @@ Once connected, you should see:
 
 ```
 Servers
-└── Standmate PostgreSQL
+└── Huzlr PostgreSQL
     └── Databases
         └── mydb
             └── Schemas
@@ -136,7 +136,7 @@ Servers
 
 ### Viewing Your Data
 
-1. **Expand:** Servers → Standmate PostgreSQL → Databases → mydb → Schemas → public → Tables
+1. **Expand:** Servers → Huzlr PostgreSQL → Databases → mydb → Schemas → public → Tables
 2. **Right-click `tasks`** → **"View/Edit Data"** → **"All Rows"**
 3. You'll see all your task records!
 
@@ -161,7 +161,7 @@ Servers
 **If using Desktop pgAdmin:**
 - ✅ Make sure you used `localhost` as the host
 - ✅ Check PostgreSQL is running: `docker ps | grep postgres`
-- ✅ Verify port 5432 is exposed: `docker port standmate-postgres`
+- ✅ Verify port 5432 is exposed: `docker port huzlr-postgres`
 
 ### Issue 2: "FATAL: password authentication failed"
 
@@ -174,7 +174,7 @@ Servers
 
 Check the logs:
 ```bash
-docker logs standmate-pgadmin
+docker logs huzlr-pgadmin
 ```
 
 Restart the container:
@@ -198,10 +198,10 @@ docker ps
 ### View Container Logs
 ```bash
 # PostgreSQL logs
-docker logs standmate-postgres
+docker logs huzlr-postgres
 
 # pgAdmin logs
-docker logs standmate-pgadmin
+docker logs huzlr-pgadmin
 ```
 
 ### Restart Services
