@@ -2,8 +2,10 @@
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.2.2",
   "scripts": {
-    "build": "pnpm generate-types && next build",
+    "build": "next build",
+    "build:refresh-types": "bash scripts/generate-types.sh && next build",
     "dev": "next dev -p 3001",
     "generate-types": "bash scripts/generate-types.sh",
     "lint": "eslint .",

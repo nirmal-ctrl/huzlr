@@ -28,6 +28,21 @@ export interface ScrumMeeting {
   outputs: Record<string, unknown>
 }
 
+export interface ScrumMeetingPage {
+  items: ScrumMeeting[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+  botScheduledTotal: number
+}
+
+export interface ScrumMeetingPageQuery {
+  workspaceId: number
+  page: number
+  pageSize?: number
+}
+
 export interface TranscriptSegment {
   id: number
   speakerType: "participant" | "agent"
@@ -93,6 +108,15 @@ interface ApiMeetingDetail extends ApiMeeting {
   }>
 }
 
+interface ApiMeetingPage {
+  items: ApiMeeting[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+  bot_scheduled_total: number
+}
+
 interface ApiSettings {
   workspace_id: number
   bot_name: string
@@ -152,9 +176,19 @@ const toApiSettings = (value: ScrumMasterSettings) => ({
 
 export const scrumMasterApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getScrumMeetings: builder.query<ScrumMeeting[], number>({
-      query: (workspaceId) => ({ url: "/scrum-master/meetings", params: { workspace_id: workspaceId } }),
-      transformResponse: (response: ApiMeeting[]) => response.map(mapMeeting),
+    getScrumMeetings: builder.query<ScrumMeetingPage, ScrumMeetingPageQuery>({
+      query: ({ workspaceId, page, pageSize = 20 }) => ({
+        url: "/scrum-master/meetings",
+        params: { workspace_id: workspaceId, page, page_size: pageSize },
+      }),
+      transformResponse: (response: ApiMeetingPage) => ({
+        items: response.items.map(mapMeeting),
+        total: response.total,
+        page: response.page,
+        pageSize: response.page_size,
+        totalPages: response.total_pages,
+        botScheduledTotal: response.bot_scheduled_total,
+      }),
       providesTags: ["ScrumMeetings"],
     }),
     getScrumMeeting: builder.query<ScrumMeetingDetail, number>({
@@ -210,9 +244,8 @@ export const scrumMasterApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["CalendarStatus", "ScrumMeetings"],
     }),
-    syncGoogleCalendar: builder.mutation<ScrumMeeting[], number>({
+    syncGoogleCalendar: builder.mutation<{ synced_count: number; connection_count: number }, number>({
       query: (workspaceId) => ({ url: "/scrum-master/calendar/sync", method: "POST", params: { workspace_id: workspaceId } }),
-      transformResponse: (response: ApiMeeting[]) => response.map(mapMeeting),
       invalidatesTags: ["CalendarStatus", "ScrumMeetings"],
     }),
     scheduleMeetingBot: builder.mutation<ScrumMeeting, number>({

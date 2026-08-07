@@ -1,9 +1,10 @@
 "use client"
 
 import {
-  Bot, CalendarDays, Clock3, ExternalLink, Link2, Loader2,
+  Bot, CalendarDays, ChevronLeft, ChevronRight, Clock3, ExternalLink, Link2, Loader2,
   Plus, RefreshCw, Trash2, Users, Video, VideoOff,
 } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { SiteHeader } from "@/components/site-header"
 import { Badge } from "@/components/ui/badge"
@@ -69,7 +70,11 @@ const errorDetail = (error: unknown) => {
 export default function ScrumMasterMeetingsPage() {
   const { toast } = useToast()
   const workspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
-  const meetingsQuery = useGetScrumMeetingsQuery(workspaceId ?? 0, { skip: !workspaceId, pollingInterval: 5000 })
+  const [page, setPage] = useState(1)
+  const meetingsQuery = useGetScrumMeetingsQuery(
+    { workspaceId: workspaceId ?? 0, page, pageSize: 20 },
+    { skip: !workspaceId, pollingInterval: 5000 },
+  )
   const calendarQuery = useGetCalendarStatusQuery(workspaceId ?? 0, { skip: !workspaceId })
   const [connectCalendar, connectState] = useConnectGoogleCalendarMutation()
   const [disconnectCalendar, disconnectState] = useDisconnectGoogleCalendarMutation()
@@ -78,9 +83,18 @@ export default function ScrumMasterMeetingsPage() {
   const [joinBot, joinState] = useJoinMeetingBotMutation()
   const [cancelBot, cancelState] = useCancelMeetingBotMutation()
 
-  const meetings = meetingsQuery.data ?? []
+  const meetingsPage = meetingsQuery.data
+  const meetings = meetingsPage?.items ?? []
   const calendar = calendarQuery.data
   const actionPending = scheduleState.isLoading || joinState.isLoading || cancelState.isLoading
+
+  useEffect(() => {
+    setPage(1)
+  }, [workspaceId])
+
+  useEffect(() => {
+    if (meetingsPage && page > meetingsPage.totalPages) setPage(meetingsPage.totalPages)
+  }, [meetingsPage, page])
 
   const run = async (action: () => Promise<unknown>, title: string) => {
     try {
@@ -175,8 +189,8 @@ export default function ScrumMasterMeetingsPage() {
 
             <section className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-3">
               {[
-                { label: "Upcoming meetings", value: meetings.length, icon: CalendarDays },
-                { label: "Bot scheduled", value: meetings.filter((meeting) => meeting.botEnabled).length, icon: Bot },
+                { label: "Upcoming meetings", value: meetingsPage?.total ?? 0, icon: CalendarDays },
+                { label: "Bot scheduled", value: meetingsPage?.botScheduledTotal ?? 0, icon: Bot },
                 { label: "Calendars", value: calendar?.connections.length ?? 0, icon: Link2 },
               ].map((item) => (
                 <div key={item.label} className="flex min-h-24 items-center gap-4 bg-background p-4">
@@ -218,6 +232,35 @@ export default function ScrumMasterMeetingsPage() {
                       </Card>
                     )
                   })}
+                  {meetingsPage && meetingsPage.totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t pt-3">
+                      <p className="text-xs text-muted-foreground">
+                        Page {meetingsPage.page} of {meetingsPage.totalPages} · {meetingsPage.total} meetings
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="size-8"
+                          aria-label="Previous meetings page"
+                          disabled={page <= 1 || meetingsQuery.isFetching}
+                          onClick={() => setPage((value) => Math.max(1, value - 1))}
+                        >
+                          <ChevronLeft className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="size-8"
+                          aria-label="Next meetings page"
+                          disabled={page >= meetingsPage.totalPages || meetingsQuery.isFetching}
+                          onClick={() => setPage((value) => Math.min(meetingsPage.totalPages, value + 1))}
+                        >
+                          <ChevronRight className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </section>

@@ -61,6 +61,20 @@ class MeetingResponse(BaseModel):
         from_attributes = True
 
 
+class MeetingPageResponse(BaseModel):
+    items: list[MeetingResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    bot_scheduled_total: int
+
+
+class CalendarSyncResponse(BaseModel):
+    synced_count: int
+    connection_count: int
+
+
 class TranscriptSegmentResponse(BaseModel):
     id: int
     speaker_type: str

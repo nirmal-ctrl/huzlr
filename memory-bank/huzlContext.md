@@ -10,6 +10,8 @@ lifecycle to the backend.
 ## Current Architecture
 
 - `huzlr`: Scrum Master Meetings, Settings, and Meeting Detail UI using RTK Query.
+- Meeting listing is server-paginated and polls only the current page; Calendar sync
+  responses return counts while Google incremental sync tokens preserve completeness.
 - `huzlr-be`: Multi-account Calendar OAuth/sync, workspace policy, durable meeting queue, worker
   authentication, status/heartbeat, transcript persistence, and LiveKit agent.
 - `huzl`: Playwright Meet worker, persistent bot profile, virtual PulseAudio devices,

@@ -9,7 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, 
 from fastapi.responses import RedirectResponse, Response
 from jose import JWTError, jwt
 from livekit.api import AccessToken, VideoGrants
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.deps import get_current_user, get_db
@@ -20,7 +20,9 @@ from models.scrum_master import GoogleCalendarConnection, MeetingTranscriptSegme
 from models.user import User
 from schemas.scrum_master import (
     CalendarConnectResponse,
+    CalendarSyncResponse,
     CalendarStatusResponse,
+    MeetingPageResponse,
     MeetingResponse,
     MeetingDetailResponse,
     ScrumMasterSettingsResponse,
@@ -330,7 +332,7 @@ async def _sync_calendar_connection(
     return changed
 
 
-@router.post("/calendar/sync", response_model=list[MeetingResponse])
+@router.post("/calendar/sync", response_model=CalendarSyncResponse)
 async def sync_calendar(
     workspace_id: int,
     connection_id: Optional[int] = None,
@@ -353,24 +355,42 @@ async def sync_calendar(
 
     await db.commit()
     changed = list({meeting.id: meeting for meeting in changed}.values())
-    for meeting in changed:
-        await db.refresh(meeting)
-    return changed
+    return CalendarSyncResponse(synced_count=len(changed), connection_count=len(connections))
 
 
-@router.get("/meetings", response_model=list[MeetingResponse])
+@router.get("/meetings", response_model=MeetingPageResponse)
 async def list_meetings(
     workspace_id: int,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    include_past: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     await assert_workspace_member(current_user.id, workspace_id, db)
+    filters = [ScrumMeeting.workspace_id == workspace_id]
+    if not include_past:
+        filters.append(ScrumMeeting.ends_at >= datetime.now(timezone.utc))
+
+    total = await db.scalar(select(func.count(ScrumMeeting.id)).where(*filters)) or 0
+    bot_scheduled_total = await db.scalar(
+        select(func.count(ScrumMeeting.id)).where(*filters, ScrumMeeting.bot_enabled.is_(True))
+    ) or 0
     result = await db.execute(
         select(ScrumMeeting)
-        .where(ScrumMeeting.workspace_id == workspace_id)
+        .where(*filters)
         .order_by(ScrumMeeting.starts_at.asc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
     )
-    return result.scalars().all()
+    return MeetingPageResponse(
+        items=list(result.scalars().all()),
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=max(1, (total + page_size - 1) // page_size),
+        bot_scheduled_total=bot_scheduled_total,
+    )
 
 
 @router.get("/meetings/{meeting_id}", response_model=MeetingDetailResponse)
