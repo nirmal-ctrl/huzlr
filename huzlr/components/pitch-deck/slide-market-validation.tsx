@@ -133,7 +133,7 @@ export function SlideMarketValidation({
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-3">
                                         <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center border", p.color)}>
-                                            {React.cloneElement(p.icon as React.ReactElement, { className: "w-4 h-4" })}
+                                            {React.cloneElement(p.icon as React.ReactElement<{ className?: string }>, { className: "w-4 h-4" })}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-slate-900 text-sm">{p.title}</h3>

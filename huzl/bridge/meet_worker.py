@@ -16,7 +16,7 @@ class MeetWorker:
         self.page = None
         self.connected = False
 
-    async def join(self, meeting_url: str, bot_name: str = "huzlr Agent"):
+    async def join(self, meeting_url: str, bot_name: str = "huzlr Agent", admission_timeout: int = 180):
         """Navigates to the Google Meet URL, enters name, turns off mic/cam, and joins."""
         if not self.browser_manager.context:
             await self.browser_manager.start()
@@ -31,21 +31,8 @@ class MeetWorker:
         # 1. Turn off camera and mic before joining
         logger.info("Configuring green-room settings (disabling camera and mic)...")
         
-        # Turn off camera
-        try:
-            # We can use keyboard shortcuts: Cmd+E or Ctrl+E is Google Meet shortcut for camera toggle
-            await self.page.keyboard.press("Control+e")
-            logger.info("Sent shortcut to toggle camera off")
-        except Exception as e:
-            logger.warning(f"Failed to turn off camera via shortcut: {e}")
-
-        # Turn off microphone
-        try:
-            # Cmd+D or Ctrl+D is Google Meet shortcut for microphone toggle
-            await self.page.keyboard.press("Control+d")
-            logger.info("Sent shortcut to toggle microphone off")
-        except Exception as e:
-            logger.warning(f"Failed to turn off microphone via shortcut: {e}")
+        await self._ensure_media_off("camera")
+        await self._ensure_media_off("microphone")
 
         await asyncio.sleep(2)
 
@@ -138,8 +125,10 @@ class MeetWorker:
             except Exception as e:
                 logger.error(f"Failed fallback visible button click scanner: {e}")
 
-        self.connected = joined
-        logger.info(f"Join request initiated. Connection status: {self.connected}")
+        if not joined:
+            raise RuntimeError("JOIN_CONTROL_NOT_FOUND")
+
+        logger.info("Join request initiated; waiting for admission confirmation")
         
         # Take a screenshot right after attempting to join to see what state we are in
         try:
@@ -151,6 +140,40 @@ class MeetWorker:
                 f.write(html_content)
         except Exception as e:
             logger.warning(f"Failed to take post-join debug info: {e}")
+
+        if not await self.wait_until_connected(timeout=admission_timeout):
+            raise TimeoutError("ADMISSION_TIMEOUT")
+
+    async def _ensure_media_off(self, media: str):
+        """Clicks the off control only when Meet indicates the device is currently on."""
+        labels = {
+            "camera": '[aria-label*="Turn off camera" i]',
+            "microphone": '[aria-label*="Turn off microphone" i]',
+        }
+        selector = labels[media]
+        try:
+            control = await self.page.query_selector(selector)
+            if control and await control.is_visible():
+                await control.click()
+                logger.info("Turned off %s", media)
+        except Exception as exc:
+            logger.warning("Could not verify %s state: %s", media, exc)
+
+    async def wait_until_connected(self, timeout: int = 180) -> bool:
+        """Waits until the in-call leave control appears or admission fails."""
+        deadline = asyncio.get_running_loop().time() + timeout
+        rejection_text = ("you can't join", "request denied", "meeting has ended", "removed from")
+
+        while asyncio.get_running_loop().time() < deadline:
+            if await self.is_connected():
+                logger.info("Admission confirmed")
+                return True
+
+            body_text = (await self.page.locator("body").inner_text()).lower()
+            if any(message in body_text for message in rejection_text):
+                raise RuntimeError("ADMISSION_REJECTED")
+            await asyncio.sleep(2)
+        return False
 
     async def is_connected(self) -> bool:
         """Checks if the meeting page is active and the call is in progress."""
@@ -177,13 +200,15 @@ class MeetWorker:
         """Unmutes the Google Meet mic so participants can hear injected audio."""
         if self.page:
             logger.info("Unmuting bot in Google Meet...")
-            await self.page.keyboard.press("Control+d")
+            control = await self.page.query_selector('[aria-label*="Turn on microphone" i]')
+            if control and await control.is_visible():
+                await control.click()
 
     async def mute(self):
         """Mutes the Google Meet mic."""
         if self.page:
             logger.info("Muting bot in Google Meet...")
-            await self.page.keyboard.press("Control+d")
+            await self._ensure_media_off("microphone")
 
     async def leave(self):
         """Leaves the meeting cleanly."""

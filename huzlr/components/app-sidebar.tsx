@@ -35,6 +35,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchCurrentUser } from "@/lib/redux/slices/authSlice"
 import { fetchWorkspaces, fetchTeams } from "@/lib/redux/slices/workspaceSlice"
 import { sanitizeIdentity } from "@/components/properties/factory"
+import { NavScrumMaster } from "@/components/nav-scrum-master"
 
 const data = {
   navMain: [
@@ -196,6 +197,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <NavScrumMaster />
         <NavTeams />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

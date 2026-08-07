@@ -14,6 +14,6 @@ export const baseApi = createApi({
             return headers;
         },
     }),
-    tagTypes: ['Projects', 'Brainstorms', 'Dashboard', 'Milestones', 'ProjectMilestones', 'Tasks', 'ProjectTasks', 'TeamTasks', 'Documents', 'ProjectDocuments'],
+    tagTypes: ['Projects', 'Brainstorms', 'Dashboard', 'Milestones', 'ProjectMilestones', 'Tasks', 'ProjectTasks', 'TeamTasks', 'Documents', 'ProjectDocuments', 'ScrumMeetings', 'ScrumSettings', 'CalendarStatus'],
     endpoints: () => ({}),
 })

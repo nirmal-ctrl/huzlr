@@ -1,6 +1,7 @@
 import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react'
-import { ProjectData } from '@/app/projects/columns'
-import data from '@/constants/data.json'
+import type { ProjectData } from '@/app/(app)/projects/schema'
+
+const mockProjects: ProjectData[] = []
 
 // Simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
@@ -29,7 +30,7 @@ export const projectsApi = createApi({
             queryFn: async (id) => {
                 await delay(500)
 
-                const project = (data as ProjectData[]).find((p) => p.id === id)
+                const project = mockProjects.find((p) => p.id === id)
 
                 if (!project) {
                     return { error: { status: 404, data: 'Project not found' } }
@@ -48,7 +49,7 @@ export const projectsApi = createApi({
                 // In a real API, the server would generate the ID
                 const project: ProjectData = {
                     ...newProject,
-                    id: Math.max(...(data as ProjectData[]).map(p => p.id)) + 1,
+                    id: mockProjects.length ? Math.max(...mockProjects.map(p => p.id)) + 1 : 1,
                 }
 
                 return { data: project }
@@ -61,7 +62,7 @@ export const projectsApi = createApi({
             queryFn: async (updatedProject) => {
                 await delay(800)
 
-                const existingProject = (data as ProjectData[]).find((p) => p.id === updatedProject.id)
+                const existingProject = mockProjects.find((p) => p.id === updatedProject.id)
 
                 if (!existingProject) {
                     return { error: { status: 404, data: 'Project not found' } }
@@ -82,7 +83,7 @@ export const projectsApi = createApi({
             queryFn: async (id) => {
                 await delay(600)
 
-                const project = (data as ProjectData[]).find((p) => p.id === id)
+                const project = mockProjects.find((p) => p.id === id)
 
                 if (!project) {
                     return { error: { status: 404, data: 'Project not found' } }

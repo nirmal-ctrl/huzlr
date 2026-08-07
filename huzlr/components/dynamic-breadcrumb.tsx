@@ -18,6 +18,9 @@ const routeMapping: Record<string, string> = {
     brainstorms: "Brainstorms",
     dashboard: "Dashboard",
     documents: "Documents",
+    "scrum-master": "Scrum Master",
+    meetings: "Meetings",
+    settings: "Settings",
 }
 
 export function DynamicBreadcrumb() {

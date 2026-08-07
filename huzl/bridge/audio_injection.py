@@ -19,6 +19,7 @@ class AudioInjectionPipeline:
         self.play_queue = queue.Queue()
         self.stream = None
         self.is_injecting = False
+        self._pending_samples = np.empty(0, dtype=np.float32)
 
     def _find_device_index(self) -> int:
         """Finds the device index matching the virtual microphone name."""
@@ -39,6 +40,11 @@ class AudioInjectionPipeline:
         outdata.fill(0)
         
         filled_frames = 0
+        if len(self._pending_samples):
+            to_take = min(len(self._pending_samples), frames)
+            outdata[:to_take, 0] = self._pending_samples[:to_take]
+            self._pending_samples = self._pending_samples[to_take:]
+            filled_frames = to_take
         while filled_frames < frames:
             try:
                 # Try to get a chunk from the queue
@@ -55,13 +61,8 @@ class AudioInjectionPipeline:
                 outdata[filled_frames : filled_frames + to_take, 0] = chunk_samples[:to_take]
                 filled_frames += to_take
                 
-                # If we didn't use the whole chunk, put the remainder back at the front of the queue
-                # Note: This simple queue implementation doesn't support 'put_front', 
-                # but since we use 20ms fixed blocks in the test script, we usually consume exactly one chunk.
                 if to_take < len(chunk_samples):
-                    # For now, we just log a warning if chunks are mismatched
-                    # In a real system, we'd use a separate buffer to handle partial chunks.
-                    logger.debug(f"Partial chunk consumed: {to_take}/{len(chunk_samples)}")
+                    self._pending_samples = chunk_samples[to_take:]
 
             except queue.Empty:
                 # No more data in queue, stop filling
@@ -103,6 +104,7 @@ class AudioInjectionPipeline:
                 self.play_queue.get_nowait()
             except queue.Empty:
                 break
+        self._pending_samples = np.empty(0, dtype=np.float32)
 
     def stop(self):
         """Stops the audio injection stream."""

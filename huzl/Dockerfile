@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libasound2-dev \
     libportaudio2 \
     portaudio19-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Set up the working directory inside the container
@@ -37,5 +38,6 @@ RUN chmod +x start.sh
 # Expose WebRTC / Socket ports if any
 EXPOSE 8080
 
-# Run the startup script
+# Run the worker by default; an explicit command can still override it.
 ENTRYPOINT ["./start.sh"]
+CMD ["python3", "worker.py"]

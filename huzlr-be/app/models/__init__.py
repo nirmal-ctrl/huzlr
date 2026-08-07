@@ -16,3 +16,4 @@ from .team import Team
 from .team_membership import TeamMembership
 from .invite import Invite
 from .audit_log import AuditLog
+from .scrum_master import ScrumMasterSettings, GoogleCalendarConnection, ScrumMeeting, MeetingTranscriptSegment

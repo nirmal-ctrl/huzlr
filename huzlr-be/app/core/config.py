@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # OAuth
     GOOGLE_CLIENT_ID: str = "your-google-client-id"
     GOOGLE_CLIENT_SECRET: str = "your-google-client-secret"
+    GOOGLE_CALENDAR_REDIRECT_URI: str = "http://localhost:8001/api/v1/scrum-master/calendar/google/callback"
     
     # URLs
     FRONTEND_BASE_URL: str = "http://localhost:3001"
@@ -26,11 +27,13 @@ class Settings(BaseSettings):
 
     # Admin
     ADMIN_SECRET: str = "admin-secret-key"
+    HUZL_WORKER_KEY: str = ""
 
     # LiveKit Voice Agent Configurations
     LIVEKIT_API_KEY: str = ""
     LIVEKIT_API_SECRET: str = ""
     LIVEKIT_URL: str = "wss://huzl-hdzkgm0u.livekit.cloud"
+    GEMINI_API_KEY: str = ""
 
     class Config:
         env_file = str(ENV_FILE)

@@ -1,134 +1,58 @@
- # huzl Architecture
-
-## System Diagram
+# huzl Architecture
 
 ```mermaid
 flowchart LR
-    Operator[Developer / Orchestrator] -->|docker run / python3 test_bridge.py| Runtime[huzl Runtime]
-
-    subgraph Container["Docker / Linux Audio Runtime"]
-        Runtime --> Startup[start.sh]
-        Startup --> Pulse[PulseAudio daemon]
-        Startup --> ALSA[/etc/asound.conf]
-        Pulse --> Speaker[huzlr_Speaker null sink]
-        Pulse --> Mic[huzlr_Mic null sink]
-
-        Runtime --> BrowserManager[bridge/browser_manager.py]
-        BrowserManager --> Chromium[Playwright Chromium]
-        Chromium --> Meet[Google Meet]
-
-        Runtime --> MeetWorker[bridge/meet_worker.py]
-        MeetWorker -->|join, mute, unmute, leave| Chromium
-
-        Meet -->|meeting audio output| Speaker
-        Speaker -->|monitor input| Capture[bridge/audio_capture.py]
-        Capture -->|16 kHz mono PCM chunks| AgentLayer[Agent / Test Logic]
-
-        AgentLayer -->|16 kHz mono PCM chunks| Injection[bridge/audio_injection.py]
-        Injection -->|output stream| Mic
-        Mic -->|virtual microphone input| Chromium
-        Chromium -->|bot speech/audio| Meet
-    end
-
-    subgraph AI["Agent Layer, Partly Scaffolded"]
-        Conversation[agent/conversation_manager.py]
-        Interruptions[agent/interruption_manager.py]
-        Gemini[agent/gemini_runtime.py]
-        LiveKit[agent/livekit_agent.py]
-        ProjectTools[tools/project_tools.py]
-    end
-
-    Capture -.future orchestration.-> Interruptions
-    Interruptions -.state events.-> Conversation
-    Conversation -.prompt context.-> Gemini
-    ProjectTools -.tool context.-> Gemini
-    Gemini -.text response.-> AgentLayer
-    LiveKit -.alternative voice stack.-> AgentLayer
+    Calendar[One or more Google Calendars] -->|OAuth and event sync| Backend[huzlr-be]
+    Frontend[huzlr Scrum Master UI] <-->|JWT APIs and status polling| Backend
+    Backend -->|PostgreSQL durable jobs| Queue[(Scrum meetings)]
+    Worker[huzl worker] -->|claim, heartbeat, status| Backend
+    Worker --> Profile[Persistent Google bot profile]
+    Worker --> Meet[Google Meet via Playwright]
+    Meet -->|virtual speaker PCM| Bridge[LiveKit PCM bridge]
+    Bridge -->|published audio| Room[Per-meeting LiveKit room]
+    Room --> Agent[Scrum Master voice agent]
+    Agent -->|VAD / STT / Gemini / TTS| Room
+    Room -->|agent audio| Bridge
+    Bridge -->|virtual microphone PCM| Meet
+    Agent -->|transcript segments| Backend
+    Backend --> Frontend
 ```
 
-## Runtime Sequence
+## Ownership Boundaries
 
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Start as start.sh
-    participant Pulse as PulseAudio/ALSA
-    participant Test as test_bridge.py
-    participant Browser as BrowserManager
-    participant MeetWorker as MeetWorker
-    participant Meet as Google Meet
-    participant Capture as AudioCapturePipeline
-    participant Inject as AudioInjectionPipeline
+- `huzlr` owns user controls and display state.
+- `huzlr-be` owns authorization, Calendar tokens, policy, scheduling, audit state,
+  transcripts, and LiveKit agent execution.
+- `huzl` owns one active browser/audio session and contains no user JWT or Calendar
+  refresh token.
+- Google OAuth identity and the dedicated Meet browser identity are separate.
+- Calendar connections are unique per workspace and Google account email; syncing
+  without a connection ID processes every connected account.
 
-    Dev->>Start: Run container command
-    Start->>Pulse: Start PulseAudio
-    Start->>Pulse: Create huzlr_Speaker and huzlr_Mic
-    Start->>Pulse: Set default sink/source and ALSA mappings
-    Start->>Test: Execute python3 test_bridge.py
+## Meeting Lifecycle
 
-    Test->>Browser: Start Playwright Chromium
-    Test->>MeetWorker: join(TEST_MEET_URL, bot name)
-    MeetWorker->>Meet: Navigate to Meet URL
-    MeetWorker->>Meet: Toggle camera/mic off
-    MeetWorker->>Meet: Fill bot name and click Join
-    MeetWorker->>Meet: Save screenshots/HTML for debugging
+```text
+scheduled -> queued -> starting -> authenticating -> waiting_for_admission
+          -> joined -> leaving -> completed
 
-    Test->>Capture: Start capture from virtual speaker
-    Meet-->>Capture: Meeting audio as PCM chunks
-    Capture-->>Test: 20 ms 16 kHz mono PCM
-
-    Test->>MeetWorker: Unmute bot
-    Test->>Inject: Start virtual mic output stream
-    Test->>Inject: Write MP3-decoded audio or 440 Hz tone chunks
-    Inject-->>Meet: Audio enters Meet as bot microphone
-
-    Test->>MeetWorker: Leave meeting
-    Test->>Browser: Stop browser
+Any active state -> cancelled
+Any active state -> failed
+Stale heartbeat -> queued retry, maximum three attempts
 ```
 
-## How It Works
+`Join now` is idempotent while a job is active. Clicking a Meet join control is not
+treated as admission; `joined` requires the in-call leave control. Cancellation is
+stored in PostgreSQL and returned with the next five-second worker heartbeat.
 
-`huzl` is built around one core trick: Google Meet is controlled by a browser, but the bot's ears and mouth are virtual audio devices.
+## Audio Contract
 
-The browser joins the meeting through Playwright. `BrowserManager` launches Chromium with media-permission flags, and `MeetWorker` performs the Google Meet UI actions: open the meeting URL, turn off mic/camera, enter the bot name, click join, detect whether the call is active, unmute, mute, and leave.
+The Meet side uses signed 16-bit, 16 kHz, mono PCM. Capture publishes frames into
+LiveKit. Remote agent frames are requested from LiveKit at the same format and fed to
+the injection queue. Partial output frames are retained instead of discarded.
 
-The audio path is handled outside the browser. `start.sh` starts PulseAudio and creates two null sinks:
+## Deployment Gate
 
-- `huzlr_Speaker`: used as the meeting audio output path. The capture pipeline listens to its monitor stream.
-- `huzlr_Mic`: used as the bot microphone path. The injection pipeline writes audio into it.
-
-`AudioCapturePipeline` reads incoming meeting audio as 20 ms, 16 kHz, mono PCM chunks. This is the shape most realtime speech systems expect.
-
-`AudioInjectionPipeline` writes 20 ms, 16 kHz, mono PCM chunks into the virtual microphone. In the current smoke test, those chunks come from either `arabic_ringtone.mp3` decoded by `ffmpeg` or a generated 440 Hz tone.
-
-The AI agent pieces are present but not fully wired into the bridge loop yet. `GeminiRuntime` can generate streamed text responses, `ConversationManager` tracks states like listening/thinking/speaking/interrupted, `InterruptionManager` does simple RMS-based voice activity detection, and `livekit_agent.py` sketches an alternate LiveKit-native voice assistant using Silero, Deepgram, Gemini, and ElevenLabs.
-
-## Current Practical Flow
-
-Today, the most concrete path is:
-
-1. Build/run the Docker image.
-2. `start.sh` prepares virtual audio.
-3. `test_bridge.py` joins a Google Meet.
-4. The script captures meeting audio and logs signal level.
-5. The script unmutes the bot and injects test audio.
-6. The script leaves the meeting and shuts down the browser.
-
-## Intended Future Flow
-
-The likely production shape is:
-
-1. Capture meeting audio from `AudioCapturePipeline`.
-2. Run VAD/interruption detection on each PCM chunk.
-3. Send speech audio to STT.
-4. Feed transcript plus project context/tools to Gemini.
-5. Convert Gemini's response to speech with TTS.
-6. Stream TTS PCM chunks into `AudioInjectionPipeline`.
-7. Clear the injection queue when an interruption is detected.
-
-## Boundaries
-
-- `bridge/*`: browser automation and raw audio IO.
-- `agent/*`: conversation state, AI model calls, interruption logic, and voice orchestration.
-- `tools/*`: project-management context/actions for the agent.
-- `test_bridge.py`: integration smoke test, not the final production orchestrator.
+The code path is complete enough for controlled integration testing, not unattended
+production. Production enablement requires real credentials, an encrypted persistent
+profile volume, migration application, disclosure/retention approval, and successful
+live-meeting reliability tests.

@@ -139,7 +139,7 @@ export function ProjectDetailsDrawer({ item }: { item: Project }) {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-3">
                                 <Label htmlFor="type">Type</Label>
-                                <Select defaultValue={item.properties.type}>
+                                <Select defaultValue={typeof item.properties.type === "string" ? item.properties.type : undefined}>
                                     <SelectTrigger id="type" className="w-full">
                                         <SelectValue placeholder="Select a type" />
                                     </SelectTrigger>
@@ -189,7 +189,7 @@ export function ProjectDetailsDrawer({ item }: { item: Project }) {
                         </div>
                         <div className="flex flex-col gap-3">
                             <Label htmlFor="reviewer">Reviewer</Label>
-                            <Select defaultValue={item.properties.reviewer}>
+                            <Select defaultValue={typeof item.properties.reviewer === "string" ? item.properties.reviewer : undefined}>
                                 <SelectTrigger id="reviewer" className="w-full">
                                     <SelectValue placeholder="Select a reviewer" />
                                 </SelectTrigger>

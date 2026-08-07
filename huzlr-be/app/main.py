@@ -13,11 +13,10 @@ from sqlalchemy import text
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.v1.router import api_router
-from core.database import engine, AsyncSessionLocal
+from core.database import AsyncSessionLocal
 from core.config import settings
 
 # Import all models to ensure they are registered with SQLAlchemy
-from models.base import Base
 from models.user import User
 # Import leaf models first (to ensure they are in registry if parents reference them)
 # But parents usually reference them by string, so order shouldn't matter...
@@ -30,6 +29,7 @@ from models.conversation import ConversationLog
 from models.version import ProjectVersion
 from models.issue import Issue
 from models.project import Project
+from models.scrum_master import ScrumMasterSettings, GoogleCalendarConnection, ScrumMeeting, MeetingTranscriptSegment
 # Add other models if needed
 
 
@@ -51,15 +51,14 @@ async def lifespan(app: FastAPI):
     # Start background health check
     health_check_task = asyncio.create_task(periodic_health_check())
     
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     # Start LiveKit Agent worker and Founder Agent worker in background subprocesses so they run together
     agent_process = None
     founder_process = None
+    scrum_master_process = None
     try:
         agent_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "services", "livekit_agent.py")
         founder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "services", "founder_agent.py")
+        scrum_master_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "services", "scrum_master_agent.py")
         python_executable = sys.executable
 
         if os.path.exists(agent_path):
@@ -83,6 +82,15 @@ async def lifespan(app: FastAPI):
             logger.info(f"LiveKit Founder agent worker started successfully with PID {founder_process.pid}")
         else:
             logger.warning(f"Founder agent script not found at {founder_path}")
+
+        if os.path.exists(scrum_master_path):
+            logger.info("Starting LiveKit Scrum Master worker subprocess...")
+            scrum_master_process = subprocess.Popen(
+                [python_executable, scrum_master_path, "dev", "--no-reload"],
+                stdout=None,
+                stderr=None,
+            )
+            logger.info("LiveKit Scrum Master worker started with PID %s", scrum_master_process.pid)
     except Exception as e:
         logger.error(f"Failed to start LiveKit voice agent subprocesses: {e}")
 
@@ -117,6 +125,14 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Founder agent worker did not terminate cleanly: {e}. Killing it...")
             founder_process.kill()
+
+    if scrum_master_process:
+        logger.info("Terminating LiveKit Scrum Master worker subprocess...")
+        scrum_master_process.terminate()
+        try:
+            scrum_master_process.wait(timeout=5)
+        except Exception:
+            scrum_master_process.kill()
 
 
 app = FastAPI(lifespan=lifespan)
