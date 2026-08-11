@@ -8,16 +8,30 @@ pulseaudio -D --exit-idle-time=-1 --system=false --disallow-exit --disallow-modu
 sleep 2
 
 echo "Configuring huzlr virtual speaker and virtual microphone..."
-# Create virtual speaker
-pactl load-module module-null-sink sink_name=huzlr_Speaker sink_properties=device.description="huzlr_Virtual_Speaker" || echo "Virtual Speaker already configured"
+sink_exists() {
+    pactl list sinks short | awk '{print $2}' | grep -Fxq "$1"
+}
 
-# Create virtual microphone
-pactl load-module module-null-sink sink_name=huzlr_Mic sink_properties=device.description="huzlr_Virtual_Microphone" || echo "Virtual Microphone already configured"
+source_exists() {
+    pactl list sources short | awk '{print $2}' | grep -Fxq "$1"
+}
+
+if ! sink_exists huzlr_Speaker; then
+    pactl load-module module-null-sink sink_name=huzlr_Speaker sink_properties=device.description="huzlr_Virtual_Speaker"
+fi
+
+if ! sink_exists huzlr_Mic; then
+    pactl load-module module-null-sink sink_name=huzlr_Mic sink_properties=device.description="huzlr_Virtual_Microphone"
+fi
+
+sink_exists huzlr_Speaker || { echo "Required virtual speaker was not created" >&2; exit 1; }
+sink_exists huzlr_Mic || { echo "Required virtual microphone sink was not created" >&2; exit 1; }
+source_exists huzlr_Mic.monitor || { echo "Required virtual microphone source was not created" >&2; exit 1; }
 
 # Set default sink and source in PulseAudio so Chromium and other apps route correctly
 echo "Setting default PulseAudio sink and source..."
-pactl set-default-sink huzlr_Speaker || echo "Failed to set default sink"
-pactl set-default-source huzlr_Mic.monitor || echo "Failed to set default source"
+pactl set-default-sink huzlr_Speaker
+pactl set-default-source huzlr_Mic.monitor
 
 echo "Listing virtual audio hardware devices inside the container:"
 pactl list sources short

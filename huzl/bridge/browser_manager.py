@@ -51,7 +51,6 @@ class BrowserManager:
             context_options["executable_path"] = executable_path
 
         if profile_dir:
-            Path(profile_dir).mkdir(parents=True, exist_ok=True)
             self.context = await self.playwright.chromium.launch_persistent_context(
                 user_data_dir=profile_dir,
                 **context_options,

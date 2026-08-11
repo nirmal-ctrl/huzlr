@@ -3,7 +3,6 @@ import numpy as np
 import logging
 import wave
 import queue
-import threading
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("huzl.audio_capture")
@@ -27,8 +26,11 @@ class AudioCapturePipeline:
             if self.device_name.lower() in dev["name"].lower():
                 logger.info(f"Found match for '{self.device_name}': device index {idx} ({dev['name']})")
                 return idx
-        logger.warning(f"Device '{self.device_name}' not found. Defaulting to system default input.")
-        return None
+        available = ", ".join(str(dev["name"]) for dev in devices) or "none"
+        raise RuntimeError(
+            f"Required audio capture device '{self.device_name}' was not found. "
+            f"Available devices: {available}"
+        )
 
     def _audio_callback(self, indata, frames, time, status):
         if status:
@@ -45,8 +47,7 @@ class AudioCapturePipeline:
 
         device_idx = self._find_device_index()
         logger.info(f"Starting audio capture stream (Rate: {self.sample_rate}Hz, Blocksize: {self.blocksize})...")
-        self.is_capturing = True
-        self.stream = sd.InputStream(
+        stream = sd.InputStream(
             device=device_idx,
             channels=self.channels,
             samplerate=self.sample_rate,
@@ -54,7 +55,9 @@ class AudioCapturePipeline:
             dtype="float32",
             callback=self._audio_callback
         )
-        self.stream.start()
+        stream.start()
+        self.stream = stream
+        self.is_capturing = True
 
     def read_chunk(self, timeout: float = None) -> bytes:
         """Reads a captured 20ms PCM chunk from the queue (blocking)."""

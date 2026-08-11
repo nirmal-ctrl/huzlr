@@ -4,19 +4,36 @@
 `huzlr-be` for due meeting jobs, joins with a persistent dedicated Google account,
 captures meeting audio, reports lifecycle state, and responds to cancellation.
 
+## Requirements
+
+- A running `huzlr-be` instance reachable from the worker
+- Docker Engine with Compose for deployment, or Python 3 with the packages in
+  `requirements.txt` for local debugging
+- One dedicated Google account and one persistent Chrome profile per concurrent worker
+- Matching `HUZL_WORKER_KEY` values in the backend and worker
+- LiveKit project credentials and AI provider credentials in `huzlr-be/.env`
+
 ## Required configuration
+
+Copy the checked-in template and replace its placeholders. `worker.py` loads this
+file automatically; do not add LiveKit API credentials here because the backend owns
+them and issues a short-lived meeting token to each claimed job.
+
+```bash
+cp .env.example .env
+```
 
 ```dotenv
 HUZLR_BACKEND_URL=http://host.docker.internal:8001
 HUZL_WORKER_KEY=<same long random value configured in huzlr-be>
-BOT_PROFILE_DIR=/data/google-bot-profile
+BOT_PROFILE_DIR=/absolute/host/path/google-bot-profile
+BOT_PROFILE_HOST_DIR=/absolute/host/path/google-bot-profile
 REQUIRE_BOT_PROFILE=true
 HEADLESS=true
-CHROME_EXECUTABLE_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 ```
 
-Create a worker key with a system password generator. Create the backend token
-encryption key with:
+Create a worker key with `openssl rand -hex 32` and put the same value in
+`huzlr-be/.env` and `huzl/.env`. Create the backend token encryption key with:
 
 ```bash
 python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
@@ -38,15 +55,27 @@ concurrent containers.
 
 ## Run
 
+Start the backend first. It must have `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and
+`LIVEKIT_API_SECRET` configured; the worker intentionally does not receive those
+project credentials.
+
 ```bash
-docker build -t huzl-worker .
-docker run --rm \
-  -e HUZLR_BACKEND_URL=http://host.docker.internal:8001 \
-  -e HUZL_WORKER_KEY=... \
-  -e BOT_PROFILE_DIR=/data/google-bot-profile \
-  -e REQUIRE_BOT_PROFILE=true \
-  -v /secure/path/google-bot-profile:/data/google-bot-profile \
-  huzl-worker
+docker compose up --build -d
+docker compose logs -f worker
+```
+
+For direct local debugging, change `HUZLR_BACKEND_URL` to
+`http://localhost:8001`, set `HEADLESS=false`, and run:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 worker.py
+```
+
+The startup is healthy when the log contains:
+
+```text
+Huzl worker polling http://host.docker.internal:8001
 ```
 
 ## Current boundary

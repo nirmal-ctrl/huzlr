@@ -35,11 +35,22 @@ class LiveKitMeetAudioBridge:
         logger.info("LiveKit Meet audio bridge connected")
 
     def _on_track_subscribed(self, track, publication, participant):
-        if track.kind != rtc.TrackKind.KIND_AUDIO:
+        if not self._is_agent_audio_track(track, participant):
+            logger.warning(
+                "Ignoring non-agent LiveKit track from participant %s",
+                getattr(participant, "identity", "unknown"),
+            )
             return
         task = asyncio.create_task(self._inject_agent_audio(track))
         self._output_tasks.add(task)
         task.add_done_callback(self._output_tasks.discard)
+
+    @staticmethod
+    def _is_agent_audio_track(track, participant) -> bool:
+        return (
+            track.kind == rtc.TrackKind.KIND_AUDIO
+            and getattr(participant, "kind", None) == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT
+        )
 
     async def _publish_meet_audio(self):
         while True:
@@ -75,4 +86,3 @@ class LiveKitMeetAudioBridge:
             await self.source.aclose()
         await self.room.disconnect()
         logger.info("LiveKit Meet audio bridge disconnected")
-

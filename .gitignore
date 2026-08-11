@@ -18,6 +18,7 @@ env/
 .env.*
 !.env.template
 !.env.example
+huzl/.bot-profile/
 *.sqlite3
 *.egg-info/
 .mypy_cache/

@@ -2,8 +2,6 @@ import sounddevice as sd
 import numpy as np
 import logging
 import queue
-import threading
-import time
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("huzl.audio_injection")
@@ -28,8 +26,11 @@ class AudioInjectionPipeline:
             if self.device_name.lower() in dev["name"].lower():
                 logger.info(f"Found match for '{self.device_name}': device index {idx} ({dev['name']})")
                 return idx
-        logger.warning(f"Device '{self.device_name}' not found. Defaulting to system default output.")
-        return None
+        available = ", ".join(str(dev["name"]) for dev in devices) or "none"
+        raise RuntimeError(
+            f"Required audio injection device '{self.device_name}' was not found. "
+            f"Available devices: {available}"
+        )
 
     def _audio_callback(self, outdata, frames, time_info, status):
         """Audio callback to fill the playback buffer from the queue."""
@@ -85,8 +86,7 @@ class AudioInjectionPipeline:
 
         device_idx = self._find_device_index()
         logger.info(f"Starting audio injection stream (Rate: {self.sample_rate}Hz, Blocksize: {self.blocksize})...")
-        self.is_injecting = True
-        self.stream = sd.OutputStream(
+        stream = sd.OutputStream(
             device=device_idx,
             channels=self.channels,
             samplerate=self.sample_rate,
@@ -94,7 +94,9 @@ class AudioInjectionPipeline:
             dtype="float32",
             callback=self._audio_callback
         )
-        self.stream.start()
+        stream.start()
+        self.stream = stream
+        self.is_injecting = True
 
     def clear_buffer(self):
         """Clears all pending audio chunks in the injection buffer (used during interruptions)."""

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from playwright.async_api import Page, TimeoutError
+from bridge.meet_states import detect_terminal_meeting_error
 try:
     from bridge.browser_manager import BrowserManager
 except ImportError:
@@ -8,6 +9,13 @@ except ImportError:
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("huzl.meet_worker")
+
+
+class MeetJoinError(RuntimeError):
+    def __init__(self, code: str, message: str):
+        super().__init__(message)
+        self.code = code
+
 
 class MeetWorker:
     """Controls the Chromium instance to join Google Meet, configure media, and monitor state."""
@@ -27,6 +35,7 @@ class MeetWorker:
 
         # Let the page load
         await asyncio.sleep(5)
+        await self._raise_for_terminal_state()
 
         # 1. Turn off camera and mic before joining
         logger.info("Configuring green-room settings (disabling camera and mic)...")
@@ -126,7 +135,8 @@ class MeetWorker:
                 logger.error(f"Failed fallback visible button click scanner: {e}")
 
         if not joined:
-            raise RuntimeError("JOIN_CONTROL_NOT_FOUND")
+            await self._raise_for_terminal_state()
+            raise MeetJoinError("JOIN_CONTROL_NOT_FOUND", "Google Meet join control was not available")
 
         logger.info("Join request initiated; waiting for admission confirmation")
         
@@ -162,18 +172,21 @@ class MeetWorker:
     async def wait_until_connected(self, timeout: int = 180) -> bool:
         """Waits until the in-call leave control appears or admission fails."""
         deadline = asyncio.get_running_loop().time() + timeout
-        rejection_text = ("you can't join", "request denied", "meeting has ended", "removed from")
-
         while asyncio.get_running_loop().time() < deadline:
             if await self.is_connected():
                 logger.info("Admission confirmed")
                 return True
 
-            body_text = (await self.page.locator("body").inner_text()).lower()
-            if any(message in body_text for message in rejection_text):
-                raise RuntimeError("ADMISSION_REJECTED")
+            await self._raise_for_terminal_state()
             await asyncio.sleep(2)
         return False
+
+    async def _raise_for_terminal_state(self):
+        body_text = await self.page.locator("body").inner_text()
+        error = detect_terminal_meeting_error(body_text)
+        if error:
+            code, message = error
+            raise MeetJoinError(code, message)
 
     async def is_connected(self) -> bool:
         """Checks if the meeting page is active and the call is in progress."""

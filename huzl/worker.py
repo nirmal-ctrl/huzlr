@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 import signal
 import urllib.error
 import urllib.request
@@ -13,6 +12,7 @@ from bridge.audio_injection import AudioInjectionPipeline
 from bridge.browser_manager import BrowserManager
 from bridge.meet_worker import MeetWorker
 from worker_contract import JobStatus, MeetingJob, WorkerControl
+from worker_settings import load_worker_settings
 from agent.livekit_bridge import LiveKitMeetAudioBridge
 
 
@@ -103,9 +103,10 @@ class MeetingJobRunner:
             await meet.leave()
             await self.client.report(job.job_id, JobStatus.COMPLETED)
         except Exception as exc:
-            logger.exception("Meeting job %s failed", job.job_id)
+            logger.exception("Meeting job %s (meeting %s) failed", job.job_id, job.meeting_id)
             try:
-                await self.client.report(job.job_id, JobStatus.FAILED, type(exc).__name__.upper(), str(exc)[:1000])
+                error_code = getattr(exc, "code", type(exc).__name__.upper())
+                await self.client.report(job.job_id, JobStatus.FAILED, error_code, str(exc)[:1000])
             except Exception:
                 logger.exception("Could not report job failure")
         finally:
@@ -117,19 +118,16 @@ class MeetingJobRunner:
 
 
 async def main():
-    backend_url = os.environ.get("HUZLR_BACKEND_URL", "http://host.docker.internal:8001")
-    worker_key = os.environ.get("HUZL_WORKER_KEY")
-    if not worker_key:
-        raise RuntimeError("HUZL_WORKER_KEY is required")
+    settings = load_worker_settings()
 
-    client = WorkerApiClient(backend_url, worker_key)
+    client = WorkerApiClient(settings.backend_url, settings.worker_key)
     runner = MeetingJobRunner(client)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop.set)
 
-    logger.info("Huzl worker polling %s", backend_url)
+    logger.info("Huzl worker polling %s", settings.backend_url)
     while not stop.is_set():
         try:
             job = await client.claim()

@@ -1,0 +1,19 @@
+services:
+  worker:
+    build:
+      context: .
+    env_file:
+      - ${HUZL_ENV_FILE:-.env}
+    environment:
+      BOT_PROFILE_DIR: /data/google-bot-profile
+      HEADLESS: "true"
+      REQUIRE_BOT_PROFILE: "true"
+    volumes:
+      - type: bind
+        source: ${BOT_PROFILE_HOST_DIR:?Set BOT_PROFILE_HOST_DIR in huzl/.env}
+        target: /data/google-bot-profile
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
