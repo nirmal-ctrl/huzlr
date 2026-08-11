@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter, Caveat, Source_Serif_4, Open_Sans } from "next/font/google"
+import { Inter, Manrope, Source_Serif_4 } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -22,26 +22,21 @@ const sourceSerif = Source_Serif_4({
   variable: "--font-source-serif",
 })
 
-const caveat = Caveat({
+const manrope = Manrope({
   subsets: ["latin"],
-  variable: "--font-caveat",
-})
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  variable: "--font-open-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
 })
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://huzlr.com"),
-  title: "huzlr  Project intelligence that thinks ahead",
+  title: "huzlr | The coordination layer for teams working with AI",
   description:
-    "huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail. Join the private beta.",
+    "huzlr keeps humans, AI workers, and existing systems aligned. Detect change, coordinate the response, and keep execution moving.",
   keywords: [
-    "AI project manager",
-    "project management software",
-    "agile project management",
+    "AI coordination layer",
+    "hybrid organization management",
+    "AI workforce coordination",
     "risk forecasting",
     "team collaboration",
     "project planning AI",
@@ -62,17 +57,17 @@ export const metadata: Metadata = {
     "AI-powered project dashboards",
   ],
   openGraph: {
-    title: "huzlr  Project intelligence that thinks ahead",
+    title: "huzlr | The coordination layer for teams working with AI",
     description:
-      "A thinking layer above your existing tools. Predict risks early, surface the signals that matter, and decide before projects derail.",
+      "Keep humans, AI workers, and existing systems aligned as work changes.",
     images: ["/og-image.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "huzlr  Project intelligence that thinks ahead",
+    title: "huzlr | The coordination layer for teams working with AI",
     description:
-      "A thinking layer above your existing tools. Signals, not dashboards.",
+      "Keep humans, AI workers, and existing systems aligned as work changes.",
     images: ["/twitter-image.png"],
   },
   icons: {
@@ -96,13 +91,13 @@ export default function RootLayout({
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "huzlr is a thinking layer above your existing tools. It understands dependencies, predicts risk early, and helps teams make better decisions before projects derail.",
-    "featureList": "Risk forecasting, predictive delay warnings, async standups, delivery drift detection, automated project intelligence"
+    "description": "huzlr is a coordination layer that keeps humans, AI workers, and existing systems aligned as work changes.",
+    "featureList": "Hybrid workforce coordination, delivery intelligence, dependency detection, AI worker orchestration, proactive risk signals"
   }
 
   return (
     <html lang="en" suppressHydrationWarning={true}>
-      <body className={`font-sans antialiased ${inter.variable} ${sourceSerif.variable} ${caveat.variable} ${openSans.variable}`} suppressHydrationWarning={true}>
+      <body className={`font-sans antialiased ${inter.variable} ${manrope.variable} ${sourceSerif.variable}`} suppressHydrationWarning={true}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -4,7 +4,7 @@ import { FAQ } from "@/components/faq"
 import { Footer } from "@/components/footer"
 import Hero from "@/components/hero"
 import { HowItWorks } from "@/components/how-it-works"
-import { IdealCustomers } from "@/components/ideal-customers"
+import { HybridOrganization } from "@/components/hybrid-organization"
 import { Navigation } from "@/components/navigation"
 import { Signals } from "@/components/signals"
 
@@ -13,10 +13,10 @@ export default function Home() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "huzlr",
-    applicationCategory: "ProjectManagement",
+    applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "Project intelligence that predicts risk early, surfaces the signals that matter, and helps teams decide before projects derail.",
+      "A coordination layer that keeps humans, AI workers, and existing systems aligned as work changes.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -32,7 +32,7 @@ export default function Home() {
       />
       <Navigation />
       <Hero />
-      <IdealCustomers />
+      <HybridOrganization />
       <HowItWorks />
       <Signals />
       <Benefits />

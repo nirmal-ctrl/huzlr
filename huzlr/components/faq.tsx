@@ -10,12 +10,12 @@ export function FAQ() {
     {
       question: "What is huzlr, exactly?",
       answer:
-        "huzlr is a project intelligence layer that sits above your existing tools. It reads the activity across your projects, understands dependencies and intent, and surfaces the few signals that deserve a decision  instead of another dashboard to check.",
+        "huzlr is a coordination layer for teams working with AI. It connects activity across projects, conversations, meetings, documents, people, and AI workers, then coordinates the next step as work changes.",
     },
     {
       question: "How does huzlr connect to my existing tools?",
       answer:
-        "huzlr integrates with Jira out of the box today, with Slack and GitHub connectors on the near-term roadmap. Integrations are read-focused and secure  huzlr observes your workflow without disrupting it.",
+        "huzlr integrates with Jira today, with Slack and GitHub connectors on the near-term roadmap. It builds shared context across the tools where your team already plans, communicates, and ships.",
     },
     {
       question: "Is my project data secure?",
@@ -23,19 +23,19 @@ export function FAQ() {
         "Yes. Data is encrypted in transit and at rest, access is scoped per workspace, and we never train shared models on your private project data. We're building toward SOC 2 compliance as part of our private beta.",
     },
     {
-      question: "Can huzlr adapt to my team's workflow?",
+      question: "How does huzlr work with AI workers?",
       answer:
-        "Yes. huzlr works with Agile, Scrum, Kanban, or hybrid setups. It learns your team's rhythms over time  how you plan, estimate, and deliver  and tunes its signals to match how your team actually works.",
+        "huzlr gives AI workers the current goals, constraints, dependencies, and ownership context needed to execute safely. It can delegate bounded work, monitor outcomes, and bring consequential decisions back to a human.",
     },
     {
       question: "What does huzlr do during the private beta?",
       answer:
-        "Beta teams get the full intelligence layer: async standups, risk signals, delivery drift detection, and the unified project view. Your feedback directly shapes what we build next, and beta pricing will be honored at launch.",
+        "Private-beta teams start with product delivery: connected project context, async coordination, dependency and risk signals, and proactive follow-through. Their feedback shapes how Huzlr expands into broader hybrid-workforce coordination.",
     },
     {
       question: "Do I need technical expertise to use huzlr?",
       answer:
-        "No. huzlr is designed for project leads, founders, and individual contributors alike. If your team can run a standup, it can use huzlr  the AI handles the analysis in the background.",
+        "No. huzlr is designed for founders, product leaders, and engineering teams. It works above your existing tools and brings decisions into the flow of work instead of requiring another management system to maintain.",
     },
   ]
 

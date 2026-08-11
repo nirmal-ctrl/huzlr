@@ -23,6 +23,7 @@ interface HeroWithMockupProps {
     width: number
     height: number
   }
+  mockupContent?: React.ReactNode
   className?: string
 }
 
@@ -37,6 +38,7 @@ export function HeroWithMockup({
   },
   secondaryCta,
   mockupImage,
+  mockupContent,
   className,
 }: HeroWithMockupProps) {
   return (
@@ -122,15 +124,17 @@ export function HeroWithMockup({
         </div>
 
         {/* Mockup */}
-        {mockupImage && (
+        {(mockupImage || mockupContent) && (
           <div className="relative w-full max-w-5xl pt-10 animate-appear opacity-0 [animation-delay:600ms]">
-            <div className="rounded-2xl border border-hairline bg-white/60 dark:bg-white/[0.03] p-2 shadow-[0_24px_60px_-24px_rgba(41,37,31,0.25)]">
-              <img
-                {...mockupImage}
-                className="w-full h-auto rounded-xl border border-hairline/60"
-                loading="lazy"
-                decoding="async"
-              />
+            <div className="rounded-xl border border-hairline bg-white/60 dark:bg-white/[0.03] p-2 shadow-[0_24px_60px_-24px_rgba(41,37,31,0.25)]">
+              {mockupContent ?? (mockupImage && (
+                <img
+                  {...mockupImage}
+                  className="w-full h-auto rounded-lg border border-hairline/60"
+                  loading="lazy"
+                  decoding="async"
+                />
+              ))}
             </div>
           </div>
         )}

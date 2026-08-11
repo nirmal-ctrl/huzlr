@@ -52,13 +52,13 @@ body {
   --sidebar-border: oklch(0.885 0.013 72);
   --sidebar-ring: oklch(0.586 0.132 41);
 
-  /* Marketing palette (Claude-inspired warm neutrals + clay accent) */
-  --paper: oklch(0.962 0.012 80);
-  --ink: oklch(0.24 0.015 60);
-  --clay: oklch(0.586 0.132 41);
-  --clay-deep: oklch(0.5 0.115 40);
-  --sand: oklch(0.935 0.016 78);
-  --hairline: oklch(0.878 0.015 72);
+  /* Marketing palette: clear neutrals with a trustworthy blue accent */
+  --paper: oklch(0.982 0.004 250);
+  --ink: oklch(0.235 0.025 255);
+  --clay: oklch(0.545 0.19 255);
+  --clay-deep: oklch(0.465 0.18 258);
+  --sand: oklch(0.952 0.012 248);
+  --hairline: oklch(0.875 0.014 248);
 }
 
 .dark {
@@ -97,21 +97,19 @@ body {
   --sidebar-border: oklch(0.93 0.012 82 / 10%);
   --sidebar-ring: oklch(0.672 0.117 43);
 
-  /* Marketing palette  dark (warm charcoal + soft clay) */
-  --paper: oklch(0.19 0.012 60);
-  --ink: oklch(0.93 0.012 82);
-  --clay: oklch(0.672 0.117 43);
-  --clay-deep: oklch(0.586 0.132 41);
-  --sand: oklch(0.235 0.014 62);
-  --hairline: oklch(0.93 0.012 82 / 12%);
+  /* Marketing palette: dark neutral surfaces with a clear blue accent */
+  --paper: oklch(0.18 0.018 255);
+  --ink: oklch(0.94 0.008 245);
+  --clay: oklch(0.69 0.15 250);
+  --clay-deep: oklch(0.62 0.17 252);
+  --sand: oklch(0.225 0.022 255);
+  --hairline: oklch(0.94 0.01 245 / 13%);
 }
 
 @theme inline {
   /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-source-serif), Georgia, "Times New Roman", serif;
-  --font-caveat: var(--font-caveat);
-  --font-open-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   /* Marketing palette tokens */
   --color-paper: var(--paper);
   --color-ink: var(--ink);
@@ -225,6 +223,12 @@ body {
   h3 {
     @apply text-[12px] font-medium tracking-tight;
   }
+
+}
+
+main.bg-paper em {
+  font-family: var(--font-source-serif), Georgia, "Times New Roman", serif;
+  font-weight: 400;
 }
 
 ::view-transition-old(root),

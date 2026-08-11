@@ -9,9 +9,9 @@ export function Footer() {
     {
       heading: "Product",
       links: [
+        { label: "Why huzlr", href: "/#why-huzlr" },
         { label: "How it works", href: "/#how-it-works" },
-        { label: "Signals", href: "/#signals" },
-        { label: "Integrations", href: "/integrations" },
+        { label: "Coordination", href: "/#signals" },
         { label: "Join waitlist", href: "/signup" },
       ],
     },
@@ -40,7 +40,7 @@ export function Footer() {
           <div className="col-span-2 space-y-4">
             <Logo size="lg" />
             <p className="text-sm leading-relaxed text-ink/50 max-w-xs">
-              Project intelligence that thinks ahead. Signals, not dashboards.
+              The coordination layer for teams working with AI.
             </p>
           </div>
 

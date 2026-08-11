@@ -14,10 +14,10 @@ import {
 import { ChevronDown } from "lucide-react";
 
 const navLinks = [
+  { label: "Why huzlr", href: "/#why-huzlr" },
   { label: "How it works", href: "/#how-it-works" },
-  { label: "Signals", href: "/#signals" },
+  { label: "Coordination", href: "/#signals" },
   { label: "FAQ", href: "/#faq" },
-  { label: "Blog", href: "/blog" },
 ];
 
 export function Navigation() {
@@ -31,7 +31,7 @@ export function Navigation() {
 function Navbar({ className }: { className?: string }) {
   return (
     <div
-      className={cn("fixed top-6 inset-x-0 max-w-2xl mx-auto z-50 px-4", className)}
+      className={cn("fixed top-6 inset-x-0 max-w-3xl mx-auto z-50 px-4", className)}
     >
       <nav className="relative rounded-full border border-hairline bg-paper/80 shadow-sm shadow-ink/5 flex items-center justify-between gap-6 pl-6 pr-3 py-2.5 backdrop-blur-md">
         {/* Logo */}

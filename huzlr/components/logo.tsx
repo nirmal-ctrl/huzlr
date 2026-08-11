@@ -20,7 +20,7 @@ export function Logo({ size = "md", href = "/", className }: LogoProps) {
   const wordmark = (
     <span
       className={cn(
-        "font-open-sans font-extrabold tracking-tight",
+        "font-serif font-extrabold tracking-tight",
         sizeStyles[size],
       )}
     >

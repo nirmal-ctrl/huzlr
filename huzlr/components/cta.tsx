@@ -6,19 +6,19 @@ export function CTA() {
     <section className="border-t border-hairline py-24 sm:py-28 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl text-center">
         <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
-          Private beta
+          Build the hybrid organization
         </p>
         <h2 className="mt-4 font-serif text-4xl sm:text-5xl md:text-6xl tracking-tight text-ink text-balance leading-[1.1]">
-          Your projects, <em className="italic text-clay">thought through.</em>
+          Add intelligence without adding <em className="italic text-clay">coordination chaos.</em>
         </h2>
         <p className="mt-6 text-base sm:text-lg leading-relaxed text-ink/60 max-w-xl mx-auto">
-          Join the waitlist and be among the first teams whose projects are
-          watched over by intelligence  not just tracked by tools.
+          Join the private beta for AI-native product teams and help shape the
+          coordination layer your future organization will run on.
         </p>
         <div className="mt-10 flex flex-col items-center gap-4">
           <Link href="/signup">
             <button className="group rounded-full bg-clay px-8 py-3.5 text-sm font-medium text-white hover:bg-clay-deep transition-colors flex items-center gap-2">
-              Join the waitlist
+              Join the private beta
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </Link>

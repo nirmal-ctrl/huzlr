@@ -1,106 +1,88 @@
-"use client";
+import { ArrowRight, BellRing, BrainCircuit, CheckCircle2, Workflow } from "lucide-react"
+import Link from "next/link"
 
-import { ProcessIndicator } from "@/components/process-indicator";
-import { ChatSimulation, SimulationPhase, ConversationTopic } from "@/components/chat-simulation";
-import { useState } from "react";
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-
-interface HowItWorksProps {
-  bottomSection?: {
-    title: string;
-    description: string;
-  };
-}
-
-export const HowItWorks = ({
-  bottomSection = {
-    title: "A project brain that never forgets.",
+const steps = [
+  {
+    number: "01",
+    icon: BellRing,
+    title: "Detect what changed",
     description:
-      "huzlr reads intent, execution flow, and people dynamics  then surfaces the few things that genuinely need your attention.",
+      "Huzlr continuously reads projects, conversations, meetings, documents, and connected systems.",
   },
-}: HowItWorksProps = {}) => {
-  const [simulationState, setSimulationState] = useState<SimulationPhase>("IDLE");
-  const [, setCurrentTopic] = useState<ConversationTopic>("sprint");
+  {
+    number: "02",
+    icon: BrainCircuit,
+    title: "Understand the impact",
+    description:
+      "It connects the change to goals, dependencies, owners, AI workers, and decisions already in motion.",
+  },
+  {
+    number: "03",
+    icon: Workflow,
+    title: "Coordinate the response",
+    description:
+      "Huzlr updates plans, delegates safe work, requests human judgment, and follows up across tools.",
+  },
+  {
+    number: "04",
+    icon: CheckCircle2,
+    title: "Learn from execution",
+    description:
+      "Every outcome improves how priorities, risks, and interventions are handled the next time.",
+  },
+]
 
+export function HowItWorks() {
   return (
-    <section id="how-it-works" className="relative py-24 sm:py-28 border-t border-hairline overflow-hidden">
-      <div className="relative max-w-6xl mx-auto px-6">
-        {/* Section header */}
-        <div className="max-w-2xl mx-auto text-center mb-14">
-          <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
-            See it in action
+    <section id="how-it-works" className="border-t border-hairline py-24 sm:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-clay">
+            Push coordination
           </p>
-          <h2 className="mt-4 font-serif text-4xl sm:text-5xl tracking-tight text-ink text-balance">
-            How huzlr <em className="italic text-clay">works</em>
+          <h2 className="mt-4 font-serif text-4xl tracking-tight text-ink text-balance sm:text-5xl">
+            Work moves before someone asks <em className="italic text-clay">for an update.</em>
           </h2>
-          <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
-            Watch a live simulation of huzlr running a standup, spotting a
-            blocker, and recommending the next move.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink/60 sm:text-lg">
+            Most management systems wait for people to find context and drive the next step.
+            Huzlr understands the operating picture and brings the right action to the right actor.
           </p>
         </div>
 
-        {/* Main Interactive Demo */}
-        <div className="rounded-2xl border border-hairline bg-card shadow-[0_24px_60px_-32px_rgba(41,37,31,0.35)] overflow-hidden">
-          {/* Window chrome */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-hairline bg-sand/50">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-ink/15" />
-              <div className="w-3 h-3 rounded-full bg-ink/15" />
-              <div className="w-3 h-3 rounded-full bg-ink/15" />
-            </div>
-            <div className="flex-1 flex justify-center">
-              <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-paper border border-hairline text-xs text-ink/60">
-                <div className="w-2 h-2 rounded-full bg-clay animate-pulse" />
-                <span>Live simulation</span>
+        <div className="mt-16 grid border-y border-hairline sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map(({ number, icon: Icon, title, description }, index) => (
+            <div
+              key={number}
+              className={`relative py-8 sm:px-6 lg:px-7 ${index > 0 ? "border-t border-hairline sm:border-t-0 sm:border-l" : ""} ${index === 2 ? "sm:border-l-0 sm:border-t lg:border-l lg:border-t-0" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-clay/10 text-clay">
+                  <Icon size={17} />
+                </div>
+                <span className="font-serif text-sm text-ink/30">{number}</span>
               </div>
+              <h3 className="mt-6 font-serif text-2xl text-ink">{title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-ink/55">{description}</p>
             </div>
-            <div className="w-14" /> {/* Spacer for symmetry */}
-          </div>
-
-          {/* Main Grid */}
-          <div className="grid lg:grid-cols-[1fr_380px] min-h-[640px]">
-            {/* Left: Process Indicator */}
-            <ProcessIndicator
-              currentPhase={simulationState}
-              className="h-full min-h-[640px] border-r border-hairline bg-sand/30"
-            />
-
-            {/* Right: Chat Simulation */}
-            <div className="h-[640px] bg-sand/20">
-              <ChatSimulation
-                onPhaseChange={(phase, topic) => {
-                  setSimulationState(phase);
-                  if (topic) setCurrentTopic(topic);
-                }}
-                className="h-full rounded-none border-0"
-              />
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom CTA band */}
-        <div className="mt-16 flex flex-col md:flex-row items-center justify-between gap-8 border-t border-hairline pt-12">
-          <div className="text-center md:text-left max-w-xl">
-            <h3 className="font-serif text-3xl md:text-4xl tracking-tight text-ink text-balance">
-              {bottomSection.title}
-            </h3>
-            <p className="mt-3 text-ink/60 leading-relaxed">
-              {bottomSection.description}
+        <div className="mt-14 flex flex-col items-center justify-between gap-7 border-t border-hairline pt-10 md:flex-row">
+          <div className="max-w-2xl text-center md:text-left">
+            <h3 className="font-serif text-3xl text-ink">Start with delivery. Build the operating memory.</h3>
+            <p className="mt-3 text-sm leading-relaxed text-ink/55 sm:text-base">
+              Huzlr begins where coordination is most visible: product delivery. Over time, it becomes the shared management context for the hybrid organization.
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-            <Link
-              href="/signup"
-              className="group px-6 py-3 rounded-full bg-clay text-white font-medium text-sm hover:bg-clay-deep transition-colors flex items-center gap-2"
-            >
-              Join the waitlist
-              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-          </div>
+          <Link
+            href="/signup"
+            className="group flex shrink-0 items-center gap-2 rounded-full bg-clay px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-clay-deep"
+          >
+            Join the private beta
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
