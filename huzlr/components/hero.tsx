@@ -1,5 +1,4 @@
 import { HeroWithMockup } from "@/components/blocks/hero-with-mockup"
-import { CoordinationPreview } from "@/components/coordination-preview"
 
 export default function Hero() {
   return (
@@ -16,7 +15,12 @@ export default function Hero() {
         text: "See how it works",
         href: "#how-it-works",
       }}
-      mockupContent={<CoordinationPreview />}
+      mockupImage={{
+        alt: "Humans and AI workers coordinating through connected systems",
+        width: 1672,
+        height: 941,
+        src: "/aiworkers.png",
+      }}
     />
   )
 }

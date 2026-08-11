@@ -5,7 +5,7 @@ import { jwtVerify } from 'jose'
 // Define paths to protect
 const protectedPaths = ['/dashboard', '/projects', '/boards', '/brainstorms', '/teams', '/scrum-master', /**'/pitch-deck'**/]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const { pathname } = request.nextUrl
 
