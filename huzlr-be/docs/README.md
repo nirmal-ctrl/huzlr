@@ -54,6 +54,10 @@ Complete guide to using SQLAlchemy 2.0 with async support.
 - Advanced queries
 - Best practices
 
+### [Scrum Master Voice Architecture](guides/SCRUM_MASTER_VOICE_ARCHITECTURE.md)
+Current control-plane and bidirectional audio architecture for Google Meet,
+Playwright, LiveKit Cloud, the voice agent model stack, and persistence.
+
 ## 🎯 Quick Start
 
 1. **Set up Docker and PostgreSQL:** [Docker Setup](setup/DOCKER_SETUP.md)
