@@ -6,12 +6,17 @@ services:
       - ${HUZL_ENV_FILE:-.env}
     environment:
       BOT_PROFILE_DIR: /data/google-bot-profile
+      BOT_STORAGE_STATE_PATH: /data/google-bot-profile/auth-state.json
+      HUZL_DEBUG_DIR: /data/debug
       HEADLESS: "true"
       REQUIRE_BOT_PROFILE: "true"
     volumes:
       - type: bind
         source: ${BOT_PROFILE_HOST_DIR:?Set BOT_PROFILE_HOST_DIR in huzl/.env}
         target: /data/google-bot-profile
+      - type: bind
+        source: ./debug
+        target: /data/debug
     extra_hosts:
       - host.docker.internal:host-gateway
     init: true

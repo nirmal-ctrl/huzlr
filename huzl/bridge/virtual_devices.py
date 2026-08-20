@@ -43,6 +43,22 @@ def setup_linux_devices():
     except subprocess.CalledProcessError as e:
         logger.warning(f"Failed to load microphone sink: {e}")
 
+    # PulseAudio monitor sources are not treated as microphones by Chromium.
+    # Remap the monitor to a regular source that WebRTC can enumerate.
+    logger.info("Creating Chromium-compatible virtual microphone source...")
+    cmd_mic_source = [
+        "pactl", "load-module", "module-remap-source",
+        "master=huzlr_Mic.monitor",
+        "source_name=huzlr_Microphone",
+        'source_properties=device.description="huzlr_Virtual_Microphone"',
+    ]
+    try:
+        subprocess.run(cmd_mic_source, check=True)
+        subprocess.run(["pactl", "set-default-source", "huzlr_Microphone"], check=True)
+        logger.info("Successfully loaded Chromium-compatible virtual microphone source!")
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Failed to load Chromium microphone source: {e}")
+
     return True
 
 def setup_macos_info():

@@ -3,11 +3,15 @@ import os
 import asyncio
 import logging
 import subprocess
+import certifi
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 # Trigger reload
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
+
+os.environ["SSL_CERT_FILE"] = certifi.where()
+os.environ["WEBSOCKET_CLIENT_CA_BUNDLE"] = certifi.where()
 
 # Add current directory to sys.path to resolve imports when running from root
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -86,7 +90,8 @@ async def lifespan(app: FastAPI):
         if os.path.exists(scrum_master_path):
             logger.info("Starting LiveKit Scrum Master worker subprocess...")
             scrum_master_process = subprocess.Popen(
-                [python_executable, scrum_master_path, "dev", "--no-reload"],
+                [python_executable, "-m", "services.scrum_master_agent", "dev", "--no-reload"],
+                cwd=os.path.dirname(os.path.abspath(__file__)),
                 stdout=None,
                 stderr=None,
             )

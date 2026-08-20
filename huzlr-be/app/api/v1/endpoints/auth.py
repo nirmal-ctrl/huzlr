@@ -324,27 +324,39 @@ async def verify_access_code(
     current_user: Annotated[User, Depends(deps.get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)]
 ):
-    if current_user.has_access:
-        return {"message": "Already has access"}
+    already_had_access = current_user.has_access
+    if not current_user.has_access:
+        result = await db.execute(select(AccessCode).where(AccessCode.code == payload.code))
+        access_code = result.scalars().first()
 
-    result = await db.execute(select(AccessCode).where(AccessCode.code == payload.code))
-    access_code = result.scalars().first()
+        if not access_code:
+            raise HTTPException(status_code=400, detail="Invalid access code")
 
-    if not access_code:
-        raise HTTPException(status_code=400, detail="Invalid access code")
-    
-    if access_code.is_used:
-        raise HTTPException(status_code=400, detail="Access code already used")
+        if access_code.is_used:
+            raise HTTPException(status_code=400, detail="Access code already used")
 
-    # Mark as used
-    access_code.is_used = True
-    access_code.used_by_id = current_user.id
-    
-    # Grant access
-    current_user.has_access = True
-    
-    await db.commit()
-    return {"message": "Access granted"}
+        # Mark as used and grant access.
+        access_code.is_used = True
+        access_code.used_by_id = current_user.id
+        current_user.has_access = True
+        await db.commit()
+
+    # The middleware authorizes protected routes from JWT claims. Return a new
+    # token so the browser does not keep navigating with the pre-access claim.
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        subject=current_user.email,
+        expires_delta=access_token_expires,
+        claims={
+            "has_access": True,
+            "is_waitlisted": current_user.is_waitlisted,
+        },
+    )
+    return {
+        "message": "Already has access" if already_had_access else "Access granted",
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
 
 @router.post("/access-codes", response_model=AccessCodeResponse)
 async def create_access_code(

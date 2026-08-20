@@ -36,7 +36,7 @@ export function WaitlistDialog({ open = true }: { open?: boolean }) {
     try {
       const resultAction = await dispatch(verifyAccessCode(accessCode))
       if (verifyAccessCode.fulfilled.match(resultAction)) {
-        router.push("/dashboard")
+        router.replace("/dashboard")
       } else {
         setError(resultAction.payload as string || "Invalid access code")
       }

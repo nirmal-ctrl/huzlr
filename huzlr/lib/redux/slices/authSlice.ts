@@ -84,7 +84,7 @@ export const fetchCurrentUser = createAsyncThunk(
 
 export const verifyAccessCode = createAsyncThunk(
   'auth/verifyAccessCode',
-  async (code: string, { getState, rejectWithValue, dispatch }) => {
+  async (code: string, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { auth: AuthState };
       const token = state.auth.token || localStorage.getItem('token');
@@ -101,9 +101,13 @@ export const verifyAccessCode = createAsyncThunk(
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Verification failed');
-      
-      // Refresh user data to get updated has_access
-      dispatch(fetchCurrentUser());
+
+      if (!data.access_token) {
+        throw new Error('Verification succeeded but no access token was returned');
+      }
+
+      localStorage.setItem('token', data.access_token);
+      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
       return data;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -118,7 +122,10 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      localStorage.removeItem('token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
+      }
     },
     clearError: (state) => {
         state.error = null;
@@ -143,6 +150,12 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.user = action.payload;
+      })
+      .addCase(verifyAccessCode.fulfilled, (state, action) => {
+        state.token = action.payload.access_token;
+        if (state.user) {
+          state.user = { ...state.user, has_access: true };
+        }
       });
   },
 });

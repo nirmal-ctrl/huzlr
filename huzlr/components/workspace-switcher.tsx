@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, Building, Users, Check } from "lucide-react"
+import { ChevronsUpDown, Plus, Building, Users, Check, Loader2 } from "lucide-react"
 
 import {
     DropdownMenu,
@@ -32,29 +32,15 @@ export function WorkspaceSwitcher() {
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
     const teams = useAppSelector((state) => state.workspace.teams)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+    const workspacesLoading = useAppSelector((state) => state.workspace.workspacesLoading)
+    const workspacesLoaded = useAppSelector((state) => state.workspace.workspacesLoaded)
+    const teamsLoading = useAppSelector((state) => state.workspace.teamsLoading)
     
     const [workspaceModalOpen, setWorkspaceModalOpen] = React.useState(false)
     const [teamModalOpen, setTeamModalOpen] = React.useState(false)
     
     const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId) || workspaces[0]
     const activeTeam = teams.find((t) => t.id === activeTeamId) || teams[0]
-
-    if (!activeWorkspace) {
-        return (
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton size="lg">
-                        <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg animate-pulse">
-                            <Building className="size-4" />
-                        </div>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-medium">Loading...</span>
-                        </div>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        )
-    }
 
     return (
         <SidebarMenu>
@@ -69,8 +55,15 @@ export function WorkspaceSwitcher() {
                                 <Building className="size-4" />
                             </div>
                             <div className="grid flex-1 text-left text-sm leading-tight">
-                                <span className="truncate font-medium">{activeWorkspace.name}</span>
-                                <span className="truncate text-xs">{activeTeam?.name || "Select Team"}</span>
+                                <span className="truncate font-medium">{activeWorkspace?.name || "huzlr."}</span>
+                                <span className="flex items-center gap-1 truncate text-xs">
+                                    {teamsLoading && activeWorkspace ? <Loader2 className="size-3 shrink-0 animate-spin" /> : null}
+                                    {!workspacesLoaded && !activeWorkspace
+                                        ? "Loading workspaces..."
+                                        : teamsLoading && activeWorkspace
+                                            ? "Loading teams..."
+                                            : activeTeam?.name || (activeWorkspace ? "Create a team" : "Create a workspace")}
+                                </span>
                             </div>
                             <ChevronsUpDown className="ml-auto" />
                         </SidebarMenuButton>
@@ -84,6 +77,12 @@ export function WorkspaceSwitcher() {
                         <DropdownMenuLabel className="text-muted-foreground text-xs">
                             Workspaces
                         </DropdownMenuLabel>
+                        {(!workspacesLoaded || workspacesLoading) && workspaces.length === 0 && (
+                            <DropdownMenuItem disabled className="gap-2 p-2">
+                                <Loader2 className="size-4 animate-spin" />
+                                Loading workspaces...
+                            </DropdownMenuItem>
+                        )}
                         {workspaces.map((workspace, index) => (
                             <DropdownMenuItem
                                 key={workspace.id}
@@ -108,13 +107,18 @@ export function WorkspaceSwitcher() {
                             </DropdownMenuItem>
                         ))}
 
-                        {teams.length > 0 && (
+                        {activeWorkspace && (
                             <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuLabel className="text-muted-foreground text-xs">
                                     Teams in {activeWorkspace.name}
                                 </DropdownMenuLabel>
-                                {teams.map((team) => (
+                                {teamsLoading ? (
+                                    <DropdownMenuItem disabled className="gap-2 p-2">
+                                        <Loader2 className="size-4 animate-spin" />
+                                        Loading teams...
+                                    </DropdownMenuItem>
+                                ) : teams.map((team) => (
                                     <DropdownMenuItem
                                         key={team.id}
                                         onClick={() => dispatch(setActiveTeam(team.id))}
@@ -127,7 +131,11 @@ export function WorkspaceSwitcher() {
                                         {team.id === activeTeamId && <Check className="size-3.5" />}
                                     </DropdownMenuItem>
                                 ))}
-                                <DropdownMenuItem className="gap-2 p-2" onClick={() => setTeamModalOpen(true)}>
+                                <DropdownMenuItem
+                                    className="gap-2 p-2"
+                                    disabled={teamsLoading}
+                                    onClick={() => setTeamModalOpen(true)}
+                                >
                                     <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                                         <Plus className="size-4" />
                                     </div>

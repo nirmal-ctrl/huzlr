@@ -3,8 +3,22 @@ import logging
 import os
 
 import certifi
+
+os.environ["SSL_CERT_FILE"] = certifi.where()
+os.environ["WEBSOCKET_CLIENT_CA_BUNDLE"] = certifi.where()
+
 from dotenv import load_dotenv
-from livekit.agents import Agent, AgentSession, AutoSubscribe, JobContext, JobRequest, WorkerOptions, cli
+from livekit import rtc
+from livekit.agents import (
+    Agent,
+    AgentSession,
+    AutoSubscribe,
+    JobContext,
+    JobRequest,
+    RoomInputOptions,
+    WorkerOptions,
+    cli,
+)
 from livekit.plugins import deepgram, google, silero
 
 from core.database import AsyncSessionLocal
@@ -12,10 +26,9 @@ from core.config import settings
 from models.scrum_master import MeetingTranscriptSegment
 
 
-os.environ["SSL_CERT_FILE"] = certifi.where()
-os.environ["WEBSOCKET_CLIENT_CA_BUNDLE"] = certifi.where()
 load_dotenv()
 logger = logging.getLogger("huzlr-scrum-master-agent")
+AGENT_NAME = "huzlr-scrum-master"
 
 
 INSTRUCTIONS = """
@@ -56,7 +69,7 @@ async def entrypoint(ctx: JobContext):
         if not text:
             return
         async with AsyncSessionLocal() as db:
-            db.add(MeetingTranscriptSegment(
+            await db.execute(MeetingTranscriptSegment.__table__.insert().values(
                 meeting_id=meeting_id,
                 speaker_type="agent" if item.role == "assistant" else "participant",
                 speaker_id="huzlr-scrum-master" if item.role == "assistant" else None,
@@ -68,8 +81,29 @@ async def entrypoint(ctx: JobContext):
     def on_conversation_item(event):
         asyncio.create_task(persist_message(event))
 
+    def on_user_state_changed(event):
+        if event.new_state == "speaking":
+            logger.info("Detected participant speech in Google Meet")
+
+    def on_user_input_transcribed(event):
+        if event.is_final:
+            logger.info("Transcribed participant turn (%s characters)", len(event.transcript))
+
     session.on("conversation_item_added", on_conversation_item)
-    await session.start(room=ctx.room, agent=agent)
+    session.on("user_state_changed", on_user_state_changed)
+    session.on("user_input_transcribed", on_user_input_transcribed)
+    await session.start(
+        room=ctx.room,
+        agent=agent,
+        room_input_options=RoomInputOptions(
+            audio_enabled=True,
+            audio_sample_rate=16000,
+            audio_num_channels=1,
+            audio_frame_size_ms=20,
+            participant_identity=participant.identity,
+            participant_kinds=[rtc.ParticipantKind.PARTICIPANT_KIND_STANDARD],
+        ),
+    )
     await session.say(
         "Hello, I am the Huzlr AI Scrum Master. I will help facilitate and may prepare meeting notes according to your workspace settings.",
         allow_interruptions=True,
@@ -89,4 +123,8 @@ async def request_fnc(request: JobRequest):
 
 
 if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, request_fnc=request_fnc))
+    cli.run_app(WorkerOptions(
+        entrypoint_fnc=entrypoint,
+        request_fnc=request_fnc,
+        agent_name=AGENT_NAME,
+    ))

@@ -1,6 +1,7 @@
 import { baseApi } from "@/services/baseApi"
 
 export type MeetingStatus =
+  | "not_scheduled"
   | "scheduled"
   | "queued"
   | "starting"

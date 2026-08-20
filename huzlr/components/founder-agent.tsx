@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Loader2, AudioLines, X, User2, MicOff, Sparkles, PanelRight, PanelRightClose } from "lucide-react"
 import { Orb } from "@/components/orb"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,9 @@ export function FounderAgentWidget() {
     const [serverUrl, setServerUrl] = React.useState<string | null>(null)
     const [isConnecting, setIsConnecting] = React.useState<boolean>(false)
     const router = useRouter()
+    const pathname = usePathname()
+
+    if (pathname === "/dashboard") return null
 
     const handleStartSession = async () => {
         if (token) {

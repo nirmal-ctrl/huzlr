@@ -1,0 +1,13 @@
+.bot-profile/
+.env
+.env.*
+!.env.example
+.git/
+.venv/
+__pycache__/
+*.py[cod]
+debug/
+after_join_debug.html
+after_join_attempt.png
+green_room_state.png
+page_source_debug.html

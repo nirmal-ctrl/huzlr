@@ -60,7 +60,8 @@ export default function TeamsPage() {
     const workspaces = useAppSelector((state) => state.workspace.workspaces)
     const teams = useAppSelector((state) => state.workspace.teams)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
-    const workspaceStateLoading = useAppSelector((state) => state.workspace.loading)
+    const workspacesLoading = useAppSelector((state) => state.workspace.workspacesLoading)
+    const teamsLoading = useAppSelector((state) => state.workspace.teamsLoading)
     const currentUser = useAppSelector((state) => state.auth.user)
 
     const [isInviteOpen, setIsInviteOpen] = useState(false)
@@ -204,7 +205,7 @@ export default function TeamsPage() {
 
                 {/* Workspace Tab Content */}
                 <TabsContent value="workspace" className="outline-none space-y-6 w-full">
-                    {workspaceStateLoading && !activeWorkspaceObj ? (
+                    {workspacesLoading && !activeWorkspaceObj ? (
                         <div className="grid gap-6 md:grid-cols-3">
                             {[1, 2, 3].map((n) => (
                                 <Card key={n} className="border border-border bg-card/40 backdrop-blur-md">
@@ -282,7 +283,7 @@ export default function TeamsPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            {workspaceStateLoading && !activeWorkspaceObj ? (
+                            {workspacesLoading && !activeWorkspaceObj ? (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Skeleton className="h-4 w-32" />
@@ -357,7 +358,7 @@ export default function TeamsPage() {
                             </Button>
                         </CardHeader>
                         <CardContent className="p-0">
-                            {workspaceStateLoading ? (
+                            {teamsLoading ? (
                                 <div className="p-6 space-y-4">
                                     {[1, 2].map((n) => (
                                         <div key={n} className="flex items-center justify-between">

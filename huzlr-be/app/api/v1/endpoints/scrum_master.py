@@ -1,4 +1,5 @@
 import hmac
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
@@ -8,6 +9,7 @@ import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
 from fastapi.responses import RedirectResponse, Response
 from jose import JWTError, jwt
+from livekit import api as livekit_api
 from livekit.api import AccessToken, VideoGrants
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +37,7 @@ from services.meeting_outputs import finalize_meeting_outputs
 
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 GOOGLE_AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URI = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URI = "https://openidconnect.googleapis.com/v1/userinfo"
@@ -44,6 +47,7 @@ WORKER_STATUSES = {
     "starting", "authenticating", "waiting_for_admission", "joined", "leaving",
     "completed", "failed", "cancelled",
 }
+SCRUM_MASTER_AGENT_NAME = "huzlr-scrum-master"
 
 
 async def _get_or_create_settings(db: AsyncSession, workspace_id: int) -> ScrumMasterSettings:
@@ -80,7 +84,10 @@ async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalen
     if not expires_at or expires_at > now + timedelta(minutes=1):
         return decrypt_token(connection.access_token)
     if not connection.refresh_token:
-        raise HTTPException(status_code=409, detail="Google Calendar authorization has expired")
+        raise HTTPException(
+            status_code=409,
+            detail="Google Calendar authorization has expired. Reconnect the calendar and try again.",
+        )
 
     async with httpx.AsyncClient(timeout=20) as client:
         response = await client.post(
@@ -93,7 +100,19 @@ async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalen
             },
         )
     if response.status_code != 200:
-        raise HTTPException(status_code=409, detail="Google Calendar token refresh failed")
+        try:
+            google_error = response.json().get("error", "unknown_error")
+        except ValueError:
+            google_error = "invalid_response"
+        logger.warning(
+            "Google Calendar refresh rejected for connection %s: %s",
+            connection.id,
+            google_error,
+        )
+        raise HTTPException(
+            status_code=409,
+            detail="Google Calendar authorization is no longer valid. Reconnect the calendar and try again.",
+        )
     payload = response.json()
     connection.access_token = encrypt_token(payload["access_token"])
     connection.token_expires_at = now + timedelta(seconds=int(payload.get("expires_in", 3600)))
@@ -314,7 +333,15 @@ async def _sync_calendar_connection(
         if policy.require_scrum_tag:
             eligible = eligible and "[scrum]" in title.lower()
         if not meeting:
-            meeting = ScrumMeeting(workspace_id=workspace_id, calendar_event_id=event_id, title=title, starts_at=datetime.now(timezone.utc), ends_at=datetime.now(timezone.utc))
+            meeting = ScrumMeeting(
+                workspace_id=workspace_id,
+                calendar_event_id=event_id,
+                title=title,
+                starts_at=datetime.now(timezone.utc),
+                ends_at=datetime.now(timezone.utc),
+                bot_enabled=False,
+                status="not_scheduled",
+            )
             db.add(meeting)
         meeting.title = title
         meeting.starts_at = datetime.fromisoformat(start_value.replace("Z", "+00:00"))
@@ -538,6 +565,27 @@ async def claim_worker_job(
             .with_grants(VideoGrants(room_join=True, room=livekit_room))
             .to_jwt()
         )
+        livekit = livekit_api.LiveKitAPI(
+            url=settings.LIVEKIT_URL,
+            api_key=settings.LIVEKIT_API_KEY,
+            api_secret=settings.LIVEKIT_API_SECRET,
+        )
+        try:
+            await livekit.agent_dispatch.create_dispatch(
+                livekit_api.CreateAgentDispatchRequest(
+                    agent_name=SCRUM_MASTER_AGENT_NAME,
+                    room=livekit_room,
+                )
+            )
+        except Exception as exc:
+            selected.status = "queued"
+            selected.claimed_at = None
+            selected.heartbeat_at = None
+            selected.attempt_count = max(0, selected.attempt_count - 1)
+            await db.commit()
+            raise HTTPException(status_code=503, detail="Scrum Master voice agent dispatch failed") from exc
+        finally:
+            await livekit.aclose()
     return WorkerJobResponse(
         job_id=selected.job_id,
         meeting_id=selected.id,

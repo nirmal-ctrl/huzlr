@@ -26,6 +26,7 @@ import {
 import Link from "next/link"
 
 const statusLabels: Record<MeetingStatus, string> = {
+  not_scheduled: "Not scheduled",
   scheduled: "Scheduled",
   queued: "Queued",
   starting: "Starting",
@@ -39,6 +40,7 @@ const statusLabels: Record<MeetingStatus, string> = {
 }
 
 const statusStyles: Record<MeetingStatus, string> = {
+  not_scheduled: "border-border bg-background text-muted-foreground",
   scheduled: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300",
   queued: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300",
   starting: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300",
@@ -71,6 +73,7 @@ export default function ScrumMasterMeetingsPage() {
   const { toast } = useToast()
   const workspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
   const [page, setPage] = useState(1)
+  const [calendarNeedsReconnect, setCalendarNeedsReconnect] = useState(false)
   const meetingsQuery = useGetScrumMeetingsQuery(
     { workspaceId: workspaceId ?? 0, page, pageSize: 20 },
     { skip: !workspaceId, pollingInterval: 5000 },
@@ -115,6 +118,27 @@ export default function ScrumMasterMeetingsPage() {
     }
   }
 
+  const handleSyncCalendar = async () => {
+    if (!workspaceId) return
+
+    try {
+      await syncCalendar(workspaceId).unwrap()
+      setCalendarNeedsReconnect(false)
+      toast({ title: "Calendar synced" })
+    } catch (error) {
+      const status = typeof error === "object" && error && "status" in error
+        ? (error as { status?: number }).status
+        : undefined
+      const needsReconnect = status === 409
+      setCalendarNeedsReconnect(needsReconnect)
+      toast({
+        variant: "destructive",
+        title: needsReconnect ? "Reconnect Google Calendar" : "Calendar sync failed",
+        description: errorDetail(error),
+      })
+    }
+  }
+
   return (
     <>
       <SiteHeader>
@@ -123,7 +147,7 @@ export default function ScrumMasterMeetingsPage() {
           size="sm"
           className="h-8 gap-2"
           disabled={!workspaceId || !calendar?.connected || syncState.isLoading}
-          onClick={() => workspaceId && run(() => syncCalendar(workspaceId).unwrap(), "Calendar synced")}
+          onClick={handleSyncCalendar}
         >
           <RefreshCw className={`size-3.5 ${syncState.isLoading ? "animate-spin" : ""}`} /> Sync
         </Button>
@@ -141,7 +165,7 @@ export default function ScrumMasterMeetingsPage() {
             className="w-fit gap-2"
           >
             {connectState.isLoading ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Add Google Calendar
+            {calendarNeedsReconnect ? "Reconnect Google Calendar" : "Add Google Calendar"}
           </Button>
         </section>
 

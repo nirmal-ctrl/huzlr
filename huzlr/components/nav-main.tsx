@@ -29,11 +29,14 @@ export function NavMain({
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
             <SidebarMenuButton
+              asChild
               tooltip="Quick Create"
               className="bg-primary rounded-full text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
             >
-              <IconCirclePlusFilled />
-              <span>Quick Create</span>
+              <Link href="/projects">
+                <IconCirclePlusFilled />
+                <span>Quick Create</span>
+              </Link>
             </SidebarMenuButton>
             <Button
               size="icon"

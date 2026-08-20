@@ -1,7 +1,14 @@
 import asyncio
 import logging
+import os
+import re
+from pathlib import Path
 from playwright.async_api import Page, TimeoutError
-from bridge.meet_states import detect_terminal_meeting_error
+from bridge.meet_states import (
+    detect_terminal_meeting_error,
+    has_microphone_error,
+    is_waiting_for_admission,
+)
 try:
     from bridge.browser_manager import BrowserManager
 except ImportError:
@@ -23,6 +30,8 @@ class MeetWorker:
         self.browser_manager = browser_manager
         self.page = None
         self.connected = False
+        self.debug_dir = Path(os.environ.get("HUZL_DEBUG_DIR", "."))
+        self.debug_dir.mkdir(parents=True, exist_ok=True)
 
     async def join(self, meeting_url: str, bot_name: str = "huzlr Agent", admission_timeout: int = 180):
         """Navigates to the Google Meet URL, enters name, turns off mic/cam, and joins."""
@@ -49,7 +58,7 @@ class MeetWorker:
         logger.info(f"Entering bot name: {bot_name}")
         try:
             # Save screenshot of green room for debugging why elements aren't matching
-            await self.page.screenshot(path="green_room_state.png")
+            await self.page.screenshot(path=str(self.debug_dir / "green_room_state.png"))
             logger.info("Saved green_room_state.png screenshot for verification.")
 
             # Look for name input text field with broader, robust selectors
@@ -77,7 +86,7 @@ class MeetWorker:
             if not filled:
                 logger.warning("Could not find visible name input field. Taking source dump for analysis...")
                 html_content = await self.page.content()
-                with open("page_source_debug.html", "w") as f:
+                with open(self.debug_dir / "page_source_debug.html", "w") as f:
                     f.write(html_content)
                 # Fallback: force fill first visible input
                 inputs = await self.page.query_selector_all('input')
@@ -91,46 +100,54 @@ class MeetWorker:
         except Exception as e:
             logger.error(f"Error filling bot name: {e}")
             # Ensure screenshot is saved on exception
-            await self.page.screenshot(path="error_state.png")
+            await self.page.screenshot(path=str(self.debug_dir / "error_state.png"))
 
         await asyncio.sleep(1)
 
         # 3. Click Join button
         logger.info("Attempting to click Join button...")
-        join_selectors = [
-            'button:has-text("Ask to join")',
-            'button:has-text("Join now")',
-            'button:has-text("Join")',
-            'button:has-text("Ask to join meeting")',
-            'button:has-text("Join meeting")'
+        join_controls = [
+            self.page.get_by_role("button", name="Join now"),
+            self.page.get_by_role("button", name="Ask to join"),
+            self.page.get_by_role("button", name="Join meeting"),
+            self.page.get_by_role("button", name="Ask to join meeting"),
+            self.page.locator('button:has-text("Join now")'),
+            self.page.locator('button:has-text("Ask to join")'),
+            self.page.locator('button:has-text("Join")'),
         ]
 
         joined = False
-        for selector in join_selectors:
+        for control in join_controls:
             try:
-                btn = await self.page.query_selector(selector)
-                if btn and await btn.is_visible() and await btn.is_enabled():
-                    await btn.click()
-                    logger.info(f"Successfully clicked active join button using selector: '{selector}'")
+                candidate = control.first
+                if await candidate.count() and await candidate.is_visible() and await candidate.is_enabled():
+                    await candidate.click()
+                    logger.info("Successfully clicked active Google Meet join control")
                     joined = True
                     break
-                elif btn:
-                    logger.debug(f"Found selector '{selector}' but it was not visible/enabled.")
             except Exception as e:
-                logger.debug(f"Selector {selector} check failed: {e}")
+                logger.debug("Join control check failed: %s", e)
 
         if not joined:
             logger.warning("Standard active join buttons not found, scanning all buttons for visibility and join text...")
             try:
-                buttons = await self.page.query_selector_all('button')
-                for btn in buttons:
-                    text = await btn.inner_text()
-                    if any(term in text.lower() for term in ["join", "ask to join", "join now", "ask"]):
-                        if await btn.is_visible() and await btn.is_enabled():
-                            await btn.click()
-                            logger.info(f"Fallback clicked visible active button containing '{text.strip()}'")
-                            joined = True
-                            break
+                joined = await self.page.evaluate(
+                    """() => {
+                        const terms = ["join now", "ask to join", "join meeting", "ask to join meeting"];
+                        for (const button of document.querySelectorAll('button')) {
+                            const text = (button.innerText || button.textContent || button.getAttribute('aria-label') || '').trim().toLowerCase();
+                            const rect = button.getBoundingClientRect();
+                            const visible = rect.width > 0 && rect.height > 0 && getComputedStyle(button).visibility !== 'hidden';
+                            if (visible && !button.disabled && terms.some((term) => text.includes(term))) {
+                                button.click();
+                                return true;
+                            }
+                        }
+                        return false;
+                    }"""
+                )
+                if joined:
+                    logger.info("Fallback clicked visible active join button via DOM scan")
             except Exception as e:
                 logger.error(f"Failed fallback visible button click scanner: {e}")
 
@@ -143,10 +160,10 @@ class MeetWorker:
         # Take a screenshot right after attempting to join to see what state we are in
         try:
             await asyncio.sleep(2)
-            await self.page.screenshot(path="after_join_attempt.png")
+            await self.page.screenshot(path=str(self.debug_dir / "after_join_attempt.png"))
             logger.info("Saved after_join_attempt.png screenshot for verification.")
             html_content = await self.page.content()
-            with open("after_join_debug.html", "w") as f:
+            with open(self.debug_dir / "after_join_debug.html", "w") as f:
                 f.write(html_content)
         except Exception as e:
             logger.warning(f"Failed to take post-join debug info: {e}")
@@ -186,6 +203,13 @@ class MeetWorker:
         error = detect_terminal_meeting_error(body_text)
         if error:
             code, message = error
+            try:
+                await self.page.screenshot(path=str(self.debug_dir / f"terminal_{code.lower()}.png"))
+                with open(self.debug_dir / f"terminal_{code.lower()}.html", "w") as f:
+                    f.write(await self.page.content())
+                logger.info("Saved terminal meeting state artifacts for %s", code)
+            except Exception as exc:
+                logger.warning("Failed to save terminal meeting state artifacts: %s", exc)
             raise MeetJoinError(code, message)
 
     async def is_connected(self) -> bool:
@@ -193,6 +217,14 @@ class MeetWorker:
         if not self.page or self.page.is_closed():
             self.connected = False
             return False
+
+        try:
+            body_text = await self.page.locator("body").inner_text()
+            if is_waiting_for_admission(body_text):
+                self.connected = False
+                return False
+        except Exception as exc:
+            logger.debug("Could not inspect admission text: %s", exc)
             
         # If we see elements specific to being inside a meeting (like the hang up button)
         try:
@@ -211,11 +243,68 @@ class MeetWorker:
 
     async def unmute(self):
         """Unmutes the Google Meet mic so participants can hear injected audio."""
-        if self.page:
-            logger.info("Unmuting bot in Google Meet...")
-            control = await self.page.query_selector('[aria-label*="Turn on microphone" i]')
-            if control and await control.is_visible():
-                await control.click()
+        if not self.page:
+            raise MeetJoinError("MICROPHONE_UNMUTE_FAILED", "Google Meet page is not available")
+
+        body_text = await self.page.locator("body").inner_text()
+        if has_microphone_error(body_text):
+            await self.page.screenshot(path=str(self.debug_dir / "microphone_unavailable.png"))
+            raise MeetJoinError(
+                "MICROPHONE_NOT_FOUND",
+                "Chromium could not open the huzlr virtual microphone",
+            )
+
+        logger.info("Unmuting bot in Google Meet...")
+        controls = [
+            self.page.get_by_role("button", name=re.compile(r"turn on (microphone|mic)", re.IGNORECASE)),
+            self.page.locator('[role="button"][aria-label*="Turn on microphone" i]'),
+            self.page.locator('[role="button"][aria-label*="Turn on mic" i]'),
+        ]
+        clicked = False
+        for control in controls:
+            for index in range(await control.count()):
+                candidate = control.nth(index)
+                if await candidate.is_visible() and await candidate.is_enabled():
+                    await candidate.click()
+                    clicked = True
+                    break
+            if clicked:
+                break
+
+        if not clicked:
+            logger.warning("Visible microphone control not found; trying Google Meet keyboard shortcut")
+            await self.page.keyboard.press("Control+d")
+
+        enabled = False
+        deadline = asyncio.get_running_loop().time() + 5
+        off_controls = self.page.locator(
+            '[role="button"][aria-label*="Turn off microphone" i], '
+            '[role="button"][aria-label*="Turn off mic" i]'
+        )
+        while asyncio.get_running_loop().time() < deadline and not enabled:
+            for index in range(await off_controls.count()):
+                if await off_controls.nth(index).is_visible():
+                    enabled = True
+                    break
+            if not enabled:
+                await asyncio.sleep(0.25)
+        if not enabled:
+            await self.page.screenshot(path=str(self.debug_dir / "microphone_unmute_failed.png"))
+            raise MeetJoinError(
+                "MICROPHONE_UNMUTE_FAILED",
+                "Google Meet did not enable the bot microphone",
+            )
+
+        body_text = await self.page.locator("body").inner_text()
+        if has_microphone_error(body_text):
+            await self.page.screenshot(path=str(self.debug_dir / "microphone_unavailable.png"))
+            raise MeetJoinError(
+                "MICROPHONE_NOT_FOUND",
+                "Chromium could not open the huzlr virtual microphone",
+            )
+
+        await self.page.screenshot(path=str(self.debug_dir / "microphone_unmuted.png"))
+        logger.info("Verified Google Meet microphone is unmuted")
 
     async def mute(self):
         """Mutes the Google Meet mic."""

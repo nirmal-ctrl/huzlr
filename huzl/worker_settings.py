@@ -29,8 +29,11 @@ class WorkerSettings:
 
         require_profile = values.get("REQUIRE_BOT_PROFILE", "false").lower() == "true"
         profile_dir_value = values.get("BOT_PROFILE_DIR", "").strip()
-        if require_profile and not profile_dir_value:
-            raise RuntimeError("BOT_PROFILE_DIR is required when REQUIRE_BOT_PROFILE=true")
+        storage_state_value = values.get("BOT_STORAGE_STATE_PATH", "").strip()
+        if require_profile and not (profile_dir_value or storage_state_value):
+            raise RuntimeError(
+                "BOT_PROFILE_DIR or BOT_STORAGE_STATE_PATH is required when REQUIRE_BOT_PROFILE=true"
+            )
         if profile_dir_value:
             profile_dir = Path(profile_dir_value).expanduser()
             if not profile_dir.exists():
@@ -40,6 +43,13 @@ class WorkerSettings:
                 )
             if not profile_dir.is_dir():
                 raise RuntimeError(f"BOT_PROFILE_DIR is not a directory: {profile_dir}")
+        if storage_state_value:
+            storage_state_path = Path(storage_state_value).expanduser()
+            if not storage_state_path.is_file():
+                raise RuntimeError(
+                    f"BOT_STORAGE_STATE_PATH does not exist: {storage_state_path}. "
+                    "Run provision_bot_profile.py before starting the worker."
+                )
 
         return cls(backend_url=backend_url, worker_key=worker_key)
 

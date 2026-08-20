@@ -26,8 +26,9 @@ cp .env.example .env
 ```dotenv
 HUZLR_BACKEND_URL=http://host.docker.internal:8001
 HUZL_WORKER_KEY=<same long random value configured in huzlr-be>
-BOT_PROFILE_DIR=/absolute/host/path/google-bot-profile
 BOT_PROFILE_HOST_DIR=/absolute/host/path/google-bot-profile
+BOT_PROFILE_DIR=/absolute/host/path/google-bot-profile
+BOT_STORAGE_STATE_PATH=/absolute/host/path/google-bot-profile/auth-state.json
 REQUIRE_BOT_PROFILE=true
 HEADLESS=true
 ```
@@ -41,17 +42,20 @@ python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().
 
 ## Provision the dedicated account
 
-Provisioning is intentionally interactive and uses a normal Google Chrome process so
-Google credentials are never entered into an automated browser. Do not put the Google
-password or a 2FA secret in environment variables or source control.
+Provisioning is interactive and uses normal Google Chrome so Google credentials are
+never entered into the worker or stored in environment variables. It exports a portable
+Playwright authentication state because a macOS Chrome profile's encrypted cookies
+cannot be read directly by Linux Chromium. Treat `auth-state.json` like a credential and
+do not commit or share it.
 
 ```bash
 python3 provision_bot_profile.py /secure/path/google-bot-profile
 ```
 
-Sign in through the opened Chromium window, then mount that directory at
-`BOT_PROFILE_DIR` for one worker only. A Chromium profile must never be shared by
-concurrent containers.
+Keep the opened Chrome window running, sign in as the dedicated bot account, verify its
+avatar appears on `meet.google.com`, and then press Enter in the terminal. The script
+will reject the export unless authenticated Google cookies are present. Stop the worker
+before provisioning, then mount the directory at `BOT_PROFILE_DIR` for one worker only.
 
 ## Run
 

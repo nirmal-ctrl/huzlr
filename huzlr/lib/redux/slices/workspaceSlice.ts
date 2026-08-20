@@ -22,7 +22,11 @@ interface WorkspaceState {
     activeWorkspaceId: number | null;
     teams: Team[];
     activeTeamId: number | null;
-    loading: boolean;
+    workspacesLoading: boolean;
+    workspacesLoaded: boolean;
+    teamsLoading: boolean;
+    teamsLoaded: boolean;
+    teamsRequestId: string | null;
     error: string | null;
 }
 
@@ -47,7 +51,11 @@ const initialState: WorkspaceState = {
     activeWorkspaceId: getSavedWorkspaceId(),
     teams: [],
     activeTeamId: getSavedTeamId(),
-    loading: false,
+    workspacesLoading: false,
+    workspacesLoaded: false,
+    teamsLoading: false,
+    teamsLoaded: false,
+    teamsRequestId: null,
     error: null,
 };
 
@@ -202,16 +210,6 @@ export const fetchTeams = createAsyncThunk(
         } catch (error: any) {
             return rejectWithValue(error.message);
         }
-    },
-    {
-        condition: (workspaceId, { getState }) => {
-            const state = getState() as any;
-            // Cancel the fetch if we already have teams for THIS workspace loaded
-            if (state.workspace.teams.length > 0 && state.workspace.teams[0].workspace_id === workspaceId) {
-                return false;
-            }
-            return true;
-        }
     }
 );
 
@@ -220,9 +218,12 @@ const workspaceSlice = createSlice({
     initialState,
     reducers: {
         setActiveWorkspace: (state, action: PayloadAction<number>) => {
+            if (state.activeWorkspaceId === action.payload) return;
             state.activeWorkspaceId = action.payload;
             state.teams = []; // Reset teams when workspace changes
             state.activeTeamId = null;
+            state.teamsLoading = true;
+            state.teamsLoaded = false;
             if (typeof window !== 'undefined') {
                 localStorage.setItem('activeWorkspaceId', action.payload.toString());
                 localStorage.removeItem('activeTeamId');
@@ -238,29 +239,49 @@ const workspaceSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(fetchWorkspaces.pending, (state) => {
-                state.loading = true;
+                state.workspacesLoading = true;
                 state.error = null;
             })
             .addCase(fetchWorkspaces.fulfilled, (state, action) => {
-                state.loading = false;
+                state.workspacesLoading = false;
+                state.workspacesLoaded = true;
                 state.workspaces = action.payload;
                 
                 // Validate or select active workspace ID
                 const exists = action.payload.some(w => w.id === state.activeWorkspaceId);
                 if (!exists && action.payload.length > 0) {
                     state.activeWorkspaceId = action.payload[0].id;
+                    state.activeTeamId = null;
+                    state.teams = [];
+                    state.teamsLoading = true;
+                    state.teamsLoaded = false;
                     if (typeof window !== 'undefined') {
                         localStorage.setItem('activeWorkspaceId', action.payload[0].id.toString());
+                        localStorage.removeItem('activeTeamId');
+                    }
+                } else if (action.payload.length === 0) {
+                    state.activeWorkspaceId = null;
+                    state.activeTeamId = null;
+                    state.teams = [];
+                    state.teamsLoaded = true;
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('activeWorkspaceId');
+                        localStorage.removeItem('activeTeamId');
                     }
                 }
             })
             .addCase(fetchWorkspaces.rejected, (state, action) => {
-                state.loading = false;
+                state.workspacesLoading = false;
+                state.workspacesLoaded = true;
                 state.error = action.payload as string;
             })
             .addCase(createWorkspace.fulfilled, (state, action) => {
                 // We set the active workspace to the newly created one
                 state.activeWorkspaceId = action.payload.id;
+                state.activeTeamId = null;
+                state.teams = [];
+                state.teamsLoading = true;
+                state.teamsLoaded = false;
                 if (typeof window !== 'undefined') {
                     localStorage.setItem('activeWorkspaceId', action.payload.id.toString());
                     localStorage.removeItem('activeTeamId');
@@ -272,12 +293,16 @@ const workspaceSlice = createSlice({
                     localStorage.setItem('activeTeamId', action.payload.id.toString());
                 }
             })
-            .addCase(fetchTeams.pending, (state) => {
-                state.loading = true;
+            .addCase(fetchTeams.pending, (state, action) => {
+                state.teamsLoading = true;
+                state.teamsRequestId = action.meta.requestId;
                 state.error = null;
             })
             .addCase(fetchTeams.fulfilled, (state, action) => {
-                state.loading = false;
+                if (state.teamsRequestId !== action.meta.requestId) return;
+                state.teamsLoading = false;
+                state.teamsLoaded = true;
+                state.teamsRequestId = null;
                 state.teams = action.payload;
                 
                 // Validate or select active team ID
@@ -292,7 +317,10 @@ const workspaceSlice = createSlice({
                 }
             })
             .addCase(fetchTeams.rejected, (state, action) => {
-                state.loading = false;
+                if (state.teamsRequestId !== action.meta.requestId) return;
+                state.teamsLoading = false;
+                state.teamsLoaded = true;
+                state.teamsRequestId = null;
                 state.error = action.payload as string;
             });
     },

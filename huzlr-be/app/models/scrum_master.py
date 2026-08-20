@@ -60,7 +60,7 @@ class ScrumMeeting(Base):
     attendees_count: Mapped[int] = mapped_column(Integer, default=0)
     bot_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     force_join: Mapped[bool] = mapped_column(Boolean, default=False)
-    status: Mapped[str] = mapped_column(String(40), default="scheduled", index=True)
+    status: Mapped[str] = mapped_column(String(40), default="not_scheduled", index=True)
     job_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, unique=True, index=True)
     cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     claimed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

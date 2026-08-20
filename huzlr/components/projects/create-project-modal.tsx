@@ -136,7 +136,12 @@ export function CreateProjectModal({
     }
 
     const dispatch = useAppDispatch()
+    const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+    const teams = useAppSelector((state) => state.workspace.teams)
+    const hasActiveTeam = teams.some(
+        (team) => team.id === activeTeamId && team.workspace_id === activeWorkspaceId,
+    )
     const descriptionRef = useRef(description)
 
     useEffect(() => {
@@ -226,7 +231,7 @@ export function CreateProjectModal({
     }, [])
 
     const handleSubmit = async () => {
-        if (!projectTitle.trim()) return
+        if (!projectTitle.trim() || !activeTeamId || !hasActiveTeam) return
 
         setIsSubmitting(true)
         try {
@@ -245,7 +250,7 @@ export function CreateProjectModal({
                     description: description,
                     milestones: milestones,
                 },
-                team_id: activeTeamId || 1
+                team_id: activeTeamId
             } as unknown as ProjectCreate
 
             const data = await dispatch(createProject(projectData)).unwrap()
@@ -378,7 +383,7 @@ export function CreateProjectModal({
                     </Button>
                     <Button
                         onClick={handleSubmit}
-                        disabled={!projectTitle}
+                        disabled={isSubmitting || !projectTitle.trim() || !hasActiveTeam}
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
                     >
                         {isSubmitting ? "Creating..." : "Create project"}

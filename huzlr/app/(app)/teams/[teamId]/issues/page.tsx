@@ -21,6 +21,8 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchProjects } from "@/lib/redux/slices/projectSlice"
 import { fetchPropertyDefinitions } from "@/lib/redux/slices/metaSlice"
 import { IssueCreate } from "@/lib/types"
+import { WorkspaceSetupState } from "@/components/workspace-setup-state"
+import { setActiveTeam } from "@/lib/redux/slices/workspaceSlice"
 
 export default function TeamIssuesPage() {
     const params = useParams()
@@ -30,16 +32,23 @@ export default function TeamIssuesPage() {
 
     const dispatch = useAppDispatch()
     const teams = useAppSelector((state) => state.workspace.teams)
+    const workspaces = useAppSelector((state) => state.workspace.workspaces)
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+    const workspacesLoaded = useAppSelector((state) => state.workspace.workspacesLoaded)
+    const teamsLoaded = useAppSelector((state) => state.workspace.teamsLoaded)
     const { items: projects } = useAppSelector((state) => state.projects)
     const viewState = useAppSelector((state) => state.view.views['task'])
     const layout = viewState?.layout || 'list'
 
-    const currentTeam = teams.find(t => t.id === teamId)
+    const hasActiveWorkspace = workspaces.some((workspace) => workspace.id === activeWorkspaceId)
+    const currentTeam = teams.find(
+        (team) => team.id === teamId && team.workspace_id === activeWorkspaceId,
+    )
+    const hasTeamContext = hasActiveWorkspace && !!currentTeam
     const teamProjects = projects.filter(p => p.team_id === teamId)
 
     const { data: issues, isLoading, error } = useGetTeamIssuesQuery(teamId, {
-        skip: isNaN(teamId)
+        skip: isNaN(teamId) || !hasTeamContext
     })
 
     const [createIssue] = useCreateIssueMutation()
@@ -62,13 +71,14 @@ export default function TeamIssuesPage() {
     const filterInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
-        if (activeWorkspaceId && teamId) {
+        if (activeWorkspaceId && currentTeam) {
+            dispatch(setActiveTeam(currentTeam.id))
             dispatch(fetchProjects({ 
                 workspaceId: activeWorkspaceId,
-                teamId: teamId
+                teamId: currentTeam.id
             }))
         }
-    }, [dispatch, activeWorkspaceId, teamId])
+    }, [dispatch, activeWorkspaceId, currentTeam])
 
     useEffect(() => {
         dispatch(fetchPropertyDefinitions('task'))
@@ -88,7 +98,9 @@ export default function TeamIssuesPage() {
 
             if (e.key === "c" || e.key === "C") {
                 e.preventDefault()
-                setIsCreateModalOpen(true)
+                if (teamProjects.length > 0) {
+                    setIsCreateModalOpen(true)
+                }
             } else if (e.key === "f" || e.key === "F") {
                 e.preventDefault()
                 setIsFilterOpen(true)
@@ -103,7 +115,7 @@ export default function TeamIssuesPage() {
         return () => {
             window.removeEventListener("keydown", handleGlobalKeyDown)
         }
-    }, [])
+    }, [teamProjects.length])
 
     const handleCreateIssue = async (issueData: Partial<IssueCreate> & { properties?: any }) => {
         if (!issueData.project_id) return
@@ -149,6 +161,7 @@ export default function TeamIssuesPage() {
     }
 
     const handleCreateClick = (statusTitle: string) => {
+        if (teamProjects.length === 0) return
         const matched = ["Backlog", "Planning", "In Progress", "Paused", "Done", "Canceled"].find(
             s => s.toLowerCase() === statusTitle.toLowerCase()
         ) || "Planning"
@@ -162,6 +175,39 @@ export default function TeamIssuesPage() {
                 <p>Invalid Team ID</p>
                 <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
             </div>
+        )
+    }
+
+    if (!workspacesLoaded || (hasActiveWorkspace && !teamsLoaded)) {
+        return (
+            <>
+                <SiteHeader />
+                <WorkspaceSetupState />
+            </>
+        )
+    }
+
+    if (!hasActiveWorkspace || teams.length === 0) {
+        return (
+            <>
+                <SiteHeader />
+                <WorkspaceSetupState />
+            </>
+        )
+    }
+
+    if (!currentTeam) {
+        return (
+            <>
+                <SiteHeader />
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+                    <h3 className="text-base font-medium tracking-tight">Team not available</h3>
+                    <p className="max-w-sm text-sm text-muted-foreground">
+                        This team does not belong to your active workspace or is no longer available.
+                    </p>
+                    <Button onClick={() => router.push('/projects')}>Go to Projects</Button>
+                </div>
+            </>
         )
     }
 
@@ -434,7 +480,10 @@ export default function TeamIssuesPage() {
                             </p>
                             <Button 
                                 className="mt-4 gap-2 rounded-full"
-                                onClick={() => router.push('/projects/new')}
+                                onClick={() => {
+                                    dispatch(setActiveTeam(currentTeam.id))
+                                    router.push('/projects/new')
+                                }}
                             >
                                 <Plus className="h-4 w-4" />
                                 Create Project

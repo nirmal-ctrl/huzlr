@@ -1,6 +1,30 @@
 from typing import Optional
 
 
+ADMISSION_WAITING_PHRASES = (
+    "please wait until a meeting host brings you into the call",
+    "you'll join the call when someone lets you in",
+    "someone in the call should let you in soon",
+    "asking to join",
+)
+
+MICROPHONE_UNAVAILABLE_PHRASES = (
+    "microphone not found",
+    "mic not found",
+    "no microphone found",
+)
+
+
+def is_waiting_for_admission(body_text: str) -> bool:
+    normalized_text = body_text.lower()
+    return any(phrase in normalized_text for phrase in ADMISSION_WAITING_PHRASES)
+
+
+def has_microphone_error(body_text: str) -> bool:
+    normalized_text = body_text.lower()
+    return any(phrase in normalized_text for phrase in MICROPHONE_UNAVAILABLE_PHRASES)
+
+
 def detect_terminal_meeting_error(body_text: str) -> Optional[tuple[str, str]]:
     states = (
         (

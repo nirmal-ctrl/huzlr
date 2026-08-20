@@ -19,12 +19,15 @@ import { useMemo } from "react"
 import { createActionsColumn, createDragColumn, createSelectColumn } from "@/components/columns/shared"
 import { createTitleColumn } from "@/components/properties/table"
 import { ColumnDef } from "@tanstack/react-table"
+import { WorkspaceSetupState } from "@/components/workspace-setup-state"
 
 export default function Page() {
   const dispatch = useAppDispatch()
   const { items: data, loading: isLoading, error } = useAppSelector((state) => state.projects)
   const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
   const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+  const workspaces = useAppSelector((state) => state.workspace.workspaces)
+  const teams = useAppSelector((state) => state.workspace.teams)
   const properties = useAppSelector((state) => state.meta.propertyDefinitions['project'])
   const viewState = useAppSelector((state) => state.view.views['project'])
   const layout = viewState?.layout || 'list'
@@ -32,12 +35,15 @@ export default function Page() {
   const isPageLoading = isLoading || isPropertiesLoading
   const user = useAppSelector((state) => state.auth.user)
   const [jiraImportOpen, setJiraImportOpen] = useState(false)
+  const hasWorkspace = workspaces.some((workspace) => workspace.id === activeWorkspaceId)
+  const hasTeam = teams.some(
+    (team) => team.id === activeTeamId && team.workspace_id === activeWorkspaceId,
+  )
+  const canCreateProject = hasWorkspace && hasTeam
 
   // Fetch projects and properties on mount and when team/workspace changes
   useEffect(() => {
-    const fetchId = activeTeamId || activeWorkspaceId;
-    
-    if (fetchId) {
+    if (canCreateProject) {
       dispatch(fetchProjects({ 
         workspaceId: activeWorkspaceId,
         teamId: activeTeamId
@@ -45,7 +51,7 @@ export default function Page() {
     }
     
     dispatch(fetchPropertyDefinitions('project'))
-  }, [dispatch, activeTeamId, activeWorkspaceId])
+  }, [dispatch, activeTeamId, activeWorkspaceId, canCreateProject])
 
   const columns = useMemo(() => {
     if (!properties) return [];
@@ -75,17 +81,21 @@ export default function Page() {
   return (
     <>
       <SiteHeader entityType="project">
-        <Link href="/projects/new">
-          <Button size="sm" className="gap-2 rounded-full">
-            <Plus className="h-4 w-4" />
-            Create Project
-          </Button>
-        </Link>
+        {canCreateProject && (
+          <Link href="/projects/new">
+            <Button size="sm" className="gap-2 rounded-full">
+              <Plus className="h-4 w-4" />
+              Create Project
+            </Button>
+          </Link>
+        )}
       </SiteHeader>
       <div className="flex flex-1 flex-col gap-4 py-4">
         <div className="w-full flex flex-1 flex-col gap-2">
           <div className="flex flex-1 flex-col gap-4 md:gap-6">
-            {isPageLoading ? (
+            {!canCreateProject ? (
+              <WorkspaceSetupState />
+            ) : isPageLoading ? (
               <DataTableSkeleton />
             ) : isError ? (
               <div className="flex items-center justify-center py-8">
