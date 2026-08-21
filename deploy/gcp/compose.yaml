@@ -1,0 +1,69 @@
+name: huzlr-workers
+
+x-agent: &agent
+  build:
+    context: ../../huzlr-agents
+  env_file:
+    - ../../huzlr-agents/.env
+  init: true
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+  healthcheck:
+    test:
+      - CMD
+      - python
+      - -c
+      - >-
+        import urllib.request;
+        urllib.request.urlopen('http://127.0.0.1:8081/', timeout=2)
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+
+services:
+  brainstorm:
+    <<: *agent
+    environment:
+      HUZLR_AGENT_TYPE: brainstorm
+
+  founder:
+    <<: *agent
+    environment:
+      HUZLR_AGENT_TYPE: founder
+
+  scrum-master:
+    <<: *agent
+    environment:
+      HUZLR_AGENT_TYPE: scrum_master
+
+  meet-bridge:
+    build:
+      context: ../../huzl
+    env_file:
+      - ../../huzl/.env
+    environment:
+      BOT_PROFILE_DIR: /data/google-bot-profile
+      BOT_STORAGE_STATE_PATH: /data/google-bot-profile/auth-state.json
+      HUZL_DEBUG_DIR: /data/debug
+      HEADLESS: "true"
+      REQUIRE_BOT_PROFILE: "true"
+    volumes:
+      - type: bind
+        source: ${BOT_PROFILE_HOST_DIR:?Set BOT_PROFILE_HOST_DIR in huzl/.env}
+        target: /data/google-bot-profile
+      - type: bind
+        source: ${HUZL_DEBUG_HOST_DIR:-/opt/huzlr-data/debug}
+        target: /data/debug
+    init: true
+    restart: unless-stopped
+    shm_size: 2gb
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"

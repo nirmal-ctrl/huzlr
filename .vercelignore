@@ -1,0 +1,16 @@
+.clinerules/
+.pnpm-store/
+deploy/
+huzl/
+huzlr/
+huzlr-agents/
+huzlr-cms/
+memory-bank/
+
+huzlr-be/backups/
+huzlr-be/docs/
+huzlr-be/poc/
+huzlr-be/scripts/
+huzlr-be/tests/
+huzlr-be/docker-compose.yml
+huzlr-be/**/*.log

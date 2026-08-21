@@ -135,4 +135,5 @@ def build_worker_options() -> WorkerOptions:
         entrypoint_fnc=entrypoint,
         request_fnc=request_fnc,
         agent_name=SCRUM_MASTER_AGENT_NAME,
+        num_idle_processes=1,
     )

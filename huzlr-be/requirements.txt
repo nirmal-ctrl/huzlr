@@ -58,5 +58,7 @@ zstandard==0.25.0
 cryptography
 google-genai==2.8.0
 
-# LiveKit server API for token creation and explicit agent dispatch
-livekit==1.1.8
+# LiveKit server API for token creation and explicit agent dispatch.
+# The `livekit` package is the realtime client SDK; backend token/dispatch APIs
+# are provided by `livekit-api`.
+livekit-api==1.1.0

@@ -126,4 +126,5 @@ def build_worker_options() -> WorkerOptions:
         prewarm_fnc=prewarm,
         request_fnc=request_fnc,
         agent_name=BRAINSTORM_AGENT_NAME,
+        num_idle_processes=1,
     )
