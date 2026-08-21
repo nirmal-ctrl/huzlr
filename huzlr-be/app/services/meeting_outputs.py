@@ -2,8 +2,7 @@ import json
 import logging
 import re
 
-from livekit.agents import llm
-from livekit.plugins import google
+from google import genai
 from sqlalchemy import select
 
 from core.config import settings
@@ -49,11 +48,13 @@ was not explicitly stated. Transcript:
 
 {transcript[:100000]}
 """
-    context = llm.ChatContext.empty()
-    context.add_message(role="user", content=prompt)
-    model = google.LLM(model="gemini-2.5-flash", api_key=settings.GEMINI_API_KEY)
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     try:
-        response = await model.chat(chat_ctx=context).collect()
+        response = await client.aio.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config={"response_mime_type": "application/json"},
+        )
         cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", response.text.strip())
         generated = json.loads(cleaned)
         outputs = {
@@ -66,10 +67,11 @@ was not explicitly stated. Transcript:
     except Exception:
         logger.exception("Meeting output generation failed for meeting %s", meeting_id)
         return
+    finally:
+        await client.aio.aclose()
 
     async with AsyncSessionLocal() as db:
         meeting = await db.get(ScrumMeeting, meeting_id)
         if meeting:
             meeting.outputs = outputs
             await db.commit()
-

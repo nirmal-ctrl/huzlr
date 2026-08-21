@@ -15,14 +15,11 @@ flowchart LR
         Calendar[Google Calendar API]
     end
 
-    subgraph AppHost[Huzlr application host]
+    subgraph AppHost[Vercel application]
         Web[Next.js frontend]
 
         subgraph Backend[FastAPI backend process]
             API[Scrum Master API<br/>scheduling, job claims, tokens]
-            Agent[LiveKit Scrum Master agent worker<br/>Python subprocess]
-            AgentSession[LiveKit AgentSession]
-            VAD[Silero VAD<br/>runs in the agent process]
         end
 
         DB[(PostgreSQL<br/>meetings, settings, transcripts, outputs)]
@@ -41,6 +38,9 @@ flowchart LR
     subgraph LiveKitCloud[LiveKit Cloud]
         LK[Per-meeting LiveKit room<br/>huzl-hdzkgm0u.livekit.cloud]
         Dispatch[Named agent dispatch<br/>huzlr-scrum-master]
+        Agent[Scrum Master agent deployment]
+        AgentSession[LiveKit AgentSession]
+        VAD[Silero VAD]
     end
 
     subgraph AIProviders[Managed AI providers]
@@ -71,7 +71,7 @@ flowchart LR
     LK --> Bridge --> Microphone --> Playwright
     Playwright -->|bot microphone audio| Meet
 
-    Agent -->|participant and agent transcript segments| DB
+    Agent -->|protected transcript API| API
 ```
 
 ## Where each component runs
@@ -80,7 +80,7 @@ flowchart LR
 | --- | --- | --- |
 | Next.js frontend | Huzlr web application | Calendar connection, meeting list, manual join, scheduling, and status UI. |
 | FastAPI Scrum Master API | `huzlr-be` application process | Stores meeting state, exposes the worker job API, creates LiveKit room tokens, and requests named-agent dispatch. |
-| Scrum Master voice agent | Python subprocess started by the FastAPI lifespan | Connects to the LiveKit room and runs the conversational voice pipeline. It is not running on the Meet worker and is not hosted by the LiveKit server. |
+| Scrum Master voice agent | `huzlr-agents` deployment on LiveKit Cloud | Connects to the LiveKit room, runs the conversational pipeline, and persists messages through the protected FastAPI agent API. |
 | Playwright automation | `huzl-worker` Docker container | Launches authenticated headless Chromium and joins Google Meet as the dedicated bot account. |
 | Audio bridge | Same `huzl-worker` container | Publishes Meet playback to LiveKit and writes returned agent audio into Chromium's virtual microphone. |
 | LiveKit server | LiveKit Cloud at `wss://huzl-hdzkgm0u.livekit.cloud` | Hosts the per-meeting RTC room and dispatches the named Scrum Master agent. It transports audio; it does not run Gemini, STT, or TTS itself. |
@@ -106,7 +106,7 @@ flowchart LR
 4. Participant audio plays through Chromium into the PulseAudio virtual speaker.
 5. The worker captures that playback as 16 kHz mono PCM and publishes it to LiveKit
    as a microphone track.
-6. The backend agent applies Silero VAD, sends speech to Deepgram STT, sends the
+6. The independently deployed agent applies Silero VAD, sends speech to Deepgram STT, sends the
    transcript to Gemini 2.5 Flash, and sends the response to Deepgram TTS.
 7. LiveKit returns the synthesized audio track to the Docker bridge.
 8. The bridge writes that audio into the virtual microphone used by Chromium, so
@@ -115,8 +115,7 @@ flowchart LR
 
 ## Production separation
 
-The development backend starts the voice agent as a subprocess. For production,
-deploy the FastAPI API, Scrum Master agent worker, Meet automation worker, and
-PostgreSQL as independently supervised services. Run exactly one Meet worker per
-mounted Google bot profile, while multiple agent workers may register with the same
-LiveKit project for horizontal scaling.
+FastAPI never starts agent subprocesses. Deploy it to Vercel, deploy the Scrum Master
+from `huzlr-agents` to LiveKit Cloud, and supervise the Meet automation worker
+independently. Run exactly one Meet worker per mounted Google bot profile; LiveKit
+Cloud manages agent worker scaling separately.

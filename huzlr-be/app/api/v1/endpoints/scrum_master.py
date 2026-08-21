@@ -2,8 +2,8 @@ import hmac
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Annotated, Optional
-from urllib.parse import urlencode
+from typing import Annotated, Literal, Optional
+from urllib.parse import urlencode, urlparse
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
@@ -18,10 +18,13 @@ from api.deps import get_current_user, get_db
 from core.access import assert_admin, assert_workspace_member
 from core.config import settings
 from core.security_utils import decrypt_token, encrypt_token
+from core.voice_agents import SCRUM_MASTER_AGENT_NAME
 from models.scrum_master import GoogleCalendarConnection, MeetingTranscriptSegment, ScrumMasterSettings, ScrumMeeting
 from models.user import User
+from models.workspace_membership import WorkspaceRoleEnum
 from schemas.scrum_master import (
     CalendarConnectResponse,
+    CalendarConnectionResponse,
     CalendarSyncResponse,
     CalendarStatusResponse,
     MeetingPageResponse,
@@ -47,7 +50,22 @@ WORKER_STATUSES = {
     "starting", "authenticating", "waiting_for_admission", "joined", "leaving",
     "completed", "failed", "cancelled",
 }
-SCRUM_MASTER_AGENT_NAME = "huzlr-scrum-master"
+ACTIVE_MEETING_STATUSES = {
+    "queued", "starting", "authenticating", "waiting_for_admission", "joined", "leaving",
+}
+
+
+def _apply_worker_status(meeting: ScrumMeeting, payload: WorkerStatusUpdate, now: datetime) -> None:
+    meeting.heartbeat_at = now
+    meeting.status = payload.status
+    if payload.status == "joined" and meeting.joined_at is None:
+        meeting.joined_at = now
+    meeting.error_code = payload.error_code
+    meeting.error_message = payload.error_message
+    if payload.status in {"completed", "failed", "cancelled"}:
+        meeting.completed_at = now
+        meeting.bot_enabled = False
+        meeting.force_join = False
 
 
 async def _get_or_create_settings(db: AsyncSession, workspace_id: int) -> ScrumMasterSettings:
@@ -76,29 +94,65 @@ def _calendar_state(user_id: int, workspace_id: int) -> str:
     )
 
 
-async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalendarConnection) -> str:
-    now = datetime.now(timezone.utc)
-    expires_at = connection.token_expires_at
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if not expires_at or expires_at > now + timedelta(minutes=1):
-        return decrypt_token(connection.access_token)
-    if not connection.refresh_token:
-        raise HTTPException(
-            status_code=409,
-            detail="Google Calendar authorization has expired. Reconnect the calendar and try again.",
-        )
+def _calendar_reconnect_required() -> HTTPException:
+    return HTTPException(
+        status_code=409,
+        detail="Google Calendar authorization has expired. Reconnect the calendar to continue.",
+    )
 
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.post(
-            GOOGLE_TOKEN_URI,
-            data={
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "refresh_token": decrypt_token(connection.refresh_token),
-                "grant_type": "refresh_token",
-            },
-        )
+
+def _is_google_meet_url(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    parsed = urlparse(value.strip())
+    return (
+        parsed.scheme == "https"
+        and parsed.hostname == "meet.google.com"
+        and bool(parsed.path.strip("/"))
+    )
+
+
+def _google_meet_url(event: dict) -> Optional[str]:
+    conference_data = event.get("conferenceData") or {}
+    conference_type = (
+        conference_data.get("conferenceSolution", {})
+        .get("key", {})
+        .get("type")
+    )
+    if conference_type != "hangoutsMeet":
+        return None
+
+    for entry in conference_data.get("entryPoints", []):
+        if entry.get("entryPointType") != "video":
+            continue
+        candidate = entry.get("uri")
+        if not isinstance(candidate, str):
+            continue
+        candidate = candidate.strip()
+        if _is_google_meet_url(candidate):
+            return candidate
+    return None
+
+
+async def _refresh_calendar_access_token(db: AsyncSession, connection: GoogleCalendarConnection) -> str:
+    if not connection.refresh_token:
+        raise _calendar_reconnect_required()
+
+    now = datetime.now(timezone.utc)
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.post(
+                GOOGLE_TOKEN_URI,
+                data={
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "refresh_token": decrypt_token(connection.refresh_token),
+                    "grant_type": "refresh_token",
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(status_code=502, detail="Google Calendar token refresh is temporarily unavailable") from exc
+
     if response.status_code != 200:
         try:
             google_error = response.json().get("error", "unknown_error")
@@ -109,15 +163,24 @@ async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalen
             connection.id,
             google_error,
         )
-        raise HTTPException(
-            status_code=409,
-            detail="Google Calendar authorization is no longer valid. Reconnect the calendar and try again.",
-        )
+        if google_error in {"invalid_grant", "invalid_token", "unauthorized_client"}:
+            raise _calendar_reconnect_required()
+        raise HTTPException(status_code=502, detail="Google Calendar rejected the token refresh request")
     payload = response.json()
     connection.access_token = encrypt_token(payload["access_token"])
     connection.token_expires_at = now + timedelta(seconds=int(payload.get("expires_in", 3600)))
     await db.flush()
     return payload["access_token"]
+
+
+async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalendarConnection) -> str:
+    now = datetime.now(timezone.utc)
+    expires_at = connection.token_expires_at
+    if expires_at and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if not expires_at or expires_at > now + timedelta(minutes=1):
+        return decrypt_token(connection.access_token)
+    return await _refresh_calendar_access_token(db, connection)
 
 
 @router.get("/settings", response_model=ScrumMasterSettingsResponse)
@@ -154,16 +217,41 @@ async def calendar_status(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await assert_workspace_member(current_user.id, workspace_id, db)
+    membership = await assert_workspace_member(current_user.id, workspace_id, db)
     result = await db.execute(
         select(GoogleCalendarConnection)
         .where(GoogleCalendarConnection.workspace_id == workspace_id)
         .order_by(GoogleCalendarConnection.email.asc())
     )
     connections = list(result.scalars().all())
+    connection_responses = []
+    requires_reconnect = False
+    for connection in connections:
+        connection_requires_reconnect = False
+        try:
+            await _valid_calendar_access_token(db, connection)
+        except HTTPException as exc:
+            if exc.status_code == 409:
+                connection_requires_reconnect = True
+                requires_reconnect = True
+            elif exc.status_code >= 500:
+                logger.warning("Calendar credential check failed for connection %s: %s", connection.id, exc.detail)
+            else:
+                raise
+        connection_responses.append(
+            CalendarConnectionResponse(
+                id=connection.id,
+                email=connection.email,
+                last_synced_at=connection.last_synced_at,
+                requires_reconnect=connection_requires_reconnect,
+            )
+        )
+    await db.commit()
     return CalendarStatusResponse(
         connected=bool(connections),
-        connections=connections,
+        can_manage=membership.role == WorkspaceRoleEnum.ADMIN,
+        requires_reconnect=requires_reconnect,
+        connections=connection_responses,
     )
 
 
@@ -266,7 +354,11 @@ async def calendar_disconnect(
 
 async def _fetch_calendar_events(db: AsyncSession, connection: GoogleCalendarConnection) -> list[dict]:
     access_token = await _valid_calendar_access_token(db, connection)
-    params = {"singleEvents": "true", "maxResults": "250"}
+    params = {
+        "singleEvents": "true",
+        "eventTypes": "default",
+        "maxResults": "250",
+    }
     if connection.sync_token:
         params["syncToken"] = connection.sync_token
     else:
@@ -280,6 +372,15 @@ async def _fetch_calendar_events(db: AsyncSession, connection: GoogleCalendarCon
             if next_page:
                 params["pageToken"] = next_page
             response = await client.get(GOOGLE_EVENTS_URI, params=params, headers={"Authorization": f"Bearer {access_token}"})
+            if response.status_code == 401:
+                access_token = await _refresh_calendar_access_token(db, connection)
+                response = await client.get(
+                    GOOGLE_EVENTS_URI,
+                    params=params,
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
+                if response.status_code == 401:
+                    raise _calendar_reconnect_required()
             if response.status_code == 410 and connection.sync_token:
                 connection.sync_token = None
                 await db.flush()
@@ -318,12 +419,16 @@ async def _sync_calendar_connection(
         end_value = event.get("end", {}).get("dateTime")
         if not start_value or not end_value:
             continue
-        meet_url = event.get("hangoutLink")
+        meet_url = _google_meet_url(event)
         if not meet_url:
-            for entry in event.get("conferenceData", {}).get("entryPoints", []):
-                if entry.get("entryPointType") == "video":
-                    meet_url = entry.get("uri")
-                    break
+            if meeting and meeting.joined_at is None:
+                if meeting.status in ACTIVE_MEETING_STATUSES:
+                    meeting.meet_url = None
+                    meeting.bot_enabled = False
+                    meeting.cancel_requested = True
+                else:
+                    await db.delete(meeting)
+            continue
         organizer_email = event.get("organizer", {}).get("email")
         attendee_emails = {attendee.get("email") for attendee in event.get("attendees", [])}
         title = event.get("summary") or "Untitled meeting"
@@ -354,6 +459,22 @@ async def _sync_calendar_connection(
             meeting.status = "scheduled"
             meeting.job_id = meeting.job_id or str(uuid.uuid4())
         changed.append(meeting)
+
+    stale_result = await db.execute(
+        select(ScrumMeeting).where(
+            ScrumMeeting.workspace_id == workspace_id,
+            ScrumMeeting.joined_at.is_(None),
+        )
+    )
+    for stale_meeting in stale_result.scalars().all():
+        if _is_google_meet_url(stale_meeting.meet_url):
+            continue
+        if stale_meeting.status in ACTIVE_MEETING_STATUSES:
+            stale_meeting.meet_url = None
+            stale_meeting.bot_enabled = False
+            stale_meeting.cancel_requested = True
+        else:
+            await db.delete(stale_meeting)
 
     connection.last_synced_at = datetime.now(timezone.utc)
     return changed
@@ -390,14 +511,23 @@ async def list_meetings(
     workspace_id: int,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    view: Literal["upcoming", "history"] = "upcoming",
     include_past: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     await assert_workspace_member(current_user.id, workspace_id, db)
     filters = [ScrumMeeting.workspace_id == workspace_id]
-    if not include_past:
-        filters.append(ScrumMeeting.ends_at >= datetime.now(timezone.utc))
+    if view == "history":
+        filters.append(ScrumMeeting.joined_at.is_not(None))
+        ordering = ScrumMeeting.joined_at.desc()
+    else:
+        filters.append(ScrumMeeting.meet_url.like("https://meet.google.com/%"))
+        if not include_past:
+            filters.append(ScrumMeeting.ends_at >= datetime.now(timezone.utc))
+            ordering = ScrumMeeting.starts_at.asc()
+        else:
+            ordering = ScrumMeeting.starts_at.desc()
 
     total = await db.scalar(select(func.count(ScrumMeeting.id)).where(*filters)) or 0
     bot_scheduled_total = await db.scalar(
@@ -406,7 +536,7 @@ async def list_meetings(
     result = await db.execute(
         select(ScrumMeeting)
         .where(*filters)
-        .order_by(ScrumMeeting.starts_at.asc())
+        .order_by(ordering)
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -620,14 +750,7 @@ async def update_worker_job(
     meeting = result.scalar_one_or_none()
     if not meeting:
         raise HTTPException(status_code=404, detail="Worker job not found")
-    meeting.heartbeat_at = datetime.now(timezone.utc)
-    meeting.status = payload.status
-    meeting.error_code = payload.error_code
-    meeting.error_message = payload.error_message
-    if payload.status in {"completed", "failed", "cancelled"}:
-        meeting.completed_at = datetime.now(timezone.utc)
-        meeting.bot_enabled = False
-        meeting.force_join = False
+    _apply_worker_status(meeting, payload, datetime.now(timezone.utc))
     cancel_requested = meeting.cancel_requested
     await db.commit()
     if payload.status == "completed":

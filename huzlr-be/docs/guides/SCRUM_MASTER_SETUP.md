@@ -10,12 +10,23 @@ GOOGLE_CLIENT_ID=<google-oauth-client-id>
 GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
 GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:8001/api/v1/scrum-master/calendar/google/callback
 HUZL_WORKER_KEY=<long-random-service-secret>
+AGENT_SERVICE_KEY=<separate-long-random-agent-service-secret>
 ENCRYPTION_KEY=<fernet-key>
 LIVEKIT_URL=wss://<project>.livekit.cloud
 LIVEKIT_API_KEY=<livekit-api-key>
 LIVEKIT_API_SECRET=<livekit-api-secret>
 GEMINI_API_KEY=<gemini-api-key>
+```
+
+Configure the separately deployed `huzlr-agents` worker with LiveKit and provider
+credentials plus:
+
+```dotenv
+HUZLR_AGENT_TYPE=scrum_master
+HUZLR_API_URL=https://<fastapi-project>.vercel.app
+HUZLR_AGENT_SERVICE_KEY=<same-value-as-backend-AGENT_SERVICE_KEY>
 DEEPGRAM_API_KEY=<deepgram-api-key>
+GEMINI_API_KEY=<gemini-api-key>
 ```
 
 Configure the frontend with the same JWT signing secret and the public service URLs:
@@ -69,7 +80,7 @@ disabled.
 Before production deployment:
 
 1. Back up PostgreSQL and run `alembic upgrade head`.
-2. Deploy the backend and the LiveKit agent as separate long-running processes.
+2. Deploy the backend to Vercel and the Scrum Master from `huzlr-agents` to LiveKit Cloud.
 3. Provision one persistent Chromium profile for the dedicated Google bot account.
 4. Deploy exactly one Meet worker per mounted Chromium profile.
 5. Verify Calendar OAuth, manual join, scheduled join, cancellation, transcript,

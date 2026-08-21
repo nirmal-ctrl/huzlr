@@ -23,6 +23,8 @@ export interface ScrumMeeting {
   meetUrl?: string
   status: MeetingStatus
   botEnabled: boolean
+  joinedAt?: string
+  completedAt?: string
   organizer?: string
   errorCode?: string
   errorMessage?: string
@@ -42,6 +44,7 @@ export interface ScrumMeetingPageQuery {
   workspaceId: number
   page: number
   pageSize?: number
+  view?: "upcoming" | "history"
 }
 
 export interface TranscriptSegment {
@@ -75,10 +78,13 @@ export interface CalendarConnection {
   id: number
   email: string
   lastSyncedAt?: string
+  requiresReconnect: boolean
 }
 
 export interface CalendarStatus {
   connected: boolean
+  canManage: boolean
+  requiresReconnect: boolean
   connections: CalendarConnection[]
 }
 
@@ -92,6 +98,8 @@ interface ApiMeeting {
   meet_url?: string
   status: MeetingStatus
   bot_enabled: boolean
+  joined_at?: string
+  completed_at?: string
   organizer_email?: string
   error_code?: string
   error_message?: string
@@ -142,6 +150,8 @@ const mapMeeting = (meeting: ApiMeeting): ScrumMeeting => ({
   meetUrl: meeting.meet_url,
   status: meeting.status,
   botEnabled: meeting.bot_enabled,
+  joinedAt: meeting.joined_at,
+  completedAt: meeting.completed_at,
   organizer: meeting.organizer_email,
   errorCode: meeting.error_code,
   errorMessage: meeting.error_message,
@@ -178,9 +188,9 @@ const toApiSettings = (value: ScrumMasterSettings) => ({
 export const scrumMasterApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getScrumMeetings: builder.query<ScrumMeetingPage, ScrumMeetingPageQuery>({
-      query: ({ workspaceId, page, pageSize = 20 }) => ({
+      query: ({ workspaceId, page, pageSize = 20, view = "upcoming" }) => ({
         url: "/scrum-master/meetings",
-        params: { workspace_id: workspaceId, page, page_size: pageSize },
+        params: { workspace_id: workspaceId, page, page_size: pageSize, view },
       }),
       transformResponse: (response: ApiMeetingPage) => ({
         items: response.items.map(mapMeeting),
@@ -224,12 +234,15 @@ export const scrumMasterApi = baseApi.injectEndpoints({
     }),
     getCalendarStatus: builder.query<CalendarStatus, number>({
       query: (workspaceId) => ({ url: "/scrum-master/calendar/status", params: { workspace_id: workspaceId } }),
-      transformResponse: (response: { connected: boolean; connections: Array<{ id: number; email: string; last_synced_at?: string }> }) => ({
+      transformResponse: (response: { connected: boolean; can_manage: boolean; requires_reconnect: boolean; connections: Array<{ id: number; email: string; last_synced_at?: string; requires_reconnect: boolean }> }) => ({
         connected: response.connected,
+        canManage: response.can_manage,
+        requiresReconnect: response.requires_reconnect,
         connections: response.connections.map((connection) => ({
           id: connection.id,
           email: connection.email,
           lastSyncedAt: connection.last_synced_at,
+          requiresReconnect: connection.requires_reconnect,
         })),
       }),
       providesTags: ["CalendarStatus"],

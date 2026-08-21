@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     # Admin
     ADMIN_SECRET: str = "admin-secret-key"
     HUZL_WORKER_KEY: str = ""
+    AGENT_SERVICE_KEY: str = ""
 
     # LiveKit Voice Agent Configurations
     LIVEKIT_API_KEY: str = ""

@@ -2,6 +2,11 @@
 
 Backend API for the Huzlr application built with FastAPI and PostgreSQL.
 
+Persistent LiveKit voice workers are maintained and deployed independently from the
+top-level `huzlr-agents` module. This backend only creates room tokens, dispatches
+named agents, and exposes protected application-data APIs to those workers, which
+keeps the FastAPI process compatible with Vercel's request-driven runtime.
+
 ## 🔗 Project Links
 
 - **Linear Issues:** https://linear.app/huzlr/team/HUZ/active

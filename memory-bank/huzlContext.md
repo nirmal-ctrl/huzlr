@@ -12,8 +12,9 @@ lifecycle to the backend.
 - `huzlr`: Scrum Master Meetings, Settings, and Meeting Detail UI using RTK Query.
 - Meeting listing is server-paginated and polls only the current page; Calendar sync
   responses return counts while Google incremental sync tokens preserve completeness.
-- `huzlr-be`: Multi-account Calendar OAuth/sync, workspace policy, durable meeting queue, worker
-  authentication, status/heartbeat, transcript persistence, and LiveKit agent.
+- `huzlr-be`: Multi-account Calendar OAuth/sync, workspace policy, durable meeting queue,
+  worker authentication, status/heartbeat, transcript persistence, and named-agent dispatch.
+- `huzlr-agents`: Independently deployed Brainstorm, Founder, and Scrum Master LiveKit workers.
 - `huzl`: Playwright Meet worker, persistent bot profile, virtual PulseAudio devices,
   LiveKit PCM bridge, cancellation, bounded retries, and cleanup.
 
@@ -29,7 +30,8 @@ lifecycle to the backend.
 - `huzl/bridge/audio_injection.py`: Buffered PCM to the Meet virtual microphone.
 - `huzl/agent/livekit_bridge.py`: Bidirectional Meet-to-LiveKit PCM adapter.
 - `huzlr-be/app/api/v1/endpoints/scrum_master.py`: User and worker APIs.
-- `huzlr-be/app/services/scrum_master_agent.py`: VAD/STT/Gemini/TTS Scrum Master.
+- `huzlr-agents/src/huzlr_agents/agents/scrum_master.py`: VAD/STT/Gemini/TTS Scrum Master.
+- `huzlr-be/app/api/v1/endpoints/agent_data.py`: Protected data and transcript API for agents.
 - `huzlr-be/app/models/scrum_master.py`: Policy, Calendar connection, meeting job,
   lifecycle, output, and transcript persistence.
 - `huzlr-be/alembic/versions/8f1c2d3e4a5b_add_scrum_master_models.py`: Schema.
@@ -68,6 +70,12 @@ Backend:
 - `ENCRYPTION_KEY`
 - `HUZL_WORKER_KEY`
 - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`
+- `AGENT_SERVICE_KEY`
+
+LiveKit agent deployment:
+
+- `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`
+- `HUZLR_API_URL`, `HUZLR_AGENT_SERVICE_KEY`, `HUZLR_AGENT_TYPE`
 - Provider credentials used by Deepgram and Gemini
 
 Worker:

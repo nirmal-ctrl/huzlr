@@ -22,7 +22,9 @@ flowchart LR
 
 - `huzlr` owns user controls and display state.
 - `huzlr-be` owns authorization, Calendar tokens, policy, scheduling, audit state,
-  transcripts, and LiveKit agent execution.
+  transcripts, LiveKit tokens, and named-agent dispatch.
+- `huzlr-agents` owns persistent LiveKit agent execution and calls the backend through
+  the protected internal agent API instead of connecting directly to PostgreSQL.
 - `huzl` owns one active browser/audio session and contains no user JWT or Calendar
   refresh token.
 - Google OAuth identity and the dedicated Meet browser identity are separate.

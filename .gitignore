@@ -54,5 +54,8 @@ build/
 # Local Netlify folder
 .netlify
 
+# Local Vercel project metadata
+.vercel
+
 # Turbo
 .turbo

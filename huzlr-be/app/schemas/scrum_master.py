@@ -28,6 +28,7 @@ class CalendarConnectionResponse(BaseModel):
     id: int
     email: str
     last_synced_at: Optional[datetime] = None
+    requires_reconnect: bool = False
 
     class Config:
         from_attributes = True
@@ -35,6 +36,8 @@ class CalendarConnectionResponse(BaseModel):
 
 class CalendarStatusResponse(BaseModel):
     connected: bool
+    can_manage: bool = False
+    requires_reconnect: bool = False
     connections: list[CalendarConnectionResponse] = Field(default_factory=list)
 
 
@@ -53,6 +56,8 @@ class MeetingResponse(BaseModel):
     attendees_count: int
     bot_enabled: bool
     status: str
+    joined_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     outputs: dict

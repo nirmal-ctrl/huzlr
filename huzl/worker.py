@@ -74,6 +74,9 @@ class MeetingJobRunner:
             await self.client.report(job.job_id, JobStatus.AUTHENTICATING)
             await self.client.report(job.job_id, JobStatus.WAITING_FOR_ADMISSION)
             await meet.join(job.meet_url, job.bot_name)
+            # Admission is the durable history boundary. Report it before optional
+            # audio/agent setup so an integration failure cannot erase a real join.
+            await self.client.report(job.job_id, JobStatus.JOINED)
             capture.start()
             if job.livekit_url and job.livekit_token:
                 await meet.unmute()
@@ -81,8 +84,6 @@ class MeetingJobRunner:
                 await voice_bridge.start()
             else:
                 logger.warning("LiveKit is not configured; meeting will run in listen-only mode")
-            await self.client.report(job.job_id, JobStatus.JOINED)
-
             deadline = asyncio.get_running_loop().time() + job.max_duration_minutes * 60
             next_check = asyncio.get_running_loop().time()
             while asyncio.get_running_loop().time() < deadline:

@@ -1,0 +1,8 @@
+certifi==2025.11.12
+httpx==0.28.1
+livekit==1.1.8
+livekit-agents==1.5.17
+livekit-plugins-deepgram==1.5.17
+livekit-plugins-google==1.5.17
+livekit-plugins-silero==1.5.17
+python-dotenv==1.2.1

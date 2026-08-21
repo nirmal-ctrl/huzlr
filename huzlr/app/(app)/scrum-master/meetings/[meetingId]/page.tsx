@@ -30,7 +30,7 @@ export default function ScrumMeetingDetailPage() {
               <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5"><Clock3 className="size-3.5" />{new Date(meeting.startsAt).toLocaleString()}</span>
                 <span className="flex items-center gap-1.5"><Users className="size-3.5" />{meeting.attendees} attendees</span>
-                <span className="flex items-center gap-1.5"><Bot className="size-3.5" />{meeting.botEnabled ? "Bot active" : "Bot inactive"}</span>
+                <span className="flex items-center gap-1.5"><Bot className="size-3.5" />{meeting.joinedAt ? `Bot joined ${new Date(meeting.joinedAt).toLocaleString()}` : meeting.botEnabled ? "Bot scheduled" : "Bot has not joined"}</span>
               </div>
             </section>
 
