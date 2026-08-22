@@ -4,6 +4,9 @@ This deployment runs the three self-hosted LiveKit agent servers and the Google
 Meet bridge on one Compute Engine VM. FastAPI and the frontend remain on Vercel,
 while LiveKit Cloud continues to provide rooms and realtime media transport.
 
+For future deployments, SSH access, logs, health checks, restarts, and VM
+operations, see [OPERATIONS.md](./OPERATIONS.md).
+
 ## VM layout
 
 The repository is installed at `/opt/huzlr`, with persistent credentials and
