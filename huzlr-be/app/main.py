@@ -8,6 +8,7 @@ os.environ["WEBSOCKET_CLIENT_CA_BUNDLE"] = certifi.where()
 
 from api.v1.router import api_router
 from core.config import settings
+from core.vercel_oidc import VercelOIDCTokenMiddleware
 
 # Import all models to ensure they are registered with SQLAlchemy
 from models.user import User
@@ -43,6 +44,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(VercelOIDCTokenMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
 

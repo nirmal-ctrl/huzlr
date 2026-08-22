@@ -37,11 +37,19 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
 
     # Google Cloud Storage
-    # Authentication uses Application Default Credentials (ADC).
     GCS_BUCKET_NAME: str = ""
     GCS_PROJECT_ID: str = ""
     GCS_DOCUMENTS_PREFIX: str = "project-documents"
     GCS_MAX_DOCUMENT_BYTES: int = 2 * 1024 * 1024
+
+    # Vercel -> Google Cloud Workload Identity Federation. When all values are
+    # set, the backend exchanges Vercel's request OIDC token for short-lived
+    # service-account credentials. Local development falls back to ADC.
+    GCP_PROJECT_ID: str = ""
+    GCP_PROJECT_NUMBER: str = ""
+    GCP_SERVICE_ACCOUNT_EMAIL: str = ""
+    GCP_WORKLOAD_IDENTITY_POOL_ID: str = ""
+    GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID: str = ""
 
     class Config:
         env_file = str(ENV_FILE)
