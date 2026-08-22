@@ -77,7 +77,6 @@ export default function ProjectDetailsPage() {
 
     // Local state for edits
     const [draftProperties, setDraftProperties] = useState<any>({})
-    const [completedMilestones, setCompletedMilestones] = useState<Record<number, boolean>>({})
     
     // Collapsible states
     const [propertiesExpanded, setPropertiesExpanded] = useState(true)
@@ -341,13 +340,16 @@ export default function ProjectDetailsPage() {
                                     ) : milestones && milestones.length > 0 ? (
                                         <div className="space-y-1.5 mt-2">
                                             {milestones.map((m) => {
-                                                const isCompleted = completedMilestones[m.milestone_id] || false;
+                                                const isCompleted = m.completed;
                                                 return (
                                                     <div key={m.milestone_id} className="flex items-center gap-2.5 group text-sm py-1 px-1.5 hover:bg-muted/30 rounded-md transition-all">
                                                         {/* Circular Checkbox */}
                                                         <button
                                                             type="button"
-                                                            onClick={() => setCompletedMilestones(prev => ({ ...prev, [m.milestone_id]: !isCompleted }))}
+                                                            onClick={() => updateMilestone({
+                                                                milestoneId: m.milestone_id,
+                                                                updates: { completed: !isCompleted },
+                                                            })}
                                                             className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 transition-all duration-200 ${
                                                                 isCompleted 
                                                                     ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 scale-95" 

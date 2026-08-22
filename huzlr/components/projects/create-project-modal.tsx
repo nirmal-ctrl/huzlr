@@ -1,27 +1,42 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, type FormEvent, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
-import { createProject } from "@/lib/redux/slices/projectSlice"
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { fetchProjectById, updateProject } from "@/lib/redux/slices/projectSlice"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { InlineEditor } from "@/components/editor/inline-editor"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
+import { ProjectVoiceAgent } from "@/components/projects/project-voice-agent"
 import {
-    Calendar,
-    CheckCircle2,
-    Circle,
-    Clock,
-    HelpCircle,
-    MoreHorizontal,
-    Box,
+    ArrowRight,
+    CalendarDays,
+    FileText,
+    Flag,
+    Layers3,
+    Loader2,
     Plus,
-    User,
-    Tag,
-    ListTodo,
-    X
+    Trash2,
 } from "lucide-react"
-import { components } from "@/lib/types/generated-api"
+import { useCreateMilestoneMutation } from "@/services/milestonesApi"
+import {
+    useCreateDocumentMutation,
+    useDeleteDocumentMutation,
+    useGetProjectDocumentsQuery,
+    type ProjectDocumentResponse,
+} from "@/services/documentsApi"
+import { useToast } from "@/hooks/use-toast"
+import { DocIcon } from "@/components/ui/emoji-selector"
 import {
     ProjectStatusSelector,
     ProjectPrioritySelector,
@@ -30,8 +45,13 @@ import {
     LabelSelector
 } from "@/components/properties/factory"
 
-type ProjectCreate = components["schemas"]["ProjectCreate"]
-type ProjectProperties = components["schemas"]["ProjectProperties"]
+interface DraftMilestone {
+    id: string
+    title: string
+    description: string
+    estimated_start_date?: string
+    estimated_end_date?: string
+}
 
 function markdownToHtml(markdown: string): string {
     let html = markdown;
@@ -75,26 +95,41 @@ function markdownToHtml(markdown: string): string {
     return processedLines.filter(Boolean).join('\n');
 }
 
+function normalizeAgentText(value: unknown): string {
+    if (typeof value !== "string") return ""
+
+    return value
+        .replace(/&#(?:x([0-9a-f]+)|(\d+));/gi, (entity, hexValue, decimalValue) => {
+            const codePoint = Number.parseInt(hexValue ?? decimalValue, hexValue ? 16 : 10)
+
+            try {
+                return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity
+            } catch {
+                return entity
+            }
+        })
+        .replace(/&nbsp;/gi, " ")
+        .replace(/\u00a0/g, " ")
+}
+
 interface CreateProjectModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     userId?: number
     inline?: boolean
-}
-
-const DEFAULT_PROPERTIES: Partial<ProjectProperties> = {
-    status: "Draft",
-    priority: "None",
-    health: "On Track",
-    source: "native",
+    page?: boolean
+    draftProjectId?: number
 }
 
 export function CreateProjectModal({
     open,
     onOpenChange,
     userId = 0, // Default to 0 as API ignores it usually, but checks for it
-    inline = false
+    inline = false,
+    page = false,
+    draftProjectId,
 }: CreateProjectModalProps) {
+    const router = useRouter()
     const [projectTitle, setProjectTitle] = useState("")
     const [shortSummary, setShortSummary] = useState("")
     const [status, setStatus] = useState("Backlog")
@@ -106,7 +141,9 @@ export function CreateProjectModal({
     const [labels, setLabels] = useState<string[]>([])
     const [dependencies, setDependencies] = useState<string[]>([])
     const [description, setDescription] = useState("")
-    const [milestones, setMilestones] = useState<any[]>([])
+    const [milestones, setMilestones] = useState<DraftMilestone[]>([])
+    const [isMilestoneDialogOpen, setIsMilestoneDialogOpen] = useState(false)
+    const [hasHydratedDraft, setHasHydratedDraft] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Highlight states for visual pulsing
@@ -136,6 +173,14 @@ export function CreateProjectModal({
     }
 
     const dispatch = useAppDispatch()
+    const { toast } = useToast()
+    const [createMilestone] = useCreateMilestoneMutation()
+    const [createDocument, { isLoading: isCreatingDocument }] = useCreateDocumentMutation()
+    const [deleteDocument] = useDeleteDocumentMutation()
+    const { data: documents = [], isLoading: isLoadingDocuments } = useGetProjectDocumentsQuery(draftProjectId ?? 0, {
+        skip: !draftProjectId,
+    })
+    const draftProject = useAppSelector((state) => state.projects.items.find((project) => project.project_id === draftProjectId))
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
     const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
     const teams = useAppSelector((state) => state.workspace.teams)
@@ -143,6 +188,89 @@ export function CreateProjectModal({
         (team) => team.id === activeTeamId && team.workspace_id === activeWorkspaceId,
     )
     const descriptionRef = useRef(description)
+    const hydratedProjectIdRef = useRef<number | null>(null)
+
+    const getDraftProperties = (isDraft = true) => ({
+        project_title: projectTitle.trim() || "Untitled project",
+        short_summary: shortSummary,
+        status,
+        priority,
+        lead,
+        members,
+        start_date: startDate,
+        target_date: targetDate,
+        labels,
+        dependencies,
+        description,
+        milestones,
+        is_draft: isDraft,
+        draft_updated_at: new Date().toISOString(),
+    })
+
+    useEffect(() => {
+        if (draftProjectId && !draftProject) {
+            dispatch(fetchProjectById(draftProjectId))
+        }
+    }, [dispatch, draftProject, draftProjectId])
+
+    useEffect(() => {
+        if (!draftProjectId || !draftProject || hydratedProjectIdRef.current === draftProjectId) return
+
+        const properties = draftProject.properties as Record<string, any>
+        if (!properties.is_draft) {
+            router.replace(`/projects/${draftProjectId}`)
+            return
+        }
+
+        const savedMilestones = Array.isArray(properties.milestones) ? properties.milestones : []
+        const savedDescription = properties.description ?? ""
+
+        setProjectTitle(properties.is_draft && properties.project_title === "Untitled project" ? "" : properties.project_title ?? "")
+        setShortSummary(properties.short_summary ?? "")
+        setStatus(properties.status ?? "Backlog")
+        setPriority(properties.priority ?? "None")
+        setLead(properties.lead?.toString())
+        setMembers((properties.members ?? []).map((member: string | number) => member.toString()))
+        setStartDate(properties.start_date ?? undefined)
+        setTargetDate(properties.target_date ?? undefined)
+        setLabels((properties.labels ?? []).map((label: string | number) => label.toString()))
+        setDependencies((properties.dependencies ?? []).map((dependency: string | number) => dependency.toString()))
+        setDescription(savedDescription)
+        setMilestones(savedMilestones)
+        descriptionRef.current = savedDescription
+        hydratedProjectIdRef.current = draftProjectId
+        setHasHydratedDraft(true)
+    }, [draftProject, draftProjectId, router])
+
+    useEffect(() => {
+        if (!draftProjectId || !hasHydratedDraft || isSubmitting) return
+
+        const timeout = window.setTimeout(() => {
+            dispatch(updateProject({
+                projectId: draftProjectId,
+                updates: getDraftProperties(true),
+            }))
+        }, 800)
+
+        return () => window.clearTimeout(timeout)
+    }, [
+        dispatch,
+        draftProjectId,
+        hasHydratedDraft,
+        isSubmitting,
+        projectTitle,
+        shortSummary,
+        status,
+        priority,
+        lead,
+        members,
+        startDate,
+        targetDate,
+        labels,
+        dependencies,
+        description,
+        milestones,
+    ])
 
     useEffect(() => {
         descriptionRef.current = description
@@ -154,32 +282,12 @@ export function CreateProjectModal({
             
             if (data.project_title !== undefined) {
                 triggerHighlight("title")
-                let index = 0
-                const targetText = data.project_title
-                setProjectTitle("")
-                const timer = setInterval(() => {
-                    if (index < targetText.length) {
-                        setProjectTitle(prev => prev + targetText[index])
-                        index++
-                    } else {
-                        clearInterval(timer)
-                    }
-                }, 30)
+                setProjectTitle(normalizeAgentText(data.project_title))
             }
             
             if (data.short_summary !== undefined) {
                 triggerHighlight("summary")
-                let index = 0
-                const targetText = data.short_summary
-                setShortSummary("")
-                const timer = setInterval(() => {
-                    if (index < targetText.length) {
-                        setShortSummary(prev => prev + targetText[index])
-                        index++
-                    } else {
-                        clearInterval(timer)
-                    }
-                }, 20)
+                setShortSummary(normalizeAgentText(data.short_summary))
             }
             
             if (data.status !== undefined) {
@@ -194,33 +302,14 @@ export function CreateProjectModal({
             
             if (data.description !== undefined) {
                 triggerHighlight("description")
-                const htmlToType = markdownToHtml(data.description)
-                let index = 0
-                let currentTyped = ""
+                const incomingDescription = markdownToHtml(normalizeAgentText(data.description))
                 const baseContent = descriptionRef.current
+                const nextDescription = baseContent
+                    ? `${baseContent}\n${incomingDescription}`
+                    : incomingDescription
 
-                const timer = setInterval(() => {
-                    if (index < htmlToType.length) {
-                        if (htmlToType[index] === '<') {
-                            const closeIndex = htmlToType.indexOf('>', index)
-                            if (closeIndex !== -1) {
-                                currentTyped += htmlToType.substring(index, closeIndex + 1)
-                                index = closeIndex + 1
-                            } else {
-                                currentTyped += htmlToType[index]
-                                index++
-                            }
-                        } else {
-                            currentTyped += htmlToType[index]
-                            index++
-                        }
-                        
-                        const separator = baseContent ? "\n" : ""
-                        setDescription(currentTyped + separator + baseContent)
-                    } else {
-                        clearInterval(timer)
-                    }
-                }, 15)
+                descriptionRef.current = nextDescription
+                setDescription(nextDescription)
             }
         }
         
@@ -231,167 +320,268 @@ export function CreateProjectModal({
     }, [])
 
     const handleSubmit = async () => {
-        if (!projectTitle.trim() || !activeTeamId || !hasActiveTeam) return
+        if (!projectTitle.trim() || !draftProjectId || !activeTeamId || !hasActiveTeam) return
 
         setIsSubmitting(true)
         try {
-            const projectData: ProjectCreate = {
-                properties: {
-                    project_title: projectTitle,
-                    short_summary: shortSummary,
-                    status: status,
-                    priority: priority,
-                    lead: lead,
-                    members: members,
-                    start_date: startDate,
-                    target_date: targetDate,
-                    labels: labels,
-                    dependencies: dependencies,
-                    description: description,
-                    milestones: milestones,
+            await dispatch(updateProject({
+                projectId: draftProjectId,
+                updates: {
+                    ...getDraftProperties(false),
+                    milestones: [],
                 },
-                team_id: activeTeamId
-            } as unknown as ProjectCreate
+            })).unwrap()
 
-            const data = await dispatch(createProject(projectData)).unwrap()
-            console.log("Project created:", data)
+            const milestoneResults = await Promise.allSettled(
+                milestones.map((milestone, index) => createMilestone({
+                    projectId: draftProjectId,
+                    milestone: {
+                        project_id: draftProjectId,
+                        title: milestone.title,
+                        description: milestone.description || undefined,
+                        estimated_start_date: milestone.estimated_start_date,
+                        estimated_end_date: milestone.estimated_end_date,
+                        order_index: index,
+                    },
+                }).unwrap()),
+            )
+            const failedMilestones = milestoneResults.filter((result) => result.status === "rejected").length
+            const createdItems = [
+                milestones.length > 0
+                    ? `${milestones.length} milestone${milestones.length === 1 ? "" : "s"}`
+                    : null,
+                documents.length > 0
+                    ? `${documents.length} document${documents.length === 1 ? "" : "s"}`
+                    : null,
+            ].filter(Boolean)
 
+            toast({
+                title: "Project created",
+                description: failedMilestones > 0
+                    ? `${failedMilestones} milestone${failedMilestones === 1 ? "" : "s"} could not be created.`
+                    : createdItems.length > 0
+                        ? `Project with ${createdItems.join(" and ")} created.`
+                        : "Your project is ready.",
+                variant: failedMilestones > 0 ? "destructive" : "default",
+            })
+
+            setHasHydratedDraft(false)
             onOpenChange(false)
-            // Reset form
-            setProjectTitle("")
-            setDescription("")
-            setShortSummary("")
-            setStatus("Backlog")
-            setPriority("None")
-            setLead(undefined)
-            setMembers([])
-            setStartDate(undefined)
-            setTargetDate(undefined)
-            setLabels([])
-            setDependencies([])
-            setMilestones([])
 
         } catch (error) {
             console.error("Failed to create project:", error)
+            toast({
+                title: "Project could not be created",
+                description: "Check the project details and try again.",
+                variant: "destructive",
+            })
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const handleCreateDocumentDraft = async () => {
+        if (!draftProjectId) return
+
+        try {
+            await dispatch(updateProject({
+                projectId: draftProjectId,
+                updates: getDraftProperties(true),
+            })).unwrap()
+            const document = await createDocument({
+                projectId: draftProjectId,
+                document: {
+                    project_id: draftProjectId,
+                    title: "Untitled document",
+                    content: "",
+                    emoji: "📄",
+                },
+            }).unwrap()
+
+            router.push(`/projects/${draftProjectId}/documents/${document.document_id}?from=project-draft`)
+        } catch (error) {
+            console.error("Failed to create document draft:", error)
+            toast({
+                title: "Document draft could not be created",
+                description: "Please try again.",
+                variant: "destructive",
+            })
+        }
+    }
+
+    const handleOpenDocumentDraft = async (documentId: number) => {
+        if (!draftProjectId) return
+
+        try {
+            await dispatch(updateProject({
+                projectId: draftProjectId,
+                updates: getDraftProperties(true),
+            })).unwrap()
+        } catch (error) {
+            console.error("Failed to save project draft before opening document:", error)
+        }
+        router.push(`/projects/${draftProjectId}/documents/${documentId}?from=project-draft`)
+    }
+
+    const handleCloseDraft = async () => {
+        if (draftProjectId && hasHydratedDraft) {
+            try {
+                await dispatch(updateProject({
+                    projectId: draftProjectId,
+                    updates: getDraftProperties(true),
+                })).unwrap()
+            } catch (error) {
+                console.error("Failed to save project draft before closing:", error)
+            }
+        }
+        onOpenChange(false)
+    }
+
     const formContent = (
-        <div className="flex flex-col h-full bg-background">
-            {/* Header Actions */}
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
-                        <Box className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium text-foreground">HUZ</span>
-                    </div>
-                    <span className="text-muted-foreground/40">/</span>
-                    <span className="text-foreground font-medium">New project</span>
-                </div>
-                {inline && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => onOpenChange(false)}>
-                        <X className="h-4 w-4" />
-                    </Button>
-                )}
-            </div>
+        <form
+            onSubmit={(event) => {
+                event.preventDefault()
+                handleSubmit()
+            }}
+            className="flex h-full min-h-full flex-col bg-background"
+        >
+            <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_360px]">
+                <section className="flex min-w-0 flex-col px-5 py-6 sm:px-6 lg:px-8 lg:py-7">
+                    <div className="flex min-h-full w-full flex-1 flex-col">
+                        <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
+                            <div className="flex min-w-0 flex-1 items-start gap-4">
+                                <div className="mt-1 flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-sm">
+                                    <Layers3 className="size-5" />
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
+                                        <span>Draft</span>
+                                        <span aria-hidden="true">·</span>
+                                        <span>#{draftProjectId}</span>
+                                    </div>
+                                    <div className={`rounded-lg px-1 transition-all duration-300 ${highlightTitle ? "bg-primary/5 ring-2 ring-primary/50" : ""}`}>
+                                        <InlineEditor
+                                            value={projectTitle}
+                                            onChange={setProjectTitle}
+                                            placeholder="Project name"
+                                            className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl"
+                                        />
+                                    </div>
+                                    <div className={`rounded-lg px-1 transition-all duration-300 ${highlightSummary ? "bg-primary/5 ring-2 ring-primary/50" : ""}`}>
+                                        <InlineEditor
+                                            value={shortSummary}
+                                            onChange={setShortSummary}
+                                            placeholder="What outcome will this project deliver?"
+                                            className="text-base leading-relaxed text-muted-foreground"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-            <div className="flex flex-col h-[calc(100vh-60px)] overflow-y-auto">
-                <div className="flex flex-col gap-6 p-6 pb-32">
+                        <div className="mt-6 border-t border-border/50 pt-5">
+                            <div className="mb-4 flex items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Project brief</h2>
+                                </div>
+                                <span className="hidden text-[10px] text-muted-foreground/70 sm:inline">
+                                    Press / for commands
+                                </span>
+                            </div>
+                            <div className={`min-h-[180px] transition-all duration-300 ${
+                                highlightDescription ? "rounded-lg bg-primary/5 px-3 ring-2 ring-primary/40" : ""
+                            }`}>
+                                <TiptapEditor
+                                    value={description}
+                                    onChange={setDescription}
+                                    placeholder="Describe the problem, proposed solution, scope, and what success looks like…"
+                                    className="min-h-[180px] max-w-none text-[15px] leading-7 prose-headings:tracking-tight prose-p:text-foreground/90"
+                                />
+                            </div>
+                        </div>
 
-                    {/* Title & Icon Area */}
-                    <div className="group relative flex gap-4 items-start">
-                        <div className="mt-1 flex-shrink-0">
-                            <Button variant="outline" size="icon" className="w-10 h-10 rounded-lg border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-border">
-                                <Box className="w-5 h-5" />
+                        <DraftMilestonesSection
+                            milestones={milestones}
+                            onAdd={() => setIsMilestoneDialogOpen(true)}
+                            onRemove={(milestoneId) => setMilestones((current) => current.filter((item) => item.id !== milestoneId))}
+                        />
+
+                        <div className="mt-auto flex items-center justify-end gap-2 pt-8">
+                            <Button type="button" variant="ghost" size="sm" onClick={handleCloseDraft}>
+                                Close
+                            </Button>
+                            <ProjectVoiceAgent />
+                            <Button
+                                type="submit"
+                                size="sm"
+                                className="rounded-full px-4"
+                                disabled={isSubmitting || !hasHydratedDraft || !draftProjectId || !projectTitle.trim() || !hasActiveTeam}
+                            >
+                                {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+                                {isSubmitting ? "Creating…" : "Create project"}
                             </Button>
                         </div>
-                        <div className="flex-1 space-y-3">
-                            <div className={`transition-all duration-300 rounded p-1 ${highlightTitle ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
-                                <InlineEditor
-                                    value={projectTitle}
-                                    onChange={setProjectTitle}
-                                    placeholder="Project name"
-                                    className="text-2xl font-semibold leading-tight"
-                                />
-                            </div>
-                            <div className={`transition-all duration-300 rounded p-1 ${highlightSummary ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
-                                <InlineEditor
-                                    value={shortSummary}
-                                    onChange={setShortSummary}
-                                    placeholder="Add a short summary..."
-                                    className="text-base text-muted-foreground"
-                                />
-                            </div>
-                        </div>
                     </div>
+                </section>
 
-                    {/* Property Row - Horizontal Scrollable */}
-                    <div className="flex flex-wrap items-center gap-2 -ml-2">
-                        <div className={`transition-all duration-300 rounded p-1 ${highlightStatus ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
-                            <ProjectStatusSelector value={status} onChange={setStatus} />
+                <aside className="border-t border-border/70 bg-muted/15 px-4 py-5 lg:border-l lg:border-t-0">
+                    <div className="lg:sticky lg:top-6">
+                        <div>
+                            <div className="mb-4 flex items-center gap-2">
+                                <Flag className="size-4 text-muted-foreground" />
+                                <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Project details</h2>
+                            </div>
+                            <div className="space-y-1">
+                                <ProjectDetailRow label="Status" highlighted={highlightStatus}>
+                                    <ProjectStatusSelector value={status} onChange={setStatus} className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Priority" highlighted={highlightPriority}>
+                                    <ProjectPrioritySelector value={priority} onChange={setPriority} className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Lead">
+                                    <MemberSelector value={lead} onChange={(value) => setLead(value as string)} className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Members">
+                                    <MemberSelector value={members} onChange={(value) => setMembers(value as string[])} multiple className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Start date">
+                                    <DateSelector value={startDate} onChange={setStartDate} placeholder="Set start date" className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Target date">
+                                    <DateSelector value={targetDate} onChange={setTargetDate} placeholder="Set target date" className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                                <ProjectDetailRow label="Labels">
+                                    <LabelSelector value={labels} onChange={setLabels} className="h-8 w-full justify-start px-2" />
+                                </ProjectDetailRow>
+                            </div>
                         </div>
-                        <div className={`transition-all duration-300 rounded p-1 ${highlightPriority ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""}`}>
-                            <ProjectPrioritySelector value={priority} onChange={setPriority} />
-                        </div>
-                        <div className="w-px h-4 bg-border mx-1" />
-                        <MemberSelector value={lead} onChange={(val) => setLead(val as string)} />
-                        <MemberSelector value={members} onChange={(val) => setMembers(val as string[])} multiple />
-                        <div className="w-px h-4 bg-border mx-1" />
-                        <DateSelector value={startDate} onChange={setStartDate} />
-                        <DateSelector value={targetDate} onChange={setTargetDate} />
-                        <div className="w-px h-4 bg-border mx-1" />
-                        <LabelSelector value={labels} onChange={setLabels} />
-                    </div>
 
-                    <div className="h-px bg-border/40 w-full my-2" />
-
-                    {/* Editor - Full space */}
-                    <div className={`min-h-[200px] text-base text-foreground/90 transition-all duration-300 rounded p-2 ${
-                        highlightDescription ? "ring-2 ring-primary/80 bg-primary/5 shadow-sm" : ""
-                    }`}>
-                        <TiptapEditor
-                            value={description}
-                            onChange={setDescription}
-                            placeholder="Write a description, project brief, or collect ideas... (Type '/' for commands)"
-                            className="min-h-[200px] prose-sm"
+                        <DraftDocumentsSection
+                            documents={documents}
+                            isLoading={isLoadingDocuments}
+                            isCreating={isCreatingDocument}
+                            onAdd={handleCreateDocumentDraft}
+                            onEdit={handleOpenDocumentDraft}
+                            onRemove={(documentId) => {
+                                if (!draftProjectId) return
+                                deleteDocument({ documentId, projectId: draftProjectId })
+                            }}
                         />
                     </div>
-
-                    {/* Milestones Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between group cursor-pointer hover:bg-muted/30 p-2 rounded-md -ml-2" onClick={() => {/* Add Milestone logic */ }}>
-                            <span className="font-semibold text-muted-foreground group-hover:text-foreground">Milestones</span>
-                            <Plus className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        <div className="border rounded-lg bg-muted/20 p-6 flex flex-col items-center justify-center text-center gap-2 text-muted-foreground border-dashed">
-                            <ListTodo className="w-8 h-8 opacity-20" />
-                            <p className="text-xs">No milestones yet</p>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Footer Actions */}
-                <div className="p-4 border-t bg-background/50 backdrop-blur-sm sticky bottom-0 flex justify-end gap-3 z-10 mt-auto">
-                    <Button
-                        variant="ghost"
-                        onClick={() => onOpenChange(false)}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting || !projectTitle.trim() || !hasActiveTeam}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                        {isSubmitting ? "Creating..." : "Create project"}
-                    </Button>
-                </div>
+                </aside>
             </div>
-        </div>
+
+            <DraftMilestoneDialog
+                open={isMilestoneDialogOpen}
+                onOpenChange={setIsMilestoneDialogOpen}
+                onAdd={(milestone) => setMilestones((current) => [...current, milestone])}
+            />
+        </form>
     )
+
+    if (page) {
+        return formContent
+    }
 
     if (inline) {
         return (
@@ -413,5 +603,341 @@ export function CreateProjectModal({
                 {formContent}
             </SheetContent>
         </Sheet>
+    )
+}
+
+function ProjectDetailRow({
+    label,
+    highlighted = false,
+    children,
+}: {
+    label: string
+    highlighted?: boolean
+    children: ReactNode
+}) {
+    return (
+        <div className={`grid grid-cols-[76px_minmax(0,1fr)] items-center gap-2 rounded-lg px-2 py-1 transition-all ${
+            highlighted ? "bg-primary/5 ring-2 ring-primary/40" : "hover:bg-muted/40"
+        }`}>
+            <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+            <div className="min-w-0">{children}</div>
+        </div>
+    )
+}
+
+function DraftDocumentsSection({
+    documents,
+    isLoading,
+    isCreating,
+    onAdd,
+    onEdit,
+    onRemove,
+}: {
+    documents: ProjectDocumentResponse[]
+    isLoading: boolean
+    isCreating: boolean
+    onAdd: () => void
+    onEdit: (documentId: number) => void
+    onRemove: (documentId: number) => void
+}) {
+    return (
+        <section className="mt-6 border-t border-border/60 pt-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <FileText className="size-4 text-muted-foreground" />
+                    <h2 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Documents</h2>
+                    {documents.length > 0 && (
+                        <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {documents.length}
+                        </span>
+                    )}
+                </div>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7 text-muted-foreground"
+                    onClick={onAdd}
+                    disabled={isCreating}
+                    aria-label="Add document"
+                >
+                    <Plus className="size-3.5" />
+                </Button>
+            </div>
+
+            {isLoading ? (
+                <div className="px-2 py-3 text-[11px] text-muted-foreground">Loading documents…</div>
+            ) : documents.length === 0 ? (
+                <button
+                    type="button"
+                    onClick={onAdd}
+                    disabled={isCreating}
+                    className="group flex w-full items-center gap-3 rounded-lg border border-dashed border-border/80 px-3 py-3 text-left transition-colors hover:border-primary/35 hover:bg-background"
+                >
+                    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground group-hover:text-primary">
+                        <FileText className="size-3.5" />
+                    </span>
+                    <span className="min-w-0">
+                        <span className="block text-xs font-medium text-foreground">Create a document</span>
+                        <span className="mt-0.5 block text-[11px] text-muted-foreground">Add a brief, spec, or project note.</span>
+                    </span>
+                </button>
+            ) : (
+                <div className="space-y-1">
+                    {documents.map((document) => (
+                        <div key={document.document_id} className="group flex items-center rounded-md transition-colors hover:bg-background">
+                            <button
+                                type="button"
+                                onClick={() => onEdit(document.document_id)}
+                                className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
+                            >
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted/70 text-sm">
+                                    <DocIcon value={document.emoji} className="flex size-3.5 items-center justify-center" />
+                                </span>
+                                <span className="truncate text-xs font-medium text-foreground/90">{document.title}</span>
+                            </button>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="mr-1 size-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                onClick={() => onRemove(document.document_id)}
+                                aria-label={`Remove ${document.title}`}
+                            >
+                                <Trash2 className="size-3.5 text-muted-foreground" />
+                            </Button>
+                        </div>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={onAdd}
+                        disabled={isCreating}
+                        className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    >
+                        <span className="flex size-6 items-center justify-center"><Plus className="size-3.5" /></span>
+                        Add document
+                    </button>
+                </div>
+            )}
+        </section>
+    )
+}
+
+function DraftMilestonesSection({
+    milestones,
+    onAdd,
+    onRemove,
+}: {
+    milestones: DraftMilestone[]
+    onAdd: () => void
+    onRemove: (milestoneId: string) => void
+}) {
+    return (
+        <section className="mt-5 border-t border-border/50 pt-5">
+            <div className="mb-3 flex items-center justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-semibold text-foreground">Milestones</h2>
+                        {milestones.length > 0 && (
+                            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                {milestones.length}
+                            </span>
+                        )}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">Organize the project into measurable delivery checkpoints.</p>
+                </div>
+                <Button type="button" variant="ghost" size="sm" className="h-8 rounded-md text-xs text-muted-foreground" onClick={onAdd}>
+                    <Plus className="size-3.5" />
+                    Add milestone
+                </Button>
+            </div>
+
+            <div className="overflow-hidden border-y border-border/60">
+                {milestones.length === 0 ? (
+                    <button
+                        type="button"
+                        onClick={onAdd}
+                        className="group flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-muted/35"
+                    >
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-dashed border-muted-foreground/35 text-muted-foreground transition-colors group-hover:border-primary/50 group-hover:text-primary">
+                            <Plus className="size-3.5" />
+                        </span>
+                        <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground">Add the first milestone</span>
+                        <span className="ml-auto hidden text-[11px] text-muted-foreground/70 sm:block">Define a checkpoint and target date</span>
+                    </button>
+                ) : (
+                    <div className="divide-y divide-border/60">
+                        {milestones.map((milestone, index) => (
+                            <div
+                                key={milestone.id}
+                                className="group grid min-h-12 grid-cols-[minmax(0,1fr)_auto_32px] items-center gap-4 px-3 py-2 transition-colors hover:bg-muted/30"
+                            >
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className="relative flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-background text-[10px] font-semibold text-muted-foreground">
+                                        {index + 1}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-xs font-medium text-foreground">{milestone.title}</p>
+                                        {milestone.description && (
+                                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{milestone.description}</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 whitespace-nowrap text-[11px] text-muted-foreground">
+                                    <CalendarDays className="size-3.5" />
+                                    {formatDraftMilestoneDates(milestone) || "No dates"}
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                    onClick={() => onRemove(milestone.id)}
+                                    aria-label={`Remove ${milestone.title}`}
+                                >
+                                    <Trash2 className="size-3.5 text-muted-foreground" />
+                                </Button>
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            onClick={onAdd}
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                        >
+                            <span className="flex size-6 items-center justify-center"><Plus className="size-3.5" /></span>
+                            Add milestone
+                        </button>
+                    </div>
+                )}
+            </div>
+        </section>
+    )
+}
+
+function formatDraftMilestoneDates(milestone: DraftMilestone): string {
+    const format = (value?: string) => value
+        ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        : null
+    const start = format(milestone.estimated_start_date)
+    const end = format(milestone.estimated_end_date)
+
+    if (start && end) return `${start} – ${end}`
+    if (end) return `Due ${end}`
+    return start ? `Starts ${start}` : ""
+}
+
+function DraftMilestoneDialog({
+    open,
+    onOpenChange,
+    onAdd,
+}: {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    onAdd: (milestone: DraftMilestone) => void
+}) {
+    const [title, setTitle] = useState("")
+    const [description, setDescription] = useState("")
+    const [startDate, setStartDate] = useState("")
+    const [endDate, setEndDate] = useState("")
+    const hasInvalidDates = Boolean(startDate && endDate && endDate < startDate)
+
+    const reset = () => {
+        setTitle("")
+        setDescription("")
+        setStartDate("")
+        setEndDate("")
+    }
+
+    const handleOpenChange = (nextOpen: boolean) => {
+        onOpenChange(nextOpen)
+        if (!nextOpen) reset()
+    }
+
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault()
+        if (!title.trim() || hasInvalidDates) return
+
+        onAdd({
+            id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
+            title: title.trim(),
+            description: description.trim(),
+            estimated_start_date: startDate || undefined,
+            estimated_end_date: endDate || undefined,
+        })
+        handleOpenChange(false)
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={handleOpenChange}>
+            <DialogContent className="border-border/70 bg-background/98 p-0 shadow-2xl backdrop-blur-xl sm:max-w-xl">
+                <form onSubmit={handleSubmit}>
+                    <DialogHeader className="border-b border-border/60 px-5 py-3.5">
+                        <div className="flex items-center gap-2">
+                            <div className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                <Flag className="size-3.5" />
+                            </div>
+                            <DialogTitle className="text-sm">New milestone</DialogTitle>
+                            <span className="rounded border border-border bg-muted/50 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground">Draft</span>
+                        </div>
+                        <DialogDescription className="sr-only">
+                            Create a delivery checkpoint. It will be saved with the project.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="px-6 py-5">
+                        <Input
+                            id="milestone-title"
+                            value={title}
+                            onChange={(event) => setTitle(event.target.value)}
+                            placeholder="Milestone name"
+                            className="h-auto rounded-none border-0 bg-transparent px-0 py-0 text-xl font-semibold shadow-none focus-visible:ring-0"
+                            autoFocus
+                        />
+                        <textarea
+                            id="milestone-description"
+                            value={description}
+                            onChange={(event) => setDescription(event.target.value)}
+                            placeholder="Add a short description or success criteria…"
+                            className="mt-3 min-h-20 w-full resize-none border-0 bg-transparent p-0 text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+                        />
+
+                        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
+                            <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 shadow-xs">
+                                <CalendarDays className="size-3.5 text-muted-foreground" />
+                                <label htmlFor="milestone-start" className="text-[11px] text-muted-foreground">Start</label>
+                                <Input
+                                    id="milestone-start"
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(event) => setStartDate(event.target.value)}
+                                    className="h-8 w-[122px] border-0 px-0 text-xs shadow-none focus-visible:ring-0"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 shadow-xs">
+                                <CalendarDays className="size-3.5 text-muted-foreground" />
+                                <label htmlFor="milestone-end" className="text-[11px] text-muted-foreground">Target</label>
+                                <Input
+                                    id="milestone-end"
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(event) => setEndDate(event.target.value)}
+                                    className="h-8 w-[122px] border-0 px-0 text-xs shadow-none focus-visible:ring-0"
+                                />
+                            </div>
+                        </div>
+                        {hasInvalidDates && (
+                            <p className="mt-3 text-xs text-destructive">Target date must be on or after the start date.</p>
+                        )}
+                    </div>
+
+                    <DialogFooter className="border-t border-border/60 bg-muted/20 px-5 py-3">
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)}>Cancel</Button>
+                        <Button type="submit" size="sm" disabled={!title.trim() || hasInvalidDates}>Create milestone</Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     )
 }

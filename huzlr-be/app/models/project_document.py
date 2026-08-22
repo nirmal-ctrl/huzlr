@@ -10,6 +10,7 @@ class ProjectDocument(Base):
     project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.project_id"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    content_object_name: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     emoji: Mapped[str] = mapped_column(String(50), default="📄")
     
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

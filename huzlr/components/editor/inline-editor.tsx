@@ -59,11 +59,7 @@ export function InlineEditor({
         content: value,
         editorProps: {
             attributes: {
-                class: [
-                    "focus:outline-none w-full",
-                    // Strip out any prose min-height; let parent control sizing
-                    className,
-                ].join(" "),
+                class: "focus:outline-none w-full font-[inherit] leading-[inherit] tracking-[inherit]",
             },
         },
         onUpdate: ({ editor }) => {
@@ -82,11 +78,11 @@ export function InlineEditor({
     }, [value, editor])
 
     return (
-        <div className={`relative ${!value && !editor?.isFocused ? "before:pointer-events-none" : ""}`}>
+        <div className={`relative min-w-0 ${className}`}>
             {/* Placeholder rendered when editor is empty and not focused */}
             {editor && !editor.getText() && !value && (
                 <span
-                    className="absolute top-0 left-0 pointer-events-none select-none text-muted-foreground/40"
+                    className="pointer-events-none absolute inset-x-0 top-0 select-none font-[inherit] leading-[inherit] tracking-[inherit] text-muted-foreground/40"
                     aria-hidden="true"
                 >
                     {placeholder}

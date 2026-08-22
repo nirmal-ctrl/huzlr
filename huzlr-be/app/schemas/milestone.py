@@ -8,12 +8,14 @@ class MilestoneBase(BaseModel):
     order_index: Optional[int] = None
     estimated_start_date: Optional[date] = None
     estimated_end_date: Optional[date] = None
+    completed: bool = False
 
 class MilestoneCreate(MilestoneBase):
     project_id: int
 
 class MilestoneUpdate(MilestoneBase):
     title: Optional[str] = None
+    completed: Optional[bool] = None
 
 class MilestoneResponse(MilestoneBase):
     milestone_id: int

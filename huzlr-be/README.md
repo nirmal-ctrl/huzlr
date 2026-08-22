@@ -90,6 +90,18 @@ huzlr-be/
 └── .env                  # Environment variables (not in git)
 ```
 
+## Google Cloud Storage
+
+Project-document bodies can be stored in a private Google Cloud Storage bucket. PostgreSQL continues to hold document metadata and the GCS object name.
+
+1. Create a private bucket and grant the backend service account `roles/storage.objectUser` on that bucket.
+2. Configure `GCS_BUCKET_NAME` and, when it cannot be inferred, `GCS_PROJECT_ID`.
+3. Use Workload Identity in Google Cloud. For local development, authenticate with Application Default Credentials or set `GOOGLE_APPLICATION_CREDENTIALS` outside the repository.
+4. Run `alembic upgrade head`.
+5. To move existing document bodies from PostgreSQL, run `python scripts/migrate_document_content_to_gcs.py` from the backend directory.
+
+When `GCS_BUCKET_NAME` is empty, legacy database-backed content remains available for local development. Once a document has a GCS object, GCS configuration is required to read, update, or delete it.
+
 ## 🤝 Contributing
 
 See the [documentation](docs/) for development guides and best practices.

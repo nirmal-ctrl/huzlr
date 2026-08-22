@@ -28,7 +28,7 @@ export const documentsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         // Query to get all documents for a project
         getProjectDocuments: builder.query<ProjectDocumentResponse[], number>({
-            query: (projectId) => `/projects/${projectId}/documents`,
+            query: (projectId) => `/projects/${projectId}/documents?include_content=false`,
             providesTags: (result, error, projectId) =>
                 result
                     ? [
@@ -36,6 +36,11 @@ export const documentsApi = baseApi.injectEndpoints({
                           { type: 'ProjectDocuments', id: projectId },
                       ]
                     : [{ type: 'ProjectDocuments', id: projectId }],
+        }),
+
+        getDocument: builder.query<ProjectDocumentResponse, number>({
+            query: (documentId) => `/documents/${documentId}`,
+            providesTags: (result, error, documentId) => [{ type: 'Documents', id: documentId }],
         }),
 
         // Mutation to create a new document
@@ -79,6 +84,7 @@ export const documentsApi = baseApi.injectEndpoints({
 // Export hooks for usage in functional components
 export const {
     useGetProjectDocumentsQuery,
+    useGetDocumentQuery,
     useCreateDocumentMutation,
     useUpdateDocumentMutation,
     useDeleteDocumentMutation,

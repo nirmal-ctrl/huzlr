@@ -11,6 +11,7 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
+  IconListCheck,
   IconReport,
   IconSearch,
   IconSettings,
@@ -47,6 +48,11 @@ const data = {
       title: "Projects",
       url: "/projects",
       icon: IconFolder,
+    },
+    {
+      title: "Issues",
+      url: "/issues",
+      icon: IconListCheck,
     },
     {
       title: "Workspace & Teams",
@@ -160,6 +166,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAppSelector((state) => state.auth.user)
 
   const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+  const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
+  const navMainItems = React.useMemo(
+    () => data.navMain.map((item) => item.title === "Issues" && activeTeamId
+      ? { ...item, url: `/teams/${activeTeamId}/issues` }
+      : item),
+    [activeTeamId],
+  )
 
   React.useEffect(() => {
     // Only fetch if not already in store. Thunk conditions also handle this,
@@ -195,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMainItems} />
         <NavScrumMaster />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

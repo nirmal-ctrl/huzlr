@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Loader2, AudioLines, X, User2, MicOff, Sparkles, PanelRight, PanelRightClose } from "lucide-react"
+import { Loader2, AudioLines, X, MicOff } from "lucide-react"
 import { Orb } from "@/components/orb"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils"
 
 export function FounderAgentWidget() {
     const [isOpen, setIsOpen] = React.useState(false)
-    const [isDocked, setIsDocked] = React.useState(false)
     const [token, setToken] = React.useState<string | null>(null)
     const [serverUrl, setServerUrl] = React.useState<string | null>(null)
     const [isConnecting, setIsConnecting] = React.useState<boolean>(false)
@@ -65,21 +64,15 @@ export function FounderAgentWidget() {
         setIsOpen(false)
     }
 
-    const toggleDock = () => {
-        setIsDocked(!isDocked)
-    }
-
     return (
-        <div className={cn(
-            isDocked && isOpen ? "fixed top-0 right-0 h-screen w-96 z-40 bg-card pointer-events-auto border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200" : "fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 pointer-events-none"
-        )}>
-            {/* Elegant Voice Agent Panel (Docked Pane vs. Floating Card) */}
+        <>
             {isOpen && (
-                <div className={cn(
-                    isDocked 
-                        ? "h-full w-full p-5 flex flex-col gap-4 pointer-events-auto" 
-                        : "w-80 sm:w-96 rounded-2xl border border-border bg-card shadow-2xl p-5 flex flex-col gap-4 pointer-events-auto animate-in fade-in slide-in-from-bottom-3 duration-200"
-                )}>
+                <aside
+                    className="fixed inset-y-0 right-0 z-50 flex w-[min(380px,calc(100vw-24px))] flex-col border-l border-border bg-card shadow-2xl animate-in slide-in-from-right duration-200"
+                    role="dialog"
+                    aria-label="Ask Nirmal voice agent"
+                >
+                    <div className="flex h-full flex-col gap-4 p-5">
                     {/* Header */}
                     <div className="flex items-center justify-between border-b pb-3">
                         <div className="flex items-center gap-2">
@@ -96,19 +89,6 @@ export function FounderAgentWidget() {
                             <span className="font-semibold text-sm text-foreground">Talk with Nirmal</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground" 
-                                onClick={toggleDock}
-                                title={isDocked ? "Undock to widget" : "Dock to side pane"}
-                            >
-                                {isDocked ? (
-                                    <PanelRightClose className="h-4 w-4" />
-                                ) : (
-                                    <PanelRight className="h-4 w-4" />
-                                )}
-                            </Button>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -165,39 +145,24 @@ export function FounderAgentWidget() {
                             </Button>
                         </div>
                     )}
-                </div>
+                    </div>
+                </aside>
             )}
 
-            {/* Clean, Modern & Professional "Ask Nirmal" Pill Toggle Button */}
-            {(!isOpen || !isDocked) && (
-                <div className="pointer-events-auto">
-                    <Button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={cn(
-                            "h-12 px-5 rounded-full shadow-lg border border-border flex items-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground font-medium text-xs tracking-wide",
-                            token ? "bg-primary text-primary-foreground" : "bg-card hover:bg-muted"
-                        )}
-                    >
-                        <div className="relative flex h-2.5 w-2.5">
-                            <span className={cn(
-                                "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                                token ? "bg-emerald-400" : "bg-primary-foreground/40"
-                            )}></span>
-                            <span className={cn(
-                                "relative inline-flex rounded-full h-2.5 w-2.5",
-                                token ? "bg-emerald-500" : "bg-primary"
-                            )}></span>
-                        </div>
-                        <span>Ask Nirmal</span>
-                        {token ? (
-                            <Sparkles className="h-4 w-4 text-emerald-300 animate-pulse" />
-                        ) : (
-                            <AudioLines className="h-4 w-4 text-primary" />
-                        )}
-                    </Button>
-                </div>
+            {!isOpen && (
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsOpen(true)}
+                    className="fixed right-0 top-1/2 z-40 h-auto w-9 -translate-y-1/2 flex-col gap-2 rounded-l-xl rounded-r-none border-r-0 bg-background/95 px-0 py-4 text-foreground shadow-lg backdrop-blur transition-colors hover:bg-muted"
+                    aria-label="Open Ask Nirmal voice agent"
+                >
+                    <span className="size-1.5 rounded-full bg-primary" />
+                    <span className="text-[10px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">Ask Nirmal</span>
+                    <AudioLines className="size-3.5 text-primary" />
+                </Button>
             )}
-        </div>
+        </>
     )
 }
 

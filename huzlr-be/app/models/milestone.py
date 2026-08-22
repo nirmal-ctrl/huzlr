@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Text, Date, ForeignKey
+from sqlalchemy import String, Integer, Text, Date, ForeignKey, Boolean
 from datetime import datetime, date
 from models.base import Base
 
@@ -13,6 +13,7 @@ class Milestone(Base):
     order_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     estimated_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     estimated_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     
     # Relationships
     project: Mapped["Project"] = relationship("Project", back_populates="milestones")

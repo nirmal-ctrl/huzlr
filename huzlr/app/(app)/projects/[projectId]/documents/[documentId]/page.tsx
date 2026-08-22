@@ -10,9 +10,9 @@ import { SpinnerEmpty } from "@/components/spinner-empty"
 import { Button } from "@/components/ui/button"
 import { TiptapEditor } from "@/components/editor/tiptap-editor"
 import { InlineEditor } from "@/components/editor/inline-editor"
-import { EmojiSelector, DocIcon } from "@/components/ui/emoji-selector"
-import { useUpdateDocumentMutation, useDeleteDocumentMutation, useGetProjectDocumentsQuery } from "@/services/documentsApi"
-import { ChevronLeft, Trash2, Calendar, FileText } from "lucide-react"
+import { EmojiSelector } from "@/components/ui/emoji-selector"
+import { useUpdateDocumentMutation, useDeleteDocumentMutation, useGetDocumentQuery } from "@/services/documentsApi"
+import { ChevronLeft, Trash2, Calendar } from "lucide-react"
 
 export default function DocumentPage() {
     const params = useParams()
@@ -25,13 +25,12 @@ export default function DocumentPage() {
 
     // Find current project
     const project = projects.find(p => p.project_id?.toString() === projectId)
+    const isProjectDraft = Boolean(project?.properties?.is_draft)
+    const projectReturnPath = isProjectDraft ? `/projects/new?draft=${projectId}` : `/projects/${projectId}`
 
-    // Fetch documents to find the active one
-    const { data: documents, isLoading: isLoadingDocs } = useGetProjectDocumentsQuery(parseInt(projectId), {
+    const { data: document, isLoading: isLoadingDocs } = useGetDocumentQuery(parseInt(documentId), {
         skip: !project
     })
-
-    const document = documents?.find(doc => doc.document_id?.toString() === documentId)
 
     const [updateDocument] = useUpdateDocumentMutation()
     const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation()
@@ -78,7 +77,7 @@ export default function DocumentPage() {
         [updateDocument, documentId, title, content, emoji]
     )
 
-    const { triggerUpdate } = useDebouncedUpdate<Partial<any>>(handleUpdate, 800)
+    const { triggerUpdate, flush } = useDebouncedUpdate<Partial<any>>(handleUpdate, 800)
 
     const handleTitleChange = (newTitle: string) => {
         setTitle(newTitle)
@@ -97,13 +96,18 @@ export default function DocumentPage() {
         triggerUpdate({ emoji: newEmoji })
     }
 
+    const handleReturnToProject = () => {
+        flush()
+        router.push(projectReturnPath)
+    }
+
     const handleDelete = async () => {
         try {
             await deleteDocument({
                 documentId: parseInt(documentId),
                 projectId: parseInt(projectId)
             }).unwrap()
-            router.push(`/projects/${projectId}`)
+            router.push(projectReturnPath)
         } catch (error) {
             console.error("Failed to delete document:", error)
         }
@@ -123,7 +127,7 @@ export default function DocumentPage() {
         return (
             <div className="flex flex-1 items-center justify-center flex-col gap-4 h-screen bg-background text-foreground">
                 <p>Document or Project not found</p>
-                <Button onClick={() => router.push(`/projects/${projectId}`)}>Back to Project</Button>
+                <Button onClick={() => router.push(projectReturnPath)}>Back to Project</Button>
             </div>
         )
     }
@@ -131,6 +135,9 @@ export default function DocumentPage() {
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-background">
             <SiteHeader>
+                {isProjectDraft && (
+                    <span className="hidden text-xs text-muted-foreground sm:inline">Saved to project draft</span>
+                )}
                 {/* Delete Document Button */}
                 <Button
                     variant="ghost"
@@ -145,6 +152,16 @@ export default function DocumentPage() {
 
             {/* Document Edit Workspace */}
             <div className="flex-1 overflow-y-auto w-full max-w-4xl mx-auto px-12 py-10 space-y-6">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleReturnToProject}
+                    className="-ml-2 h-8 gap-1.5 text-xs text-muted-foreground"
+                >
+                    <ChevronLeft className="size-3.5" />
+                    {isProjectDraft ? "Back to project draft" : "Back to project"}
+                </Button>
+
                 {/* Title & Emoji Selector Header */}
                 <div className="flex items-start gap-4">
                     <EmojiSelector 

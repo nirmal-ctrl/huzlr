@@ -325,10 +325,19 @@ export function createTitleColumn<TData>(accessorKey: string, header: string = "
             const item = row.original as any;
             const projectId = item.project_id || item.id;
             const title = item.properties?.project_title || "Untitled Project";
+            const isDraft = Boolean(item.properties?.is_draft);
 
             return (
-                <Link href={`/projects/${projectId}`} className="text-foreground font-medium hover:underline">
-                    {title}
+                <Link
+                    href={isDraft ? `/projects/new?draft=${projectId}` : `/projects/${projectId}`}
+                    className="flex items-center gap-2 text-foreground font-medium hover:underline"
+                >
+                    <span>{title}</span>
+                    {isDraft && (
+                        <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium uppercase tracking-wide">
+                            Draft
+                        </Badge>
+                    )}
                 </Link>
             )
         },

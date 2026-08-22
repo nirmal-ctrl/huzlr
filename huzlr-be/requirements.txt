@@ -57,6 +57,7 @@ xxhash==3.6.0
 zstandard==0.25.0
 cryptography
 google-genai==2.8.0
+google-cloud-storage==3.13.1
 
 # LiveKit server API for token creation and explicit agent dispatch.
 # The `livekit` package is the realtime client SDK; backend token/dispatch APIs

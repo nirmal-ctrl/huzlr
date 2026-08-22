@@ -36,6 +36,13 @@ class Settings(BaseSettings):
     LIVEKIT_URL: str = "wss://huzl-hdzkgm0u.livekit.cloud"
     GEMINI_API_KEY: str = ""
 
+    # Google Cloud Storage
+    # Authentication uses Application Default Credentials (ADC).
+    GCS_BUCKET_NAME: str = ""
+    GCS_PROJECT_ID: str = ""
+    GCS_DOCUMENTS_PREFIX: str = "project-documents"
+    GCS_MAX_DOCUMENT_BYTES: int = 2 * 1024 * 1024
+
     class Config:
         env_file = str(ENV_FILE)
         env_file_encoding = 'utf-8'

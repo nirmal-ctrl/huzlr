@@ -657,6 +657,8 @@ export interface components {
             estimated_start_date?: string | null;
             /** Estimated End Date */
             estimated_end_date?: string | null;
+            /** Completed */
+            completed?: boolean;
             /** Project Id */
             project_id: number;
         };
@@ -672,6 +674,8 @@ export interface components {
             estimated_start_date?: string | null;
             /** Estimated End Date */
             estimated_end_date?: string | null;
+            /** Completed */
+            completed: boolean;
             /** Milestone Id */
             milestone_id: number;
             /** Project Id */
@@ -689,6 +693,8 @@ export interface components {
             estimated_start_date?: string | null;
             /** Estimated End Date */
             estimated_end_date?: string | null;
+            /** Completed */
+            completed?: boolean | null;
         };
         /** ProjectCreate */
         ProjectCreate: {

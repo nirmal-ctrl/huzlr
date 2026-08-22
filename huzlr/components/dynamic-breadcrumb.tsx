@@ -14,6 +14,7 @@ import { useAppSelector } from "@/lib/redux/hooks"
 
 const routeMapping: Record<string, string> = {
     projects: "Projects",
+    issues: "Issues",
     new: "New Project",
     brainstorms: "Brainstorms",
     dashboard: "Dashboard",
