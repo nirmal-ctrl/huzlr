@@ -2,7 +2,6 @@
 .pnpm-store/
 deploy/
 huzl/
-huzlr/
 huzlr-agents/
 huzlr-cms/
 memory-bank/
