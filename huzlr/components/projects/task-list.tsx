@@ -104,11 +104,11 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                 cell: ({ row }) => {
                     const t = row.original
                     return (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                                className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:text-foreground"
                                 onClick={() => {
                                     const project = projects.find(p => p.project_id === t.project_id)
                                     const resolvedTeamId = teamId || project?.team_id
@@ -116,14 +116,16 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                                         router.push(`/teams/${resolvedTeamId}/issues/${t.id}`)
                                     }
                                 }}
+                                aria-label="Open issue"
                             >
                                 <Maximize2 className="w-3.5 h-3.5" />
                             </Button>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => onDeleteTask(t.id!)}
+                                aria-label="Delete issue"
                             >
                                 <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -135,7 +137,7 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
         ]
 
         return [...baseColumns, ...dynamicColumns, ...actionColumns]
-    }, [schemaDefinitions, onUpdateTask, onDeleteTask])
+    }, [schemaDefinitions, onUpdateTask, onDeleteTask, projects, router, teamId])
 
     if (isLoading || isSchemaLoading) {
         return <DataTableSkeleton rows={3} />
@@ -143,7 +145,7 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
 
     return (
         <>
-            <div className="group/table">
+            <div className="group/table min-w-0 w-full">
                 <DataTable 
                     data={tasks} 
                     columns={columns}
