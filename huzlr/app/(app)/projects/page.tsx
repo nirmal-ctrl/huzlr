@@ -1,12 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Loader2, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import { SiteHeader } from "@/components/site-header"
 import { DataTable } from "@/components/data-table"
-import { DataTableSkeleton } from "@/components/data-table-skeleton"
 import { KanbanBoard } from "@/components/kanban/kanban-board"
 import { ConnectedIntegrationsSheet } from "@/components/connected-integrations"
 import { JiraImportDialog } from "@/components/jira-import-dialog"
@@ -33,7 +32,6 @@ export default function Page() {
   const layout = viewState?.layout || 'list'
   const isPropertiesLoading = useAppSelector((state) => state.meta.loading['project'] ?? true)
   const isPageLoading = isLoading || isPropertiesLoading
-  const user = useAppSelector((state) => state.auth.user)
   const [jiraImportOpen, setJiraImportOpen] = useState(false)
   const hasWorkspace = workspaces.some((workspace) => workspace.id === activeWorkspaceId)
   const hasTeam = teams.some(
@@ -41,29 +39,26 @@ export default function Page() {
   )
   const canCreateProject = hasWorkspace && hasTeam
 
-  // Fetch projects and properties on mount and when team/workspace changes
   useEffect(() => {
     if (canCreateProject) {
-      dispatch(fetchProjects({ 
+      dispatch(fetchProjects({
         workspaceId: activeWorkspaceId,
         teamId: activeTeamId
       }))
     }
-    
+
     dispatch(fetchPropertyDefinitions('project'))
   }, [dispatch, activeTeamId, activeWorkspaceId, canCreateProject])
 
   const columns = useMemo(() => {
     if (!properties) return [];
 
-    // Default columns that always exist
     const baseColumns: ColumnDef<any>[] = [
       createDragColumn(),
       createSelectColumn(),
-      createTitleColumn("properties.project_title", "Header"), // Always keep header linked to title
+      createTitleColumn("properties.project_title", "Header"),
     ];
 
-    // Dynamic columns from properties
     const dynamicColumns = buildColumnsFromProperties(properties).filter(col => {
       const accessor = (col as any).accessorKey;
       return !["header", "project_title", "title", "properties.project_title"].includes(accessor);
@@ -96,7 +91,9 @@ export default function Page() {
             {!canCreateProject ? (
               <WorkspaceSetupState />
             ) : isPageLoading ? (
-              <DataTableSkeleton />
+              <div className="flex min-h-[240px] flex-1 items-center justify-center" role="status" aria-label="Loading projects">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
             ) : isError ? (
               <div className="flex items-center justify-center py-8">
                 <div className="text-destructive">
@@ -112,14 +109,13 @@ export default function Page() {
                   entityType="project"
                 />
               ) : (
-                <KanbanBoard 
+                <KanbanBoard
                   data={data}
                   columns={columns}
                   entityType="project"
                 />
               )
             ) : (
-              // Only show empty state if not loading and no data
               <div className="flex flex-1 flex-col items-center justify-center">
                 <div className="flex flex-col items-center gap-1 text-center">
                   <h3 className="text-base font-medium tracking-tight">
@@ -151,7 +147,6 @@ export default function Page() {
         </div>
       </div>
 
-      {/* Jira Import Dialog */}
       <JiraImportDialog
         open={jiraImportOpen}
         onOpenChange={setJiraImportOpen}
