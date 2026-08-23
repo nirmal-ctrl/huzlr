@@ -34,8 +34,12 @@ class VercelSubjectTokenSupplier(identity_pool.SubjectTokenSupplier):
 
 class GCSStorage:
     @property
+    def bucket_name(self) -> str:
+        return settings.GCS_BUCKET_NAME.strip()
+
+    @property
     def enabled(self) -> bool:
-        return bool(settings.GCS_BUCKET_NAME.strip())
+        return bool(self.bucket_name)
 
     @cached_property
     def client(self):
@@ -45,7 +49,11 @@ class GCSStorage:
         try:
             from google.cloud import storage
 
-            project_id = settings.GCS_PROJECT_ID or settings.GCP_PROJECT_ID or None
+            project_id = (
+                settings.GCS_PROJECT_ID.strip()
+                or settings.GCP_PROJECT_ID.strip()
+                or None
+            )
             credentials = self._vercel_credentials()
             return storage.Client(project=project_id, credentials=credentials)
         except ImportError as error:
@@ -97,10 +105,10 @@ class GCSStorage:
 
     @cached_property
     def bucket(self):
-        return self.client.bucket(settings.GCS_BUCKET_NAME)
+        return self.client.bucket(self.bucket_name)
 
     def document_object_name(self, project_id: int, document_id: int) -> str:
-        prefix = settings.GCS_DOCUMENTS_PREFIX.strip("/") or "project-documents"
+        prefix = settings.GCS_DOCUMENTS_PREFIX.strip().strip("/") or "project-documents"
         return f"{prefix}/{project_id}/{document_id}.html"
 
     async def upload_text(self, object_name: str, content: str) -> None:
@@ -123,7 +131,7 @@ class GCSStorage:
         except GCSStorageError:
             raise
         except Exception as error:
-            raise GCSStorageError(f"Could not upload gs://{settings.GCS_BUCKET_NAME}/{object_name}") from error
+            raise GCSStorageError(f"Could not upload gs://{self.bucket_name}/{object_name}") from error
 
     async def download_text(self, object_name: str) -> str:
         def download() -> bytes:
@@ -138,12 +146,12 @@ class GCSStorage:
 
                 if isinstance(error, NotFound):
                     raise GCSObjectNotFound(
-                        f"gs://{settings.GCS_BUCKET_NAME}/{object_name} does not exist"
+                        f"gs://{self.bucket_name}/{object_name} does not exist"
                     ) from error
             except ImportError:
                 pass
 
-            raise GCSStorageError(f"Could not download gs://{settings.GCS_BUCKET_NAME}/{object_name}") from error
+            raise GCSStorageError(f"Could not download gs://{self.bucket_name}/{object_name}") from error
 
     async def delete(self, object_name: str) -> None:
         def delete_blob() -> None:
@@ -160,7 +168,7 @@ class GCSStorage:
             except ImportError:
                 pass
 
-            raise GCSStorageError(f"Could not delete gs://{settings.GCS_BUCKET_NAME}/{object_name}") from error
+            raise GCSStorageError(f"Could not delete gs://{self.bucket_name}/{object_name}") from error
 
 
 gcs_storage = GCSStorage()

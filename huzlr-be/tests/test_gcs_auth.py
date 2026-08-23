@@ -102,6 +102,21 @@ class GCSWorkloadIdentityTests(unittest.TestCase):
             with self.assertRaisesRegex(GCSStorageError, "Incomplete Google Workload"):
                 GCSStorage()._vercel_credentials()
 
+    def test_normalizes_storage_identifiers_from_environment(self):
+        storage = GCSStorage()
+        with patch(
+            "services.gcs_storage.settings.GCS_BUCKET_NAME",
+            "  huzlr-project-documents\n",
+        ), patch(
+            "services.gcs_storage.settings.GCS_DOCUMENTS_PREFIX",
+            " /project-documents/\n",
+        ):
+            self.assertEqual(storage.bucket_name, "huzlr-project-documents")
+            self.assertEqual(
+                storage.document_object_name(15, 7),
+                "project-documents/15/7.html",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
