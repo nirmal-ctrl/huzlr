@@ -75,6 +75,22 @@ class ScrumMasterContractTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             ScrumMasterSettingsUpdate(bot_name="Huzlr", max_meeting_minutes=300)
 
+    def test_policy_requires_non_blank_conversation_settings(self):
+        with self.assertRaises(ValidationError):
+            ScrumMasterSettingsUpdate(bot_name="Huzlr", agent_prompt="   ")
+        with self.assertRaises(ValidationError):
+            ScrumMasterSettingsUpdate(bot_name="Huzlr", introduction_message="\n")
+
+    def test_policy_trims_conversation_settings(self):
+        policy = ScrumMasterSettingsUpdate(
+            bot_name="Huzlr",
+            agent_prompt="  Keep updates concise.  ",
+            introduction_message="  Hello team.  ",
+        )
+
+        self.assertEqual(policy.agent_prompt, "Keep updates concise.")
+        self.assertEqual(policy.introduction_message, "Hello team.")
+
     def test_worker_error_message_is_bounded(self):
         with self.assertRaises(ValidationError):
             WorkerStatusUpdate(status="failed", error_message="x" * 1001)

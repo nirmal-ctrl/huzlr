@@ -4,6 +4,10 @@ from typing import Optional
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from core.scrum_master_defaults import (
+    DEFAULT_SCRUM_MASTER_AGENT_PROMPT,
+    DEFAULT_SCRUM_MASTER_INTRODUCTION,
+)
 from models.base import Base
 
 
@@ -14,6 +18,12 @@ class ScrumMasterSettings(Base):
     workspace_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("workspaces.id"), nullable=False, unique=True, index=True)
     bot_name: Mapped[str] = mapped_column(String(120), default="Huzlr Scrum Master")
     bot_account_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    agent_prompt: Mapped[str] = mapped_column(Text, nullable=False, default=DEFAULT_SCRUM_MASTER_AGENT_PROMPT)
+    introduction_message: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default=DEFAULT_SCRUM_MASTER_INTRODUCTION,
+    )
     auto_join: Mapped[bool] = mapped_column(Boolean, default=False)
     join_only_organized: Mapped[bool] = mapped_column(Boolean, default=True)
     require_scrum_tag: Mapped[bool] = mapped_column(Boolean, default=False)

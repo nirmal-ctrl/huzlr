@@ -16,20 +16,14 @@ from livekit.agents import (
 from livekit.plugins import deepgram, google, silero
 
 from huzlr_agents.clients.huzlr_api import HuzlrApiClient, HuzlrApiError
-from huzlr_agents.contracts import SCRUM_MASTER_AGENT_NAME, SCRUM_MASTER_ROOM_PREFIX
+from huzlr_agents.contracts import (
+    SCRUM_MASTER_AGENT_NAME,
+    SCRUM_MASTER_ROOM_PREFIX,
+    ScrumMasterConversationConfig,
+)
 
 
 logger = logging.getLogger("huzlr-scrum-master-agent")
-
-SCRUM_MASTER_INSTRUCTIONS = """
-You are Huzlr Scrum Master, an explicitly identified AI participant in a team meeting.
-Listen carefully and facilitate concise standups. Track completed work, planned work,
-blockers, decisions, and proposed action items. Never claim to be a human. Do not create,
-assign, or change project work without explicit participant confirmation. Keep spoken
-responses short, avoid interrupting, and do not reveal information from other workspaces.
-At the beginning, state that you are an AI meeting assistant and that transcription or
-summarization may be enabled by the workspace administrator.
-"""
 
 
 def _meeting_id_from_room(room_name: str) -> int:
@@ -50,6 +44,7 @@ async def entrypoint(ctx: JobContext) -> None:
     settings = AgentSettings.from_environment()
     api = HuzlrApiClient.from_settings(settings)
     meeting_id = _meeting_id_from_room(ctx.room.name)
+    conversation = ScrumMasterConversationConfig.from_metadata(getattr(ctx.job, "metadata", None))
     pending_writes: set[asyncio.Task] = set()
 
     llm_kwargs = {"api_key": settings.gemini_api_key} if settings.gemini_api_key else {}
@@ -59,7 +54,7 @@ async def entrypoint(ctx: JobContext) -> None:
         llm=google.LLM(model="gemini-2.5-flash", **llm_kwargs),
         tts="deepgram/aura-2:odysseus",
     )
-    agent = Agent(instructions=SCRUM_MASTER_INSTRUCTIONS)
+    agent = Agent(instructions=conversation.agent_prompt)
 
     async def persist_message(event) -> None:
         item = event.item
@@ -109,10 +104,7 @@ async def entrypoint(ctx: JobContext) -> None:
                 participant_kinds=[rtc.ParticipantKind.PARTICIPANT_KIND_STANDARD],
             ),
         )
-        await session.say(
-            "Hello, I am the Huzlr AI Scrum Master. I will help facilitate and may prepare meeting notes according to your workspace settings.",
-            allow_interruptions=True,
-        )
+        await session.say(conversation.introduction_message, allow_interruptions=True)
         while True:
             await asyncio.sleep(1)
     except asyncio.CancelledError:

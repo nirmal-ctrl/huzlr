@@ -64,6 +64,8 @@ export interface ScrumMasterSettings {
   workspaceId: number
   botName: string
   botAccountEmail?: string
+  agentPrompt: string
+  introductionMessage: string
   autoJoin: boolean
   joinOnlyOrganized: boolean
   requireScrumTag: boolean
@@ -130,6 +132,8 @@ interface ApiSettings {
   workspace_id: number
   bot_name: string
   bot_account_email?: string
+  agent_prompt: string
+  introduction_message: string
   auto_join: boolean
   join_only_organized: boolean
   require_scrum_tag: boolean
@@ -162,6 +166,8 @@ const mapSettings = (value: ApiSettings): ScrumMasterSettings => ({
   workspaceId: value.workspace_id,
   botName: value.bot_name,
   botAccountEmail: value.bot_account_email,
+  agentPrompt: value.agent_prompt,
+  introductionMessage: value.introduction_message,
   autoJoin: value.auto_join,
   joinOnlyOrganized: value.join_only_organized,
   requireScrumTag: value.require_scrum_tag,
@@ -175,6 +181,8 @@ const mapSettings = (value: ApiSettings): ScrumMasterSettings => ({
 const toApiSettings = (value: ScrumMasterSettings) => ({
   bot_name: value.botName,
   bot_account_email: value.botAccountEmail || null,
+  agent_prompt: value.agentPrompt,
+  introduction_message: value.introductionMessage,
   auto_join: value.autoJoin,
   join_only_organized: value.joinOnlyOrganized,
   require_scrum_tag: value.requireScrumTag,

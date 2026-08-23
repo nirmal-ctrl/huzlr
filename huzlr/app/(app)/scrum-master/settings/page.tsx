@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/lib/redux/hooks"
 import {
@@ -55,16 +56,17 @@ export default function ScrumMasterSettingsPage() {
     { key: "summaryEnabled" as const, title: "Summary", description: "Generate a concise meeting recap.", icon: FileText },
     { key: "actionItemsEnabled" as const, title: "Action items", description: "Extract owners and due dates from decisions.", icon: ListChecks },
   ]
+  const conversationIsValid = Boolean(draft?.agentPrompt.trim() && draft.introductionMessage.trim())
 
   return (
     <>
       <SiteHeader>
-        <Button size="sm" className="h-8 gap-2" onClick={save} disabled={!draft || updateState.isLoading}>
+        <Button size="sm" className="h-8 gap-2" onClick={save} disabled={!draft || !conversationIsValid || updateState.isLoading}>
           {updateState.isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />} Save changes
         </Button>
       </SiteHeader>
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-5 lg:px-6">
-        <section className="border-b pb-5"><h1 className="text-base font-semibold">Scrum Master settings</h1><p className="mt-1 text-sm text-muted-foreground">Control the bot identity, join policy, and meeting outputs.</p></section>
+        <section className="border-b pb-5"><h1 className="text-base font-semibold">Scrum Master settings</h1><p className="mt-1 text-sm text-muted-foreground">Control the bot identity, conversation, join policy, and meeting outputs.</p></section>
 
         {!workspaceId ? (
           <Message title="Select a workspace" description="Scrum Master settings belong to the active workspace." />
@@ -79,6 +81,22 @@ export default function ScrumMasterSettingsPage() {
               <div className="grid gap-4 rounded-lg border p-4">
                 <div><Label htmlFor="bot-name" className="text-xs">Display name</Label><Input id="bot-name" className="mt-2 max-w-md" value={draft.botName} onChange={(event) => updateSetting("botName", event.target.value)} /></div>
                 <div><Label htmlFor="bot-email" className="text-xs">Dedicated Google account email</Label><Input id="bot-email" type="email" className="mt-2 max-w-md" placeholder="scrum-master@company.com" value={draft.botAccountEmail || ""} onChange={(event) => updateSetting("botAccountEmail", event.target.value)} /><p className="mt-1.5 text-xs text-muted-foreground">Auto-join only applies when this account is invited to the event.</p></div>
+              </div>
+            </section>
+
+            <section className="grid gap-5 border-t pt-7 md:grid-cols-[220px_1fr]">
+              <div><h2 className="text-sm font-semibold">Agent conversation</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Set how the Scrum Master behaves and what it says when joining a meeting.</p></div>
+              <div className="grid gap-5 rounded-lg border p-4">
+                <div>
+                  <div className="flex items-center justify-between gap-3"><Label htmlFor="agent-prompt" className="text-xs">Agent prompt</Label><span className="text-[11px] text-muted-foreground">{draft.agentPrompt.length}/8000</span></div>
+                  <Textarea id="agent-prompt" className="mt-2 min-h-44 resize-y leading-6" maxLength={8000} value={draft.agentPrompt} onChange={(event) => updateSetting("agentPrompt", event.target.value)} aria-invalid={!draft.agentPrompt.trim()} />
+                  <p className="mt-1.5 text-xs text-muted-foreground">Instructions used for every Scrum Master conversation in this workspace.</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between gap-3"><Label htmlFor="introduction-message" className="text-xs">Introduction message</Label><span className="text-[11px] text-muted-foreground">{draft.introductionMessage.length}/1000</span></div>
+                  <Textarea id="introduction-message" className="mt-2 min-h-24 resize-y leading-6" maxLength={1000} value={draft.introductionMessage} onChange={(event) => updateSetting("introductionMessage", event.target.value)} aria-invalid={!draft.introductionMessage.trim()} />
+                  <p className="mt-1.5 text-xs text-muted-foreground">The exact opening message the agent speaks after it joins.</p>
+                </div>
               </div>
             </section>
 

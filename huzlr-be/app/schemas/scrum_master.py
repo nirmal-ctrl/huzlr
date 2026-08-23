@@ -1,12 +1,27 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from core.scrum_master_defaults import (
+    DEFAULT_SCRUM_MASTER_AGENT_PROMPT,
+    DEFAULT_SCRUM_MASTER_INTRODUCTION,
+)
 
 
 class ScrumMasterSettingsUpdate(BaseModel):
     bot_name: str = Field(min_length=1, max_length=120)
     bot_account_email: Optional[str] = Field(default=None, max_length=255)
+    agent_prompt: str = Field(
+        default=DEFAULT_SCRUM_MASTER_AGENT_PROMPT,
+        min_length=1,
+        max_length=8000,
+    )
+    introduction_message: str = Field(
+        default=DEFAULT_SCRUM_MASTER_INTRODUCTION,
+        min_length=1,
+        max_length=1000,
+    )
     auto_join: bool = False
     join_only_organized: bool = True
     require_scrum_tag: bool = False
@@ -15,6 +30,14 @@ class ScrumMasterSettingsUpdate(BaseModel):
     transcript_enabled: bool = True
     summary_enabled: bool = True
     action_items_enabled: bool = True
+
+    @field_validator("agent_prompt", "introduction_message")
+    @classmethod
+    def strip_required_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
 
 
 class ScrumMasterSettingsResponse(ScrumMasterSettingsUpdate):

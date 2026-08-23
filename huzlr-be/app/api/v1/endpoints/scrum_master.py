@@ -1,4 +1,5 @@
 import hmac
+import json
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -705,6 +706,12 @@ async def claim_worker_job(
                 livekit_api.CreateAgentDispatchRequest(
                     agent_name=SCRUM_MASTER_AGENT_NAME,
                     room=livekit_room,
+                    metadata=json.dumps(
+                        {
+                            "agent_prompt": policy.agent_prompt,
+                            "introduction_message": policy.introduction_message,
+                        }
+                    ),
                 )
             )
         except Exception as exc:
