@@ -75,7 +75,7 @@ export default function Page() {
 
   return (
     <>
-      <SiteHeader entityType="project">
+      <SiteHeader>
         {canCreateProject && (
           <Link href="/projects/new">
             <Button size="sm" className="gap-2 rounded-full">
@@ -107,6 +107,7 @@ export default function Page() {
                   getRowId={(row) => row.project_id.toString()}
                   columns={columns}
                   entityType="project"
+                  tableLabel="Projects"
                 />
               ) : (
                 <KanbanBoard

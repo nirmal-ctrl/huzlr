@@ -23,10 +23,6 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
-  const isItemActive = (url: string) => {
-    if (pathname === url || pathname.startsWith(`${url}/`)) return true
-    return url === "/issues" && /^\/teams\/[^/]+\/issues(?:\/|$)/.test(pathname)
-  }
 
   return (
     <SidebarGroup>
@@ -59,7 +55,7 @@ export function NavMain({
               <SidebarMenuButton
                 asChild
                 tooltip={item.title}
-                data-active={isItemActive(item.url)}
+                data-active={pathname === item.url || pathname.startsWith(`${item.url}/`)}
               >
                 <Link href={item.url}>
                   {item.icon && <item.icon />}

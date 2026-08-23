@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { IssueDetailSheet } from "./issue-detail-sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ProjectIdentity } from "@/components/projects/project-identity"
 
 export interface KanbanBoardProps {
   data: any[]
@@ -421,6 +422,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 }
                               }}
                               teamId={teamId || projects.find(p => p.project_id === item.project_id)?.team_id}
+                              projectName={projects.find(p => p.project_id === item.project_id)?.properties?.project_title}
                             />
                           ))}
                           {provided.placeholder}
@@ -468,6 +470,7 @@ interface DraggableCardProps {
   onFocus: () => void
   onOpenDetail: (item: any) => void
   teamId?: number
+  projectName?: string | null
 }
 
 const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
@@ -477,7 +480,8 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
   isFocused,
   onFocus,
   onOpenDetail,
-  teamId
+  teamId,
+  projectName,
 }) => {
   const [updateTask] = useUpdateTaskMutation()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -569,6 +573,11 @@ const DraggableCard: React.FC<DraggableCardProps> = React.memo(({
             }`}
           >
             <div className="flex flex-col gap-2">
+              <ProjectIdentity
+                projectId={item.project_id}
+                projectName={projectName}
+                className="text-[10px] font-semibold text-muted-foreground"
+              />
               <button 
                 onClick={() => onOpenDetail(item)}
                 className="font-medium text-sm text-foreground leading-snug line-clamp-2 text-left hover:underline cursor-pointer focus:outline-none"

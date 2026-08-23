@@ -135,6 +135,8 @@ export interface DataTableProps<TData> {
   enableRowSelection?: boolean
   defaultPageSize?: number
   entityType?: string
+  showDisplayOptions?: boolean
+  tableLabel?: string
   tabs?: {
     value: string
     label: string
@@ -151,6 +153,8 @@ export function DataTable<TData>({
   enableRowSelection = true,
   defaultPageSize = 10,
   entityType,
+  showDisplayOptions = true,
+  tableLabel,
   tabs,
 }: DataTableProps<TData>) {
   const [data, setData] = React.useState(() => initialData)
@@ -221,10 +225,16 @@ export function DataTable<TData>({
       defaultValue={tabs?.[0]?.value || "outline"}
       className="w-full flex-col justify-start gap-6"
     >
+      {(tableLabel || showDisplayOptions || (tabs?.length ?? 0) > 1) && (
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
           View
         </Label>
+        {tableLabel && (
+          <h2 className="text-sm font-semibold tracking-tight text-foreground">
+            {tableLabel}
+          </h2>
+        )}
         {tabs && tabs.length > 1 && (
           <>
             <Select defaultValue={tabs[0].value}>
@@ -255,7 +265,8 @@ export function DataTable<TData>({
             </TabsList>
           </>
         )}
-        <div className="flex items-center gap-2">
+        {showDisplayOptions && (
+        <div className="ml-auto flex items-center gap-2">
           {entityType ? (
             <DisplayPropertiesMenu entityType={entityType} />
           ) : (
@@ -294,7 +305,9 @@ export function DataTable<TData>({
             </DropdownMenu>
           )}
         </div>
+        )}
       </div>
+      )}
       <TabsContent
         value={tabs?.[0]?.value || "outline"}
         className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
@@ -442,4 +455,3 @@ export function DataTable<TData>({
     </Tabs>
   )
 }
-

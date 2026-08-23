@@ -11,6 +11,7 @@ import { fetchPropertyDefinitions } from "@/lib/redux/slices/metaSlice"
 import { CheckCircle2, Trash2, Maximize2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TaskDetailsDrawer } from "./task-details-drawer"
+import { ProjectIdentity } from "./project-identity"
 
 interface TaskListProps {
     tasks: Task[]
@@ -89,6 +90,29 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                     )
                 },
             },
+            {
+                id: "project",
+                header: "Project",
+                cell: ({ row }) => {
+                    const project = projects.find((item) => item.project_id === row.original.project_id)
+                    const projectName = project?.properties?.project_title
+
+                    return (
+                        <button
+                            type="button"
+                            onClick={() => router.push(`/projects/${row.original.project_id}`)}
+                            className="max-w-48 text-left text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                            title={projectName || `Project #${row.original.project_id}`}
+                        >
+                            <ProjectIdentity
+                                projectId={row.original.project_id}
+                                projectName={projectName}
+                            />
+                        </button>
+                    )
+                },
+                size: 180,
+            },
         ]
 
         const dynamicColumns = schemaDefinitions
@@ -152,6 +176,7 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                     data={tasks}
                     columns={columns}
                     entityType="task"
+                    showDisplayOptions={false}
                     getRowId={(row) => row.id!.toString()}
                 />
             </div>

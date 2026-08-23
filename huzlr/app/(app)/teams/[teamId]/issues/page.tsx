@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Plus, Filter, X, ChevronDown, Check, ChevronRight, ListFilter } from "lucide-react"
+import { Plus, Filter, X, ChevronDown, Check, ChevronRight, ListFilter, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { TaskList } from "@/components/projects/task-list"
@@ -23,6 +23,7 @@ import { fetchPropertyDefinitions } from "@/lib/redux/slices/metaSlice"
 import { IssueCreate } from "@/lib/types"
 import { WorkspaceSetupState } from "@/components/workspace-setup-state"
 import { setActiveTeam } from "@/lib/redux/slices/workspaceSlice"
+import { ProjectIdentity } from "@/components/projects/project-identity"
 
 export default function TeamIssuesPage() {
     const params = useParams()
@@ -62,12 +63,13 @@ export default function TeamIssuesPage() {
     const [activeTab, setActiveTab] = useState<'all' | 'active' | 'backlog'>('all')
     const [statusFilter, setStatusFilter] = useState<string | null>(null)
     const [priorityFilter, setPriorityFilter] = useState<string | null>(null)
+    const [projectFilter, setProjectFilter] = useState<number | null>(null)
     const [hiddenColumns, setHiddenColumns] = useState<string[]>(['planning', 'paused', 'canceled'])
     
     // Nested Searchable Filter Panel States
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [filterSearch, setFilterSearch] = useState("")
-    const [activeCategory, setActiveCategory] = useState<'root' | 'status' | 'priority'>('root')
+    const [activeCategory, setActiveCategory] = useState<'root' | 'status' | 'priority' | 'project'>('root')
     const filterInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -224,7 +226,8 @@ export default function TeamIssuesPage() {
         if (activeCategory === 'root') {
             const categories = [
                 { id: 'status', label: 'Status' },
-                { id: 'priority', label: 'Priority' }
+                { id: 'priority', label: 'Priority' },
+                { id: 'project', label: 'Project' },
             ].filter(c => c.label.toLowerCase().includes(query))
 
             return (
@@ -311,6 +314,48 @@ export default function TeamIssuesPage() {
                 </div>
             )
         }
+
+        if (activeCategory === 'project') {
+            const filteredProjects = teamProjects.filter((project) => {
+                const projectName = project.properties?.project_title || `Project #${project.project_id}`
+                return projectName.toLowerCase().includes(query)
+            })
+
+            return (
+                <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                          setActiveCategory('root')
+                          setFilterSearch("")
+                      }}
+                      className="mb-1 w-full rounded px-2.5 py-1 text-left text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-muted/40"
+                    >
+                        ← Back to categories
+                    </button>
+                    {filteredProjects.map((project) => (
+                        <button
+                          key={project.project_id}
+                          onClick={() => {
+                              setProjectFilter(project.project_id)
+                              setIsFilterOpen(false)
+                              setFilterSearch("")
+                          }}
+                          className="flex w-full items-center justify-between rounded px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60"
+                        >
+                            <ProjectIdentity
+                                projectId={project.project_id}
+                                projectName={project.properties?.project_title}
+                                className="max-w-[170px]"
+                            />
+                            {projectFilter === project.project_id && <Check className="size-3.5 text-primary" />}
+                        </button>
+                    ))}
+                    {filteredProjects.length === 0 && (
+                        <div className="py-2 text-center text-[11px] text-muted-foreground/60">No matching projects</div>
+                    )}
+                </div>
+            )
+        }
     }
 
     // Apply Tab filtering & Search filtering concurrently
@@ -338,6 +383,8 @@ export default function TeamIssuesPage() {
                 : String(p)
             if (priorityStr.toLowerCase() !== priorityFilter.toLowerCase()) return false
         }
+
+        if (projectFilter && t.project_id !== projectFilter) return false
 
         return true
     }).map(t => ({
@@ -368,10 +415,10 @@ export default function TeamIssuesPage() {
                 </div>
             </SiteHeader>
 
-            <div className="flex flex-col gap-4 py-6 px-8 h-[calc(100vh-80px)] overflow-hidden bg-background w-full max-w-full min-w-0">
+            <div className="flex h-[calc(100vh-80px)] min-w-0 w-full max-w-full flex-col gap-4 overflow-hidden bg-background py-4">
                 {/* Sub Header Action Bar (Linear benchmark design) */}
                 {teamProjects.length > 0 && (
-                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-2 flex-wrap gap-2">
+                    <div className="mx-4 mb-2 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3 lg:mx-6">
                         <div className="flex items-center gap-2.5 flex-wrap">
                             {/* Left View Tabs */}
                             <div className="flex items-center gap-1 border border-border/60 bg-muted/40 p-0.5 rounded-lg shadow-sm">
@@ -415,6 +462,17 @@ export default function TeamIssuesPage() {
                                     <span className="capitalize">Priority: {priorityFilter}</span>
                                     <button onClick={() => setPriorityFilter(null)} className="hover:bg-primary/20 rounded-full p-0.5 shrink-0 cursor-pointer">
                                         <X className="h-2.5 w-2.5" />
+                                    </button>
+                                </span>
+                            )}
+                            {projectFilter && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary shadow-sm">
+                                    <ProjectIdentity
+                                        projectId={projectFilter}
+                                        projectName={teamProjects.find((project) => project.project_id === projectFilter)?.properties?.project_title}
+                                    />
+                                    <button onClick={() => setProjectFilter(null)} className="shrink-0 rounded-full p-0.5 hover:bg-primary/20">
+                                        <X className="size-2.5" />
                                     </button>
                                 </span>
                             )}
@@ -462,15 +520,9 @@ export default function TeamIssuesPage() {
                                 onDeleteTask={handleDeleteIssue}
                             />
                         ) : (
-                            <KanbanBoard
-                                data={[]}
-                                columns={[]}
-                                entityType="task"
-                                defaultProjectId={firstProjectId}
-                                hiddenColumns={hiddenColumns}
-                                setHiddenColumns={setHiddenColumns}
-                                isLoading={true}
-                            />
+                            <div className="flex flex-1 items-center justify-center" role="status" aria-label="Loading issues">
+                                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                            </div>
                         )
                     ) : teamProjects.length === 0 ? (
                         <div className="flex flex-1 flex-col items-center justify-center p-8 text-center min-h-[300px]">
