@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { Loader2, AudioLines, X, MicOff } from "lucide-react"
+import { Loader2, AudioLines, X, MicOff, GripVertical } from "lucide-react"
 import { Orb } from "@/components/orb"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,11 +19,39 @@ import { cn } from "@/lib/utils"
 
 export function FounderAgentWidget() {
     const [isOpen, setIsOpen] = React.useState(false)
+    const [triggerTop, setTriggerTop] = React.useState<number | null>(null)
     const [token, setToken] = React.useState<string | null>(null)
     const [serverUrl, setServerUrl] = React.useState<string | null>(null)
     const [isConnecting, setIsConnecting] = React.useState<boolean>(false)
     const router = useRouter()
     const pathname = usePathname()
+    const triggerRef = React.useRef<HTMLButtonElement>(null)
+    const dragStateRef = React.useRef<{
+        pointerId: number
+        startY: number
+        startTop: number
+        height: number
+        moved: boolean
+    } | null>(null)
+    const suppressClickRef = React.useRef(false)
+
+    const clampTriggerTop = React.useCallback((top: number, height: number) => {
+        const viewportPadding = 12
+        return Math.min(
+            Math.max(top, viewportPadding),
+            Math.max(viewportPadding, window.innerHeight - height - viewportPadding),
+        )
+    }, [])
+
+    React.useEffect(() => {
+        const handleResize = () => {
+            if (triggerTop === null || !triggerRef.current) return
+            setTriggerTop(clampTriggerTop(triggerTop, triggerRef.current.offsetHeight))
+        }
+
+        window.addEventListener("resize", handleResize)
+        return () => window.removeEventListener("resize", handleResize)
+    }, [clampTriggerTop, triggerTop])
 
     if (pathname === "/dashboard") return null
 
@@ -151,12 +179,64 @@ export function FounderAgentWidget() {
 
             {!isOpen && (
                 <Button
+                    ref={triggerRef}
                     type="button"
                     variant="outline"
-                    onClick={() => setIsOpen(true)}
-                    className="fixed right-0 top-1/2 z-40 h-auto w-9 -translate-y-1/2 flex-col gap-2 rounded-l-xl rounded-r-none border-r-0 bg-background/95 px-0 py-4 text-foreground shadow-lg backdrop-blur transition-colors hover:bg-muted"
+                    onPointerDown={(event) => {
+                        if (event.button !== 0) return
+
+                        const rect = event.currentTarget.getBoundingClientRect()
+                        dragStateRef.current = {
+                            pointerId: event.pointerId,
+                            startY: event.clientY,
+                            startTop: rect.top,
+                            height: rect.height,
+                            moved: false,
+                        }
+                        event.currentTarget.setPointerCapture(event.pointerId)
+                    }}
+                    onPointerMove={(event) => {
+                        const dragState = dragStateRef.current
+                        if (!dragState || dragState.pointerId !== event.pointerId) return
+
+                        const deltaY = event.clientY - dragState.startY
+                        if (Math.abs(deltaY) >= 4) dragState.moved = true
+                        if (!dragState.moved) return
+
+                        setTriggerTop(clampTriggerTop(dragState.startTop + deltaY, dragState.height))
+                    }}
+                    onPointerUp={(event) => {
+                        const dragState = dragStateRef.current
+                        if (!dragState || dragState.pointerId !== event.pointerId) return
+
+                        suppressClickRef.current = dragState.moved
+                        dragStateRef.current = null
+                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                            event.currentTarget.releasePointerCapture(event.pointerId)
+                        }
+                    }}
+                    onPointerCancel={(event) => {
+                        dragStateRef.current = null
+                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                            event.currentTarget.releasePointerCapture(event.pointerId)
+                        }
+                    }}
+                    onClick={() => {
+                        if (suppressClickRef.current) {
+                            suppressClickRef.current = false
+                            return
+                        }
+                        setIsOpen(true)
+                    }}
+                    style={triggerTop === null ? undefined : { top: triggerTop }}
+                    className={cn(
+                        "fixed right-0 z-40 h-auto w-9 touch-none cursor-grab select-none flex-col gap-2 rounded-l-xl rounded-r-none border-r-0 bg-background/95 px-0 py-3 text-foreground shadow-lg backdrop-blur transition-[background-color,box-shadow] hover:bg-muted active:cursor-grabbing",
+                        triggerTop === null ? "top-1/3 -translate-y-1/2" : "translate-y-0",
+                    )}
                     aria-label="Open Ask Nirmal voice agent"
+                    title="Click to open or drag vertically to move"
                 >
+                    <GripVertical className="size-3 text-muted-foreground/60" aria-hidden="true" />
                     <span className="size-1.5 rounded-full bg-primary" />
                     <span className="text-[10px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">Ask Nirmal</span>
                     <AudioLines className="size-3.5 text-primary" />

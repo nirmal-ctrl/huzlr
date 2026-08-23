@@ -94,6 +94,25 @@ class GCSWorkloadIdentityTests(unittest.TestCase):
                 stack.enter_context(patch(f"services.gcs_storage.settings.{name}", ""))
             self.assertIsNone(GCSStorage()._vercel_credentials())
 
+    def test_uses_adc_locally_even_when_workload_identity_is_configured(self):
+        with ExitStack() as stack:
+            for name, value in self.workload_identity_settings().items():
+                stack.enter_context(patch(f"services.gcs_storage.settings.{name}", value))
+            stack.enter_context(patch.dict(os.environ, {}, clear=False))
+            os.environ.pop("VERCEL_OIDC_TOKEN", None)
+
+            self.assertIsNone(GCSStorage()._credentials_for_environment())
+
+    def test_uses_workload_identity_when_vercel_token_is_available(self):
+        with ExitStack() as stack:
+            for name, value in self.workload_identity_settings().items():
+                stack.enter_context(patch(f"services.gcs_storage.settings.{name}", value))
+            stack.enter_context(patch.dict(os.environ, {"VERCEL_OIDC_TOKEN": "vercel-token"}))
+
+            credentials = GCSStorage()._credentials_for_environment()
+
+        self.assertIsInstance(credentials, identity_pool.Credentials)
+
     def test_rejects_partial_workload_identity_configuration(self):
         with ExitStack() as stack:
             for name in self.workload_identity_settings():

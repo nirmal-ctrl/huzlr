@@ -54,7 +54,7 @@ class GCSStorage:
                 or settings.GCP_PROJECT_ID.strip()
                 or None
             )
-            credentials = self._vercel_credentials()
+            credentials = self._credentials_for_environment()
             return storage.Client(project=project_id, credentials=credentials)
         except ImportError as error:
             raise GCSStorageError("google-cloud-storage is not installed") from error
@@ -62,6 +62,15 @@ class GCSStorage:
             raise
         except Exception as error:
             raise GCSStorageError("Google Cloud credentials could not be initialized") from error
+
+    def _credentials_for_environment(self):
+        # Vercel's federation token only exists while handling a Vercel request.
+        # Locally, let google-cloud-storage use Application Default Credentials
+        # even when the production Workload Identity settings are in `.env`.
+        if not get_vercel_oidc_token():
+            return None
+
+        return self._vercel_credentials()
 
     def _vercel_credentials(self):
         config = {
