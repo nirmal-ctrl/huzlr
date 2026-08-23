@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -19,12 +20,10 @@ interface SiteHeaderProps {
   entityType?: string
 }
 
-import { useState } from "react"
-
 export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
   const dispatch = useAppDispatch()
   const { toast } = useToast()
-  
+
   const { data: pendingInvites, refetch: refetchInvites } = useGetMyPendingInvitesQuery()
   const [acceptInvite] = useAcceptInviteMutation()
   const [acceptingInviteId, setAcceptingInviteId] = useState<number | null>(null)
@@ -37,7 +36,6 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
         title: "Joined Workspace",
         description: `You are now a member of ${workspaceName}.`,
       })
-      // Refetch invitations and active workspaces
       await refetchInvites()
       await dispatch(fetchWorkspaces())
     } catch (error: any) {
@@ -55,63 +53,66 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
 
   return (
     <header className="flex flex-col border-b bg-background">
-      <div className="flex h-14 items-center px-4 gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
+      <div className="flex h-14 min-w-0 items-center gap-1.5 px-2 sm:gap-2 sm:px-4 lg:px-6">
+        <SidebarTrigger className="-ml-0.5 shrink-0 sm:-ml-1" />
         <Separator
           orientation="vertical"
-          className="mx-2 h-4"
+          className="mx-1 hidden h-4 shrink-0 sm:block lg:mx-2"
         />
-        <DynamicBreadcrumb />
-        <div className="ml-auto flex items-center gap-2">
+
+        <div className="hidden min-w-0 flex-1 overflow-hidden sm:block">
+          <DynamicBreadcrumb />
+        </div>
+
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 sm:gap-2 max-sm:[&>*:not(:last-child)]:hidden">
           {children}
           {entityType && <ViewOptionsDropdown entityType={entityType} />}
-          
-          {/* Notifications Popover */}
+
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="relative h-8 w-8 rounded-full border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground flex items-center justify-center cursor-pointer"
+                className="relative flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground"
               >
                 <Bell className="size-4 text-muted-foreground" />
                 {invitesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
                     {invitesCount}
                   </span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-0 overflow-hidden bg-popover border border-border rounded-xl shadow-2xl">
-              <div className="p-4 border-b border-border/60 bg-muted/20">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            <PopoverContent align="end" className="w-[min(20rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-border bg-popover p-0 shadow-2xl">
+              <div className="border-b border-border/60 bg-muted/20 p-4">
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                   <Bell className="size-4 text-primary" />
                   Notifications
                 </h3>
-                <p className="text-xs text-muted-foreground pt-0.5">
+                <p className="pt-0.5 text-xs text-muted-foreground">
                   You have {invitesCount} pending workspace invitation{invitesCount === 1 ? "" : "s"}.
                 </p>
               </div>
 
-              <div className="max-h-[300px] overflow-y-auto divide-y divide-border/60">
+              <div className="max-h-[300px] divide-y divide-border/60 overflow-y-auto">
                 {invitesCount === 0 ? (
-                  <div className="p-8 text-center flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground">
                     <Mail className="size-6 text-muted-foreground/40" />
                     <p className="text-xs font-medium">All caught up!</p>
                     <p className="text-[11px] text-muted-foreground/60">No pending workspace invitations.</p>
                   </div>
                 ) : (
                   pendingInvites?.map((invite) => (
-                    <div key={invite.id} className="p-4 space-y-3 hover:bg-muted/10 transition-colors">
+                    <div key={invite.id} className="space-y-3 p-4 transition-colors hover:bg-muted/10">
                       <div className="flex gap-2">
-                        <div className="bg-primary/10 p-1.5 h-fit rounded-lg text-primary shrink-0 mt-0.5">
+                        <div className="mt-0.5 h-fit shrink-0 rounded-lg bg-primary/10 p-1.5 text-primary">
                           <Sparkles className="size-3.5" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs font-semibold text-foreground leading-tight">
+                          <p className="text-xs font-semibold leading-tight text-foreground">
                             Workspace Invitation
                           </p>
-                          <p className="text-[11px] text-muted-foreground leading-normal">
+                          <p className="text-[11px] leading-normal text-muted-foreground">
                             You've been invited to join the <strong>{invite.workspace.name}</strong> workspace.
                           </p>
                         </div>
@@ -121,7 +122,7 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
                           size="sm"
                           onClick={() => handleAccept(invite.id, invite.workspace.name)}
                           disabled={acceptingInviteId !== null}
-                          className="h-7 text-xs font-semibold px-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md flex items-center gap-1"
+                          className="flex h-7 items-center gap-1 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                         >
                           {acceptingInviteId === invite.id ? (
                             <Loader2 className="size-3 animate-spin" />
@@ -138,10 +139,9 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
             </PopoverContent>
           </Popover>
 
-          <AnimatedThemeToggler className="h-8 w-8 rounded-full border border-border bg-background shadow-sm hover:bg-accent hover:text-accent-foreground p-1.5 flex items-center justify-center" />
+          <AnimatedThemeToggler className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background p-1.5 shadow-sm hover:bg-accent hover:text-accent-foreground sm:flex" />
         </div>
       </div>
-      
     </header>
   )
 }
