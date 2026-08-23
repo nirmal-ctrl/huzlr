@@ -80,7 +80,7 @@ function Navbar({ className }: { className?: string }) {
 
           <Link href="/signup">
             <Button className="rounded-full cursor-pointer h-9 px-4 text-[13px] font-medium bg-clay text-white hover:bg-clay-deep transition-colors">
-              Join waitlist
+              Get started
             </Button>
           </Link>
         </div>
