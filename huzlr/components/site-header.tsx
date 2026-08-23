@@ -50,24 +50,19 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
   }
 
   const invitesCount = pendingInvites?.length || 0
+  const hasPageActions = Boolean(children || entityType)
 
   return (
     <header className="flex flex-col border-b bg-background">
-      <div className="flex h-14 min-w-0 items-center gap-1.5 px-2 sm:gap-2 sm:px-4 lg:px-6">
-        <SidebarTrigger className="-ml-0.5 shrink-0 sm:-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-1 hidden h-4 shrink-0 sm:block lg:mx-2"
-        />
+      <div className="flex min-h-14 min-w-0 flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2 sm:h-14 sm:flex-nowrap sm:px-4 sm:py-0 lg:px-6">
+        <SidebarTrigger className="order-1 -ml-1 shrink-0" />
+        <Separator orientation="vertical" className="order-1 mx-1 h-4 shrink-0 sm:mx-2" />
 
-        <div className="hidden min-w-0 flex-1 overflow-hidden sm:block">
+        <div className="order-1 min-w-0 flex-1 overflow-hidden">
           <DynamicBreadcrumb />
         </div>
 
-        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 sm:gap-2 max-sm:[&>*:not(:last-child)]:hidden">
-          {children}
-          {entityType && <ViewOptionsDropdown entityType={entityType} />}
-
+        <div className="order-2 flex shrink-0 items-center gap-1.5 sm:order-4 sm:gap-2">
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -139,8 +134,21 @@ export function SiteHeader({ title, children, entityType }: SiteHeaderProps) {
             </PopoverContent>
           </Popover>
 
-          <AnimatedThemeToggler className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background p-1.5 shadow-sm hover:bg-accent hover:text-accent-foreground sm:flex" />
+          <AnimatedThemeToggler className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background p-1.5 shadow-sm hover:bg-accent hover:text-accent-foreground" />
         </div>
+
+        {hasPageActions && (
+          <div className="order-3 flex min-w-0 basis-full items-center justify-between gap-2 border-t border-border/50 pt-2 sm:order-3 sm:ml-auto sm:basis-auto sm:border-0 sm:pt-0">
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto sm:flex-none sm:overflow-visible">
+              {children}
+            </div>
+            {entityType && (
+              <div className="shrink-0">
+                <ViewOptionsDropdown entityType={entityType} />
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   )
