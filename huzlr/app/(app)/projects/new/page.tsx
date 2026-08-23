@@ -1,7 +1,6 @@
 'use client'
 
 import { SiteHeader } from "@/components/site-header"
-import { CreateProjectModal } from "@/components/projects/create-project-modal"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { WorkspaceSetupState } from "@/components/workspace-setup-state"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -33,7 +32,12 @@ function NewProjectPage() {
     const draftProjectId = Number.isInteger(draftParam) && draftParam > 0 ? draftParam : undefined
 
     useEffect(() => {
-        if (!canCreateProject || !activeTeamId || draftProjectId || creatingDraftRef.current) return
+        if (draftProjectId) {
+            router.replace(`/projects/${draftProjectId}`)
+            return
+        }
+
+        if (!canCreateProject || !activeTeamId || creatingDraftRef.current) return
 
         creatingDraftRef.current = true
         setDraftError(null)
@@ -53,7 +57,7 @@ function NewProjectPage() {
                 draft_updated_at: new Date().toISOString(),
             },
         })).unwrap()
-            .then((project) => router.replace(`/projects/new?draft=${project.project_id}`))
+            .then((project) => router.replace(`/projects/${project.project_id}`))
             .catch((error) => {
                 creatingDraftRef.current = false
                 setDraftError(error instanceof Error ? error.message : "Unable to create a project draft.")
@@ -68,15 +72,6 @@ function NewProjectPage() {
                     <div className="h-full w-full bg-background">
                         {draftError ? (
                             <div className="flex h-full items-center justify-center px-6 text-sm text-destructive">{draftError}</div>
-                        ) : draftProjectId ? (
-                            <CreateProjectModal
-                                open
-                                onOpenChange={(open) => {
-                                    if (!open) router.push("/projects")
-                                }}
-                                page
-                                draftProjectId={draftProjectId}
-                            />
                         ) : (
                             <div className="flex h-full items-center justify-center"><SpinnerEmpty /></div>
                         )}

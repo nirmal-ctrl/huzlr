@@ -28,7 +28,11 @@ import {
     Plus,
     Trash2,
 } from "lucide-react"
-import { useCreateMilestoneMutation } from "@/services/milestonesApi"
+import {
+    useCreateMilestoneMutation,
+    useDeleteMilestoneMutation,
+    useGetProjectMilestonesQuery,
+} from "@/services/milestonesApi"
 import {
     useCreateDocumentMutation,
     useDeleteDocumentMutation,
@@ -47,6 +51,7 @@ import {
 
 interface DraftMilestone {
     id: string
+    milestoneId?: number
     title: string
     description: string
     estimated_start_date?: string
@@ -144,6 +149,7 @@ export function CreateProjectModal({
     const [milestones, setMilestones] = useState<DraftMilestone[]>([])
     const [isMilestoneDialogOpen, setIsMilestoneDialogOpen] = useState(false)
     const [hasHydratedDraft, setHasHydratedDraft] = useState(false)
+    const [isProjectDraft, setIsProjectDraft] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Highlight states for visual pulsing
@@ -175,10 +181,14 @@ export function CreateProjectModal({
     const dispatch = useAppDispatch()
     const { toast } = useToast()
     const [createMilestone] = useCreateMilestoneMutation()
+    const [deleteMilestone] = useDeleteMilestoneMutation()
     const [createDocument, { isLoading: isCreatingDocument }] = useCreateDocumentMutation()
     const [deleteDocument] = useDeleteDocumentMutation()
     const { data: documents = [], isLoading: isLoadingDocuments } = useGetProjectDocumentsQuery(draftProjectId ?? 0, {
         skip: !draftProjectId,
+    })
+    const { data: savedMilestones } = useGetProjectMilestonesQuery(draftProjectId ?? 0, {
+        skip: !draftProjectId || isProjectDraft,
     })
     const draftProject = useAppSelector((state) => state.projects.items.find((project) => project.project_id === draftProjectId))
     const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
@@ -190,7 +200,7 @@ export function CreateProjectModal({
     const descriptionRef = useRef(description)
     const hydratedProjectIdRef = useRef<number | null>(null)
 
-    const getDraftProperties = (isDraft = true) => ({
+    const getProjectProperties = (isDraft = isProjectDraft) => ({
         project_title: projectTitle.trim() || "Untitled project",
         short_summary: shortSummary,
         status,
@@ -202,9 +212,9 @@ export function CreateProjectModal({
         labels,
         dependencies,
         description,
-        milestones,
+        milestones: isDraft ? milestones : [],
         is_draft: isDraft,
-        draft_updated_at: new Date().toISOString(),
+        draft_updated_at: isDraft ? new Date().toISOString() : undefined,
     })
 
     useEffect(() => {
@@ -217,15 +227,11 @@ export function CreateProjectModal({
         if (!draftProjectId || !draftProject || hydratedProjectIdRef.current === draftProjectId) return
 
         const properties = draftProject.properties as Record<string, any>
-        if (!properties.is_draft) {
-            router.replace(`/projects/${draftProjectId}`)
-            return
-        }
-
-        const savedMilestones = Array.isArray(properties.milestones) ? properties.milestones : []
+        const projectIsDraft = Boolean(properties.is_draft)
+        const draftMilestones = Array.isArray(properties.milestones) ? properties.milestones : []
         const savedDescription = properties.description ?? ""
 
-        setProjectTitle(properties.is_draft && properties.project_title === "Untitled project" ? "" : properties.project_title ?? "")
+        setProjectTitle(projectIsDraft && properties.project_title === "Untitled project" ? "" : properties.project_title ?? "")
         setShortSummary(properties.short_summary ?? "")
         setStatus(properties.status ?? "Backlog")
         setPriority(properties.priority ?? "None")
@@ -236,11 +242,25 @@ export function CreateProjectModal({
         setLabels((properties.labels ?? []).map((label: string | number) => label.toString()))
         setDependencies((properties.dependencies ?? []).map((dependency: string | number) => dependency.toString()))
         setDescription(savedDescription)
-        setMilestones(savedMilestones)
+        setMilestones(projectIsDraft ? draftMilestones : [])
+        setIsProjectDraft(projectIsDraft)
         descriptionRef.current = savedDescription
         hydratedProjectIdRef.current = draftProjectId
         setHasHydratedDraft(true)
-    }, [draftProject, draftProjectId, router])
+    }, [draftProject, draftProjectId])
+
+    useEffect(() => {
+        if (isProjectDraft || !hasHydratedDraft || !savedMilestones) return
+
+        setMilestones(savedMilestones.map((milestone) => ({
+            id: `saved-${milestone.milestone_id}`,
+            milestoneId: milestone.milestone_id,
+            title: milestone.title,
+            description: milestone.description ?? "",
+            estimated_start_date: milestone.estimated_start_date ?? undefined,
+            estimated_end_date: milestone.estimated_end_date ?? undefined,
+        })))
+    }, [hasHydratedDraft, isProjectDraft, savedMilestones])
 
     useEffect(() => {
         if (!draftProjectId || !hasHydratedDraft || isSubmitting) return
@@ -248,7 +268,7 @@ export function CreateProjectModal({
         const timeout = window.setTimeout(() => {
             dispatch(updateProject({
                 projectId: draftProjectId,
-                updates: getDraftProperties(true),
+                updates: getProjectProperties(),
             }))
         }, 800)
 
@@ -270,6 +290,7 @@ export function CreateProjectModal({
         dependencies,
         description,
         milestones,
+        isProjectDraft,
     ])
 
     useEffect(() => {
@@ -327,13 +348,14 @@ export function CreateProjectModal({
             await dispatch(updateProject({
                 projectId: draftProjectId,
                 updates: {
-                    ...getDraftProperties(false),
+                    ...getProjectProperties(false),
                     milestones: [],
                 },
             })).unwrap()
 
+            const unsavedMilestones = milestones.filter((milestone) => !milestone.milestoneId)
             const milestoneResults = await Promise.allSettled(
-                milestones.map((milestone, index) => createMilestone({
+                unsavedMilestones.map((milestone) => createMilestone({
                     projectId: draftProjectId,
                     milestone: {
                         project_id: draftProjectId,
@@ -341,7 +363,7 @@ export function CreateProjectModal({
                         description: milestone.description || undefined,
                         estimated_start_date: milestone.estimated_start_date,
                         estimated_end_date: milestone.estimated_end_date,
-                        order_index: index,
+                        order_index: milestones.findIndex((item) => item.id === milestone.id),
                     },
                 }).unwrap()),
             )
@@ -355,23 +377,26 @@ export function CreateProjectModal({
                     : null,
             ].filter(Boolean)
 
+            const wasDraft = isProjectDraft
+            setIsProjectDraft(false)
             toast({
-                title: "Project created",
+                title: wasDraft ? "Project created" : "Project updated",
                 description: failedMilestones > 0
                     ? `${failedMilestones} milestone${failedMilestones === 1 ? "" : "s"} could not be created.`
                     : createdItems.length > 0
-                        ? `Project with ${createdItems.join(" and ")} created.`
-                        : "Your project is ready.",
+                        ? `Project with ${createdItems.join(" and ")} ${wasDraft ? "created" : "updated"}.`
+                        : wasDraft ? "Your project is ready." : "Your changes have been saved.",
                 variant: failedMilestones > 0 ? "destructive" : "default",
             })
 
-            setHasHydratedDraft(false)
-            onOpenChange(false)
+            if (wasDraft) {
+                router.replace(`/projects/${draftProjectId}`)
+            }
 
         } catch (error) {
             console.error("Failed to create project:", error)
             toast({
-                title: "Project could not be created",
+                title: isProjectDraft ? "Project could not be created" : "Project could not be updated",
                 description: "Check the project details and try again.",
                 variant: "destructive",
             })
@@ -386,7 +411,7 @@ export function CreateProjectModal({
         try {
             await dispatch(updateProject({
                 projectId: draftProjectId,
-                updates: getDraftProperties(true),
+                updates: getProjectProperties(),
             })).unwrap()
             const document = await createDocument({
                 projectId: draftProjectId,
@@ -398,7 +423,7 @@ export function CreateProjectModal({
                 },
             }).unwrap()
 
-            router.push(`/projects/${draftProjectId}/documents/${document.document_id}?from=project-draft`)
+            router.push(`/projects/${draftProjectId}/documents/${document.document_id}`)
         } catch (error) {
             console.error("Failed to create document draft:", error)
             toast({
@@ -415,12 +440,12 @@ export function CreateProjectModal({
         try {
             await dispatch(updateProject({
                 projectId: draftProjectId,
-                updates: getDraftProperties(true),
+                updates: getProjectProperties(),
             })).unwrap()
         } catch (error) {
             console.error("Failed to save project draft before opening document:", error)
         }
-        router.push(`/projects/${draftProjectId}/documents/${documentId}?from=project-draft`)
+        router.push(`/projects/${draftProjectId}/documents/${documentId}`)
     }
 
     const handleCloseDraft = async () => {
@@ -428,7 +453,7 @@ export function CreateProjectModal({
             try {
                 await dispatch(updateProject({
                     projectId: draftProjectId,
-                    updates: getDraftProperties(true),
+                    updates: getProjectProperties(),
                 })).unwrap()
             } catch (error) {
                 console.error("Failed to save project draft before closing:", error)
@@ -455,7 +480,7 @@ export function CreateProjectModal({
                                 </div>
                                 <div className="min-w-0 flex-1 space-y-2">
                                     <div className="flex items-center gap-1.5 px-1 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/70">
-                                        <span>Draft</span>
+                                        <span>{isProjectDraft ? "Draft" : "Project"}</span>
                                         <span aria-hidden="true">·</span>
                                         <span>#{draftProjectId}</span>
                                     </div>
@@ -503,7 +528,25 @@ export function CreateProjectModal({
                         <DraftMilestonesSection
                             milestones={milestones}
                             onAdd={() => setIsMilestoneDialogOpen(true)}
-                            onRemove={(milestoneId) => setMilestones((current) => current.filter((item) => item.id !== milestoneId))}
+                            onRemove={async (milestone) => {
+                                if (milestone.milestoneId && draftProjectId) {
+                                    try {
+                                        await deleteMilestone({
+                                            milestoneId: milestone.milestoneId,
+                                            projectId: draftProjectId,
+                                        }).unwrap()
+                                    } catch (error) {
+                                        console.error("Failed to delete milestone:", error)
+                                        toast({
+                                            title: "Milestone could not be removed",
+                                            description: "Please try again.",
+                                            variant: "destructive",
+                                        })
+                                        return
+                                    }
+                                }
+                                setMilestones((current) => current.filter((item) => item.id !== milestone.id))
+                            }}
                         />
 
                         <div className="mt-auto flex items-center justify-end gap-2 pt-8">
@@ -518,7 +561,9 @@ export function CreateProjectModal({
                                 disabled={isSubmitting || !hasHydratedDraft || !draftProjectId || !projectTitle.trim() || !hasActiveTeam}
                             >
                                 {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-                                {isSubmitting ? "Creating…" : "Create project"}
+                                {isSubmitting
+                                    ? isProjectDraft ? "Creating…" : "Saving…"
+                                    : isProjectDraft ? "Create project" : "Save changes"}
                             </Button>
                         </div>
                     </div>
@@ -730,7 +775,7 @@ function DraftMilestonesSection({
 }: {
     milestones: DraftMilestone[]
     onAdd: () => void
-    onRemove: (milestoneId: string) => void
+    onRemove: (milestone: DraftMilestone) => void
 }) {
     return (
         <section className="mt-5 border-t border-border/50 pt-5">
@@ -794,7 +839,7 @@ function DraftMilestonesSection({
                                     variant="ghost"
                                     size="icon-sm"
                                     className="size-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                    onClick={() => onRemove(milestone.id)}
+                                    onClick={() => onRemove(milestone)}
                                     aria-label={`Remove ${milestone.title}`}
                                 >
                                     <Trash2 className="size-3.5 text-muted-foreground" />

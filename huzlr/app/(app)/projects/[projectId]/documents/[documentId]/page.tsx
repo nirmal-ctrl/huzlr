@@ -26,7 +26,7 @@ export default function DocumentPage() {
     // Find current project
     const project = projects.find(p => p.project_id?.toString() === projectId)
     const isProjectDraft = Boolean(project?.properties?.is_draft)
-    const projectReturnPath = isProjectDraft ? `/projects/new?draft=${projectId}` : `/projects/${projectId}`
+    const projectReturnPath = `/projects/${projectId}`
 
     const { data: document, isLoading: isLoadingDocs } = useGetDocumentQuery(parseInt(documentId), {
         skip: !project

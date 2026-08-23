@@ -329,7 +329,7 @@ export function createTitleColumn<TData>(accessorKey: string, header: string = "
 
             return (
                 <Link
-                    href={isDraft ? `/projects/new?draft=${projectId}` : `/projects/${projectId}`}
+                    href={`/projects/${projectId}`}
                     className="flex items-center gap-2 text-foreground font-medium hover:underline"
                 >
                     <span>{title}</span>
