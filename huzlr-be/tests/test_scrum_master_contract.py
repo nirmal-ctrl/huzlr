@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from fastapi import HTTPException
+from cryptography.fernet import InvalidToken
 from pydantic import ValidationError
 
 from api.v1.endpoints.scrum_master import (
@@ -12,6 +13,7 @@ from api.v1.endpoints.scrum_master import (
     _google_meet_url,
     _is_google_meet_url,
     _refresh_calendar_access_token,
+    _valid_calendar_access_token,
 )
 from models.scrum_master import ScrumMeeting
 from schemas.scrum_master import ScrumMasterSettingsUpdate, WorkerStatusUpdate
@@ -161,6 +163,21 @@ class CalendarTokenTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(connection.access_token, "encrypted-new-access")
         self.assertGreater(connection.token_expires_at, datetime.now(timezone.utc))
         db.flush.assert_awaited_once()
+
+    async def test_undecryptable_calendar_token_requires_reconnect(self):
+        connection = SimpleNamespace(
+            id=10,
+            access_token="encrypted-with-another-key",
+            refresh_token="encrypted-refresh",
+            token_expires_at=None,
+        )
+
+        with patch("api.v1.endpoints.scrum_master.decrypt_token", side_effect=InvalidToken):
+            with self.assertRaises(HTTPException) as raised:
+                await _valid_calendar_access_token(SimpleNamespace(), connection)
+
+        self.assertEqual(raised.exception.status_code, 409)
+        self.assertIn("Reconnect", raised.exception.detail)
 
     async def test_calendar_list_uses_google_default_event_type_filter(self):
         response = MagicMock(status_code=200)

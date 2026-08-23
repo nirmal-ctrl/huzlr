@@ -7,6 +7,7 @@ from typing import Annotated, Literal, Optional
 from urllib.parse import urlencode, urlparse
 
 import httpx
+from cryptography.fernet import InvalidToken
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, status
 from fastapi.responses import RedirectResponse, Response
 from jose import JWTError, jwt
@@ -179,9 +180,16 @@ async def _valid_calendar_access_token(db: AsyncSession, connection: GoogleCalen
     expires_at = connection.token_expires_at
     if expires_at and expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if not expires_at or expires_at > now + timedelta(minutes=1):
-        return decrypt_token(connection.access_token)
-    return await _refresh_calendar_access_token(db, connection)
+    try:
+        if not expires_at or expires_at > now + timedelta(minutes=1):
+            return decrypt_token(connection.access_token)
+        return await _refresh_calendar_access_token(db, connection)
+    except InvalidToken as exc:
+        logger.warning(
+            "Stored Google Calendar credentials cannot be decrypted for connection %s; reconnect required",
+            connection.id,
+        )
+        raise _calendar_reconnect_required() from exc
 
 
 @router.get("/settings", response_model=ScrumMasterSettingsResponse)
