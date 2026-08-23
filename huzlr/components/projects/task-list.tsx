@@ -4,12 +4,11 @@ import React, { useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Task } from "@/lib/types"
 import { DataTable } from "@/components/data-table"
-import { DataTableSkeleton } from "@/components/data-table-skeleton"
 import { ColumnDef } from "@tanstack/react-table"
 import { buildColumnsFromProperties } from "@/components/properties/table-builder"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { fetchPropertyDefinitions } from "@/lib/redux/slices/metaSlice"
-import { CheckCircle2, Trash2, Maximize2 } from "lucide-react"
+import { CheckCircle2, Trash2, Maximize2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TaskDetailsDrawer } from "./task-details-drawer"
 
@@ -26,13 +25,12 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
     const params = useParams()
     const router = useRouter()
     const teamId = params.teamId as string
-    
-    // Load schema definitions from Redux
+
     const entityType = "task"
     const schemaDefinitions = useAppSelector(state => state.meta.propertyDefinitions[entityType])
     const isSchemaLoading = useAppSelector(state => state.meta.loading[entityType])
     const projects = useAppSelector(state => state.projects.items)
-    
+
     const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
     const [isDrawerOpen, setIsDrawerOpen] = React.useState(false)
 
@@ -50,7 +48,7 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                 cell: ({ row }) => {
                     const t = row.original
                     return (
-                        <button 
+                        <button
                             className="shrink-0 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                             onClick={() => onUpdateTask(t.id!, { status: t.status === "completed" ? "pending" : "completed" })}
                         >
@@ -93,7 +91,7 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
             },
         ]
 
-        const dynamicColumns = schemaDefinitions 
+        const dynamicColumns = schemaDefinitions
             ? buildColumnsFromProperties<Task>(schemaDefinitions)
             : []
 
@@ -105,9 +103,9 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                     const t = row.original
                     return (
                         <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 sm:h-6 sm:w-6 text-muted-foreground hover:text-foreground"
                                 onClick={() => {
                                     const project = projects.find(p => p.project_id === t.project_id)
@@ -120,9 +118,9 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
                             >
                                 <Maximize2 className="w-3.5 h-3.5" />
                             </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 onClick={() => onDeleteTask(t.id!)}
                                 aria-label="Delete issue"
@@ -140,21 +138,25 @@ export function TaskList({ tasks, projectId, isLoading, onUpdateTask, onDeleteTa
     }, [schemaDefinitions, onUpdateTask, onDeleteTask, projects, router, teamId])
 
     if (isLoading || isSchemaLoading) {
-        return <DataTableSkeleton rows={3} />
+        return (
+            <div className="flex min-h-[240px] flex-1 items-center justify-center" role="status" aria-label="Loading issues">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        )
     }
 
     return (
         <>
             <div className="group/table min-w-0 w-full">
-                <DataTable 
-                    data={tasks} 
+                <DataTable
+                    data={tasks}
                     columns={columns}
                     entityType="task"
                     getRowId={(row) => row.id!.toString()}
                 />
             </div>
-            
-            <TaskDetailsDrawer 
+
+            <TaskDetailsDrawer
                 task={selectedTask}
                 open={isDrawerOpen}
                 onOpenChange={(open) => {
