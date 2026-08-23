@@ -19,7 +19,7 @@ export default function Hero() {
         alt: "Humans and AI workers coordinating through connected systems",
         width: 1672,
         height: 941,
-        src: "/aiworkers.png",
+        src: "/aiworkrs.png",
       }}
     />
   )
