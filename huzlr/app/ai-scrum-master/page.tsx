@@ -1,4 +1,3 @@
-import type { Metadata } from "next"
 import {
   AlertTriangle,
   ArrowRight,
@@ -17,27 +16,17 @@ import { Navigation } from "@/components/navigation"
 import { TrackedLink } from "@/components/tracked-link"
 import { Button } from "@/components/ui/button"
 import { NoiseTexture } from "@/components/ui/noise-texture"
-import { absoluteUrl, serializeJsonLd, siteConfig } from "@/lib/seo"
+import { absoluteUrl, createMarketingMetadata, serializeJsonLd, siteConfig } from "@/lib/seo"
 
 const description =
   "Run focused Google Meet standups with an AI Scrum Master that follows workspace join rules and produces transcripts, summaries, blockers, decisions, and proposed action items."
 
-export const metadata: Metadata = {
+export const metadata = createMarketingMetadata({
   title: "AI Scrum Master for Google Meet Standups",
   description,
-  alternates: { canonical: "/ai-scrum-master" },
-  openGraph: {
-    title: "AI Scrum Master for Google Meet Standups | huzlr",
-    description,
-    url: "/ai-scrum-master",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "AI Scrum Master for Google Meet Standups | huzlr",
-    description,
-  },
-}
+  path: "/ai-scrum-master",
+  keywords: ["AI Scrum Master", "AI Scrum Master software", "AI Scrum Master tool", "Scrum Master automation", "AI Scrum Master for engineering teams"],
+})
 
 const workflow = [
   {
@@ -146,6 +135,14 @@ export default function AiScrumMasterPage() {
             item: absoluteUrl("/ai-scrum-master"),
           },
         ],
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
       },
     ],
   }

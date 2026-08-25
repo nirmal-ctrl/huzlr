@@ -6,7 +6,7 @@ export default function Hero() {
       eyebrow="Private beta · For AI-native product teams"
       title="The coordination layer for"
       accent="teams working with AI."
-      description="huzlr is an AI project management and delivery coordination platform that keeps humans, AI workers, meetings, and existing tools aligned as work changes."
+      description="huzlr is an AI project manager for engineering teams that coordinates project work, Google Meet standups, blockers, status updates, and reviewable next actions."
       primaryCta={{
         text: "Join the waitlist",
         href: "/signup",

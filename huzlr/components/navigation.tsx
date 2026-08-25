@@ -5,12 +5,16 @@ import type { LucideIcon } from "lucide-react"
 import {
   BookOpen,
   Bot,
+  BriefcaseBusiness,
   CalendarCheck,
   ChevronDown,
   FileChartColumn,
+  FileText,
   FolderKanban,
+  GitCompareArrows,
   Layers3,
   ShieldAlert,
+  UsersRound,
 } from "lucide-react"
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
@@ -45,6 +49,13 @@ interface MenuLink {
 
 const productLinks: MenuLink[] = [
   {
+    label: "AI Project Manager",
+    href: "/ai-project-manager",
+    description: "Coordinate engineering work across projects, meetings, blockers, and next actions.",
+    icon: Bot,
+    status: "Private beta",
+  },
+  {
     label: "AI Scrum Master",
     href: "/ai-scrum-master",
     description: "Facilitate Google Meet standups and create reviewable outputs.",
@@ -74,6 +85,23 @@ const productLinks: MenuLink[] = [
   },
 ]
 
+const solutionLinks: MenuLink[] = [
+  {
+    label: "Delivery leaders",
+    href: "/solutions/delivery-leaders",
+    description: "Reduce status chasing and review delivery signals across projects.",
+    icon: UsersRound,
+    status: "Preview",
+  },
+  {
+    label: "Agencies",
+    href: "/solutions/agencies",
+    description: "Keep client delivery context and reporting workflows reviewable.",
+    icon: BriefcaseBusiness,
+    status: "Preview",
+  },
+]
+
 const integrationLinks: MenuLink[] = [
   {
     label: "Jira",
@@ -84,7 +112,7 @@ const integrationLinks: MenuLink[] = [
   },
   {
     label: "Google Meet workflow",
-    href: "/ai-scrum-master",
+    href: "/integrations/google-meet",
     description: "See the implemented calendar, meeting-agent, and output controls.",
     icon: CalendarCheck,
     status: "Private beta",
@@ -104,6 +132,18 @@ const resourceLinks: MenuLink[] = [
     description: "Proof and implementation stories from teams using huzlr.",
     icon: Layers3,
   },
+  {
+    label: "Status report template",
+    href: "/templates/project-status-report",
+    description: "Copy a review-first weekly project update structure.",
+    icon: FileText,
+  },
+  {
+    label: "Compare workflows",
+    href: "/compare",
+    description: "Evaluate AI project management by collection model and action boundary.",
+    icon: GitCompareArrows,
+  },
 ]
 
 export function Navigation() {
@@ -116,7 +156,7 @@ export function Navigation() {
 
 function Navbar({ className }: { className?: string }) {
   return (
-    <div className={cn("fixed inset-x-0 top-6 z-50 mx-auto max-w-6xl px-4", className)}>
+    <div className={cn("fixed inset-x-0 top-6 z-50 mx-auto max-w-5xl px-4", className)}>
       <nav className="relative flex items-center justify-between gap-4 rounded-full border border-hairline bg-paper/90 py-2.5 pl-6 pr-3 shadow-sm shadow-ink/5 backdrop-blur-xl">
         <Logo />
 
@@ -126,8 +166,8 @@ function Navbar({ className }: { className?: string }) {
               <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/60 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
                 Product
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="p-3 md:w-[760px]">
-                <div className="grid gap-3 md:grid-cols-[0.78fr_1.22fr]">
+              <NavigationMenuContent className="p-3 md:w-[880px]">
+                <div className="grid gap-3 md:grid-cols-[0.68fr_1.32fr]">
                   <NavigationMenuLink asChild className="p-0">
                     <Link
                       href="/product"
@@ -141,8 +181,15 @@ function Navbar({ className }: { className?: string }) {
                       <span className="mt-8 text-sm font-medium text-paper/70 transition-colors group-hover:text-paper">Explore the product →</span>
                     </Link>
                   </NavigationMenuLink>
-                  <div className="grid gap-1 sm:grid-cols-2">
-                    {productLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
+                  <div>
+                    <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">Product workflows</p>
+                    <div className="grid gap-1 sm:grid-cols-2">
+                      {productLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
+                    </div>
+                    <p className="mx-4 mt-2 border-t border-hairline px-0 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">For teams</p>
+                    <div className="grid gap-1 sm:grid-cols-2">
+                      {solutionLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
+                    </div>
                   </div>
                 </div>
               </NavigationMenuContent>
@@ -166,7 +213,7 @@ function Navbar({ className }: { className?: string }) {
               <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/60 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
                 Resources
               </NavigationMenuTrigger>
-              <NavigationMenuContent className="p-3 md:w-[520px]">
+              <NavigationMenuContent className="p-3 md:w-[640px]">
                 <div className="grid gap-2 sm:grid-cols-2">
                   {resourceLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
                 </div>
@@ -195,12 +242,18 @@ function Navbar({ className }: { className?: string }) {
                 <MobileMenuItem label="Product overview" href="/product" />
                 {productLinks.map((item) => <MobileMenuItem key={item.href} label={item.label} href={item.href} />)}
                 <DropdownMenuSeparator />
+                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Solutions</DropdownMenuLabel>
+                {solutionLinks.map((item) => <MobileMenuItem key={item.href} label={item.label} href={item.href} />)}
+                <DropdownMenuSeparator />
                 <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Integrations</DropdownMenuLabel>
                 <MobileMenuItem label="Jira" href="/integrations/jira" />
+                <MobileMenuItem label="Google Meet" href="/integrations/google-meet" />
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Resources</DropdownMenuLabel>
                 <MobileMenuItem label="Blog" href="/blog" />
                 <MobileMenuItem label="Case studies" href="/case-studies" />
+                <MobileMenuItem label="Status report template" href="/templates/project-status-report" />
+                <MobileMenuItem label="Compare workflows" href="/compare" />
                 <MobileMenuItem label="Why huzlr" href="/#why-huzlr" />
               </DropdownMenuContent>
             </DropdownMenu>

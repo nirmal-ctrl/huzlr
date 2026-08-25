@@ -3,9 +3,9 @@ import type { Metadata } from "next"
 export const siteConfig = {
   name: "huzlr",
   url: "https://www.huzlr.com",
-  title: "AI Delivery Coordination for Hybrid Teams",
+  title: "AI Project Manager for Engineering Teams",
   description:
-    "huzlr is an AI project management and delivery coordination platform that keeps people, AI workers, meetings, and existing tools aligned as work changes.",
+    "huzlr is an AI project manager for engineering teams that coordinates projects, Google Meet standups, blockers, status updates, and reviewable next actions.",
 } as const
 
 export function absoluteUrl(path = "/") {
@@ -20,16 +20,19 @@ export function createMarketingMetadata({
   title,
   description,
   path,
+  keywords,
 }: {
   title: string
   description: string
   path: string
+  keywords?: string[]
 }): Metadata {
   const socialTitle = `${title} | ${siteConfig.name}`
 
   return {
     title,
     description,
+    keywords,
     alternates: { canonical: path },
     openGraph: {
       title: socialTitle,

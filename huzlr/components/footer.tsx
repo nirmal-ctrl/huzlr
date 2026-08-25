@@ -10,6 +10,7 @@ export function Footer() {
       heading: "Product",
       links: [
         { label: "Product overview", href: "/product" },
+        { label: "AI Project Manager", href: "/ai-project-manager" },
         { label: "AI Scrum Master", href: "/ai-scrum-master" },
         { label: "Automated standups", href: "/automated-daily-standups" },
         { label: "Status reporting", href: "/automated-project-status-reporting" },
@@ -17,10 +18,17 @@ export function Footer() {
       ],
     },
     {
+      heading: "Solutions",
+      links: [
+        { label: "Delivery leaders", href: "/solutions/delivery-leaders" },
+        { label: "Agencies", href: "/solutions/agencies" },
+      ],
+    },
+    {
       heading: "Integrations",
       links: [
         { label: "Jira", href: "/integrations/jira" },
-        { label: "Google Meet", href: "/ai-scrum-master" },
+        { label: "Google Meet", href: "/integrations/google-meet" },
       ],
     },
     {
@@ -28,6 +36,8 @@ export function Footer() {
       links: [
         { label: "Blog", href: "/blog" },
         { label: "Case Studies", href: "/case-studies" },
+        { label: "Status report template", href: "/templates/project-status-report" },
+        { label: "Compare", href: "/compare" },
         { label: "FAQ", href: "/#faq" },
       ],
     },
@@ -43,7 +53,7 @@ export function Footer() {
   return (
     <footer className="border-t border-hairline py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-6">
+        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-7">
           {/* Brand */}
           <div className="col-span-2 space-y-4">
             <Logo size="lg" />

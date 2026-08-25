@@ -9,12 +9,19 @@ import { CommercialPage, type CommercialPageConfig } from "@/components/marketin
 import { createMarketingMetadata } from "@/lib/seo"
 
 const description =
-  "Turn explicitly stated blockers and project context into reviewable delivery-risk signals. Join huzlr's design-partner preview for project risk detection."
+  "Explore review-first AI project risk detection for stated blockers, dependencies, and delivery context—without presenting project delay prediction as certainty."
 
 export const metadata = createMarketingMetadata({
-  title: "Project Risk Detection for Delivery Teams",
+  title: "AI Project Risk Detection and Blocker Signals",
   description,
   path: "/project-risk-detection",
+  keywords: [
+    "AI project risk detection",
+    "AI project risk management software",
+    "project blocker detection",
+    "project risk prediction",
+    "project early warning system",
+  ],
 })
 
 const config = {
@@ -22,7 +29,7 @@ const config = {
   name: "Project Risk Detection",
   eyebrow: "Delivery risk signals",
   status: "Design-partner preview",
-  title: <>Surface the blocker while the team can still <em className="italic text-clay">change the outcome.</em></>,
+  title: <>AI project risk detection while the team can still <em className="italic text-clay">change the outcome.</em></>,
   description,
   proofNote: "The current beta can retain blockers stated in meeting outputs and project risk state. Predictive cross-tool detection is not generally available today.",
   previewLabel: "Risk review",
@@ -52,15 +59,15 @@ const config = {
     "A generally available portfolio risk dashboard with validated alert quality.",
   ],
   faqs: [
+    { question: "What is AI project risk detection?", answer: "It is the use of project signals to surface possible delivery risk for review. huzlr currently retains explicit blockers and risk state; it does not claim generally available predictive delay scoring." },
     { question: "Does huzlr predict project delays today?", answer: "No generally available predictive model is claimed. The current beta can retain stated blockers and project state; broader cross-tool detection is a design-partner workflow." },
     { question: "What counts as a risk signal?", answer: "Examples include an explicitly stated blocker, a changed delivery date, an unresolved dependency, or an at-risk project state. A human should still confirm impact and response." },
     { question: "Will huzlr assign a risk owner automatically?", answer: "Not when the source context did not establish one. The intended workflow preserves uncertainty and requests confirmation." },
-    { question: "Who should join the preview?", answer: "Delivery and engineering leaders who can provide real risk-review workflows and evaluate whether signals are timely, explainable, and actionable." },
   ],
   related: [
     { href: "/automated-project-status-reporting", label: "Status reporting", description: "Carry confirmed risks into a reviewed stakeholder update." },
-    { href: "/ai-scrum-master", label: "AI Scrum Master", description: "Capture the blockers and decisions voiced during live standups." },
-    { href: "/product", label: "Product overview", description: "See how risk signals fit into the broader coordination model." },
+    { href: "/solutions/delivery-leaders", label: "For delivery leaders", description: "Connect risk signals to portfolio review and intervention decisions." },
+    { href: "/ai-project-manager", label: "AI project manager", description: "See how risk signals fit into the broader coordination model." },
   ],
   ctaTitle: "Design a risk signal your team will act on—not ignore.",
   ctaDescription: "Join the design-partner preview to validate signals, explanations, review controls, and intervention timing.",

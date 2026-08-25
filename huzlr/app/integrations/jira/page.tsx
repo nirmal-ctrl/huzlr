@@ -9,12 +9,19 @@ import { CommercialPage, type CommercialPageConfig } from "@/components/marketin
 import { createMarketingMetadata } from "@/lib/seo"
 
 const description =
-  "Connect Jira to huzlr through Atlassian OAuth and help shape a review-first workflow for bringing Jira delivery context into AI coordination."
+  "Connect Jira through Atlassian OAuth and help shape a review-first Jira AI project manager workflow for project context, standups, status reports, and proposed updates."
 
 export const metadata = createMarketingMetadata({
-  title: "Jira Integration for AI Delivery Coordination",
+  title: "Jira AI Project Manager Integration",
   description,
   path: "/integrations/jira",
+  keywords: [
+    "Jira AI project manager",
+    "AI project manager for Jira",
+    "AI Scrum Master for Jira",
+    "Jira status report automation",
+    "automated Jira updates",
+  ],
 })
 
 const config = {
@@ -22,7 +29,7 @@ const config = {
   name: "Jira Integration",
   eyebrow: "Jira integration",
   status: "Connection beta",
-  title: <>Keep Jira as the system of record. Add a layer for <em className="italic text-clay">coordination.</em></>,
+  title: <>A Jira AI project manager that keeps Jira as the <em className="italic text-clay">system of record.</em></>,
   description,
   proofNote: "Atlassian OAuth connection and encrypted credential storage are implemented. Live production project import, continuous sync, and write-back are not generally available yet.",
   previewLabel: "Connected system",
@@ -52,15 +59,15 @@ const config = {
     "Automatic Jira issue creation or updates from meeting action items.",
   ],
   faqs: [
+    { question: "What would a Jira AI project manager do?", answer: "The intended workflow uses selected Jira context to support coordination, standup records, reviewed status reports, and proposed actions. Live issue import and write-back are still in production validation." },
     { question: "Can I import live Jira projects today?", answer: "Not as a generally available production workflow. The OAuth connection is implemented, while the current project-selection experience still uses demonstration data." },
     { question: "Does huzlr replace Jira?", answer: "No. The product direction keeps Jira as a system of record and adds coordination around meetings, project context, blockers, and next actions." },
     { question: "Are Jira credentials stored securely?", answer: "The backend encrypts the access and refresh tokens before storing the connection. Production security review and operational controls still remain part of rollout." },
-    { question: "Does huzlr write issues automatically?", answer: "No generally available write-back workflow is claimed today. Proposed actions should remain reviewable before they change Jira." },
   ],
   related: [
-    { href: "/product", label: "Product overview", description: "See how connected systems fit into huzlr's broader coordination model." },
+    { href: "/ai-project-manager", label: "AI project manager", description: "See how connected systems fit into huzlr's broader coordination model." },
     { href: "/automated-project-status-reporting", label: "Status reporting", description: "Explore the reviewed reporting workflow that Jira context can eventually support." },
-    { href: "/ai-scrum-master", label: "AI Scrum Master", description: "Capture meeting decisions and proposed actions before any system-of-record update." },
+    { href: "/integrations/google-meet", label: "Google Meet", description: "Capture meeting decisions and proposed actions before any system-of-record update." },
   ],
   ctaTitle: "Help define the Jira workflow your delivery team will trust.",
   ctaDescription: "Join the private beta to validate project selection, field mapping, review controls, and the right boundary for write-back.",

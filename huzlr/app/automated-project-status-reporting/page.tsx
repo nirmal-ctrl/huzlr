@@ -9,20 +9,27 @@ import { CommercialPage, type CommercialPageConfig } from "@/components/marketin
 import { createMarketingMetadata } from "@/lib/seo"
 
 const description =
-  "Turn project records and standup outputs into a reviewable project status update. Join huzlr's design-partner preview for automated project status reporting."
+  "Automate project status updates from project records and standup outputs. Shape huzlr's review-first AI project status report and stakeholder update workflow."
 
 export const metadata = createMarketingMetadata({
-  title: "Automated Project Status Reporting",
+  title: "Automate Project Status Updates with AI",
   description,
   path: "/automated-project-status-reporting",
+  keywords: [
+    "automate project status updates",
+    "AI project status report",
+    "automated project status updates",
+    "project status report automation",
+    "stakeholder update automation",
+  ],
 })
 
 const config = {
   path: "/automated-project-status-reporting",
   name: "Automated Project Status Reporting",
-  eyebrow: "Project status reporting",
+  eyebrow: "AI project status reporting",
   status: "Design-partner preview",
-  title: <>Build the update from delivery context—not another <em className="italic text-clay">status chase.</em></>,
+  title: <>Automate project status updates—not another <em className="italic text-clay">status chase.</em></>,
   description,
   proofNote: "Scheduled cross-tool report generation and stakeholder delivery are not generally available today; the current beta provides the meeting and project records that this workflow will use.",
   previewLabel: "Weekly delivery update",
@@ -52,15 +59,15 @@ const config = {
     "Automatic stakeholder delivery without an explicit review step.",
   ],
   faqs: [
+    { question: "What is an AI project status report?", answer: "It is a project update assembled from delivery context such as progress, decisions, blockers, and next actions. In huzlr's intended workflow, a delivery owner reviews the draft before stakeholders receive it." },
     { question: "Can huzlr send our weekly report today?", answer: "Not as a generally available, scheduled workflow. The current private beta captures project and meeting context; automated report assembly and delivery are being developed with design partners." },
     { question: "Will the report invent missing owners or dates?", answer: "It should not. The intended workflow preserves unknown values and asks the delivery owner to review the draft before sharing." },
     { question: "Which inputs can be used now?", answer: "The current product stores huzlr project and issue records and can generate enabled meeting outputs from Google Meet standups. Broader live connector coverage remains limited." },
-    { question: "Who is this preview for?", answer: "Delivery leaders, engineering managers, agencies, and project managers willing to shape a review-first reporting workflow during private beta." },
   ],
   related: [
-    { href: "/ai-scrum-master", label: "AI Scrum Master", description: "Capture the decisions and blockers raised during a Google Meet standup." },
-    { href: "/automated-daily-standups", label: "Automated standups", description: "Use an explicit meeting policy to produce a consistent standup record." },
-    { href: "/project-risk-detection", label: "Risk detection", description: "See how stated blockers can become a reviewable risk signal." },
+    { href: "/templates/project-status-report", label: "Status report template", description: "Use a practical review-first structure for your next weekly update." },
+    { href: "/blog/how-to-automate-project-status-reports", label: "Automation guide", description: "Build the evidence, uncertainty, review, and distribution workflow." },
+    { href: "/solutions/delivery-leaders", label: "For delivery leaders", description: "Connect reporting to portfolio visibility and intervention decisions." },
   ],
   ctaTitle: "Help shape a status update your stakeholders can trust.",
   ctaDescription: "Join the private beta and tell us how your team gathers, reviews, and distributes delivery status today.",

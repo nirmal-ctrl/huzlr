@@ -29,6 +29,23 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
+const huzlrGuides = [
+  {
+    href: "/blog/how-to-automate-project-status-reports",
+    eyebrow: "Project status automation",
+    title: "How to automate project status reports without losing trust",
+    description: "A review-first workflow for evidence, uncertainty, ownership, approval, and stakeholder distribution.",
+    readTime: "8 min",
+  },
+  {
+    href: "/blog/how-we-built-google-meet-ai-agent",
+    eyebrow: "Product build story",
+    title: "How we built a Google Meet AI agent around explicit control",
+    description: "First-hand implementation lessons about calendar eligibility, identity, mixed audio, state, and output boundaries.",
+    readTime: "9 min",
+  },
+]
+
 export default async function BlogIndexPage() {
   let posts: StrapiBlogPost[] = [];
   let errorMsg: string | null = null;
@@ -73,6 +90,19 @@ export default async function BlogIndexPage() {
 
       {/* Blog List Section */}
       <section className="pb-28 px-4 max-w-7xl mx-auto w-full relative z-10">
+        <div className="mb-16 grid gap-5 md:grid-cols-2">
+          {huzlrGuides.map((guide) => (
+            <Link key={guide.href} href={guide.href} className="group rounded-3xl border border-border/60 bg-muted/5 p-7 transition-all hover:border-primary/25 hover:bg-primary/[0.03] sm:p-8">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">{guide.eyebrow}</span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Clock className="size-3.5" />{guide.readTime}</span>
+              </div>
+              <h2 className="mt-6 max-w-xl text-2xl font-bold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-3xl">{guide.title}</h2>
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground">{guide.description}</p>
+              <span className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-primary">Read guide <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" /></span>
+            </Link>
+          ))}
+        </div>
         {errorMsg ? (
           <div className="p-8 rounded-2xl border border-destructive/20 bg-destructive/5 text-destructive text-center max-w-xl mx-auto space-y-2">
             <p className="font-semibold text-lg">Strapi API Connection Error</p>
@@ -83,7 +113,7 @@ export default async function BlogIndexPage() {
           </div>
         ) : posts.length === 0 ? (
           <div className="p-16 text-center border border-dashed border-border rounded-3xl max-w-xl mx-auto space-y-4">
-            <p className="text-muted-foreground font-medium">No blog posts found</p>
+            <p className="text-muted-foreground font-medium">No additional publications found</p>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto">
               Ready to write? Log into your Strapi admin panel and publish your first article to see it show up here!
             </p>

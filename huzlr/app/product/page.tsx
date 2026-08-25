@@ -17,15 +17,29 @@ import { NoiseTexture } from "@/components/ui/noise-texture"
 import { absoluteUrl, createMarketingMetadata, serializeJsonLd, siteConfig } from "@/lib/seo"
 
 const description =
-  "Explore huzlr's AI delivery coordination capabilities for projects, Google Meet standups, meeting outputs, Jira connection, status reporting, and risk signals."
+  "Explore AI project management software for engineering teams that connects project work, Google Meet standups, status reporting, Jira context, and reviewable risk signals."
 
 export const metadata = createMarketingMetadata({
-  title: "AI Delivery Coordination Product",
+  title: "AI Project Management Software for Engineering Teams",
   description,
   path: "/product",
+  keywords: [
+    "AI project management software",
+    "AI project management tool",
+    "project management automation",
+    "AI project coordinator",
+    "AI project manager for engineering teams",
+  ],
 })
 
 const capabilities = [
+  {
+    href: "/ai-project-manager",
+    icon: Bot,
+    title: "AI Project Manager",
+    status: "Private beta",
+    description: "Coordinate engineering projects across workspace records, live meetings, blockers, and reviewable next actions.",
+  },
   {
     href: "/ai-scrum-master",
     icon: Bot,
@@ -111,7 +125,7 @@ export default function ProductPage() {
         <div className="relative mx-auto max-w-5xl text-center">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-clay">huzlr product</p>
           <h1 className="mx-auto mt-6 max-w-4xl font-serif text-5xl font-normal leading-[1.04] tracking-tight text-balance sm:text-6xl lg:text-7xl">
-            One coordination layer for the work between <em className="italic text-clay">meetings and delivery.</em>
+            AI project management software for the work between <em className="italic text-clay">meetings and delivery.</em>
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-base leading-relaxed text-ink/60 sm:text-lg">{description}</p>
           <div className="mt-9 flex flex-wrap justify-center gap-4">
@@ -217,11 +231,11 @@ export default function ProductPage() {
             </Button>
             <Button asChild size="lg" variant="outline" className="h-11 rounded-full border-hairline bg-transparent px-6 text-sm">
               <TrackedLink
-                href="/ai-scrum-master"
+                href="/ai-project-manager"
                 eventName="CTA Click"
-                eventProperties={{ location: "product_bottom", destination: "ai-scrum-master", label: "See AI Scrum Master" }}
+                eventProperties={{ location: "product_bottom", destination: "ai-project-manager", label: "See AI Project Manager" }}
               >
-                See AI Scrum Master
+                See AI Project Manager
               </TrackedLink>
             </Button>
           </div>
