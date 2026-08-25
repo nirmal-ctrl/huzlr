@@ -25,6 +25,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.9,
     },
+    {
+      url: absoluteUrl('/product'),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: absoluteUrl('/automated-project-status-reporting'),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl('/automated-daily-standups'),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl('/project-risk-detection'),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: absoluteUrl('/integrations/jira'),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
   ]
 
   let blogPosts: MetadataRoute.Sitemap = []

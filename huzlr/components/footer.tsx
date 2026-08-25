@@ -9,11 +9,18 @@ export function Footer() {
     {
       heading: "Product",
       links: [
+        { label: "Product overview", href: "/product" },
         { label: "AI Scrum Master", href: "/ai-scrum-master" },
-        { label: "Why huzlr", href: "/#why-huzlr" },
-        { label: "How it works", href: "/#how-it-works" },
-        { label: "Coordination", href: "/#signals" },
-        { label: "Join waitlist", href: "/signup" },
+        { label: "Automated standups", href: "/automated-daily-standups" },
+        { label: "Status reporting", href: "/automated-project-status-reporting" },
+        { label: "Risk detection", href: "/project-risk-detection" },
+      ],
+    },
+    {
+      heading: "Integrations",
+      links: [
+        { label: "Jira", href: "/integrations/jira" },
+        { label: "Google Meet", href: "/ai-scrum-master" },
       ],
     },
     {
@@ -36,7 +43,7 @@ export function Footer() {
   return (
     <footer className="border-t border-hairline py-14 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-6">
           {/* Brand */}
           <div className="col-span-2 space-y-4">
             <Logo size="lg" />
