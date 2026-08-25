@@ -1,22 +1,28 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
+  const privateRoutes = [
+    '/api/',
+    '/auth/',
+    '/dashboard',
+    '/projects',
+    '/issues',
+    '/boards',
+    '/brainstorms',
+    '/teams',
+    '/scrum-master',
+    '/onboarding',
+    '/signup',
+    '/atlassian-callback',
+    '/integrations/jira/callback',
+  ]
+
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: [
-          '/dashboard', 
-          '/projects', 
-          '/boards', 
-          '/brainstorms', 
-          '/teams', 
-          '/onboarding', 
-          '/signup',
-          '/atlassian-callback',
-          '/integrations'
-        ],
+        disallow: privateRoutes,
       },
       {
         userAgent: [
@@ -33,21 +39,11 @@ export default function robots(): MetadataRoute.Robots {
           '/', 
           '/blog', 
           '/case-studies', 
-          '/pricing'
+          '/ai-scrum-master'
         ],
-        disallow: [
-          '/dashboard', 
-          '/projects', 
-          '/boards', 
-          '/brainstorms', 
-          '/teams', 
-          '/onboarding', 
-          '/signup',
-          '/atlassian-callback',
-          '/integrations'
-        ],
+        disallow: privateRoutes,
       }
     ],
-    sitemap: 'https://huzlr.com/sitemap.xml',
+    sitemap: 'https://www.huzlr.com/sitemap.xml',
   }
 }

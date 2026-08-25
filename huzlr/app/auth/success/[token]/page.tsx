@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppDispatch } from '@/lib/redux/hooks'
 import { setToken } from '@/lib/redux/slices/authSlice'
+import { track } from '@vercel/analytics'
 
 export default function AuthSuccessPage({
   params
@@ -18,6 +19,7 @@ export default function AuthSuccessPage({
 
   useEffect(() => {
     if (token) {
+      track('Authentication Completed', { method: 'google' })
       // Store in localStorage
       localStorage.setItem('token', token)
       

@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { track } from "@vercel/analytics"
 import {
   Field,
   FieldDescription,
@@ -18,6 +19,7 @@ export function SignupForm({
 
   const handleGoogleLogin = () => {
     setIsConnecting(true)
+    track("Authentication Started", { method: "google", location: "signup_page" })
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google-login`
   }
 

@@ -1,9 +1,16 @@
+import type { Metadata } from "next"
 import { Bot, BrainCircuit, Network } from "lucide-react"
 
 import { Logo } from "@/components/logo"
 import { SignupForm } from "@/components/signup-form"
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 import { NoiseTexture } from "@/components/ui/noise-texture"
+
+export const metadata: Metadata = {
+  title: "Join the Private Beta",
+  description: "Create a huzlr workspace and request access to the private beta.",
+  robots: { index: false, follow: false },
+}
 
 const capabilities = [
   {

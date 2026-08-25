@@ -1,5 +1,5 @@
-import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { TrackedLink } from "@/components/tracked-link"
 
 export function CTA() {
   return (
@@ -16,12 +16,15 @@ export function CTA() {
           coordination layer your future organization will run on.
         </p>
         <div className="mt-10 flex flex-col items-center gap-4">
-          <Link href="/signup">
-            <button className="group rounded-full bg-clay px-8 py-3.5 text-sm font-medium text-white hover:bg-clay-deep transition-colors flex items-center gap-2">
+          <TrackedLink
+            href="/signup"
+            eventName="CTA Click"
+            eventProperties={{ location: "homepage_bottom", destination: "signup", label: "Join the private beta" }}
+            className="group rounded-full bg-clay px-8 py-3.5 text-sm font-medium text-white hover:bg-clay-deep transition-colors flex items-center gap-2"
+          >
               Join the private beta
               <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </Link>
+          </TrackedLink>
           <p className="text-xs text-ink/50">
             Limited spots during private beta. No credit card required.
           </p>

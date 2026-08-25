@@ -9,6 +9,7 @@ export function Footer() {
     {
       heading: "Product",
       links: [
+        { label: "AI Scrum Master", href: "/ai-scrum-master" },
         { label: "Why huzlr", href: "/#why-huzlr" },
         { label: "How it works", href: "/#how-it-works" },
         { label: "Coordination", href: "/#signals" },

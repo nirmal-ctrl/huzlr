@@ -1,6 +1,9 @@
+import Image from "next/image"
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { NoiseTexture } from "@/components/ui/noise-texture"
+import { TrackedLink } from "@/components/tracked-link"
 import { ArrowRight } from "lucide-react"
 
 interface HeroWithMockupProps {
@@ -102,10 +105,14 @@ export function HeroWithMockup({
             size="lg"
             className="rounded-full bg-clay text-white hover:bg-clay-deep transition-colors h-11 px-6 text-sm font-medium"
           >
-            <a href={primaryCta.href}>
+            <TrackedLink
+              href={primaryCta.href}
+              eventName="CTA Click"
+              eventProperties={{ location: "hero", destination: primaryCta.href, label: primaryCta.text }}
+            >
               {primaryCta.text}
               <ArrowRight className="ml-1.5 h-4 w-4" />
-            </a>
+            </TrackedLink>
           </Button>
 
           {secondaryCta && (
@@ -115,10 +122,14 @@ export function HeroWithMockup({
               variant="ghost"
               className="rounded-full text-ink/70 hover:text-ink hover:bg-sand h-11 px-6 text-sm font-medium"
             >
-              <a href={secondaryCta.href}>
+              <TrackedLink
+                href={secondaryCta.href}
+                eventName="CTA Click"
+                eventProperties={{ location: "hero", destination: secondaryCta.href, label: secondaryCta.text }}
+              >
                 {secondaryCta.icon}
                 {secondaryCta.text}
-              </a>
+              </TrackedLink>
             </Button>
           )}
         </div>
@@ -128,12 +139,11 @@ export function HeroWithMockup({
           <div className="relative w-full max-w-5xl pt-10 animate-appear opacity-0 [animation-delay:600ms]">
             <div className="rounded-xl border border-hairline bg-white/60 dark:bg-white/[0.03] p-2 shadow-[0_24px_60px_-24px_rgba(41,37,31,0.25)]">
               {mockupContent ?? (mockupImage && (
-                <img
+                <Image
                   {...mockupImage}
                   className="w-full h-auto rounded-lg border border-hairline/60"
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                 />
               ))}
             </div>

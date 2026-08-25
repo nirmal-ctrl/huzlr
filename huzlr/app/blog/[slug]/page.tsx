@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { cache } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
@@ -7,23 +8,27 @@ import { Calendar, ArrowLeft, ArrowRight, Clock, Share2, Sparkles } from "lucide
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import type { Metadata } from 'next';
+import { absoluteUrl, serializeJsonLd } from '@/lib/seo';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+const getBlogPost = cache((slug: string) => strapiApi.getBlogPostBySlug(slug));
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const post = await strapiApi.getBlogPostBySlug(slug);
+    const post = await getBlogPost(slug);
     if (!post) return {};
     
     const coverUrl = getStrapiMediaUrl(post.coverImage);
-    const postUrl = `https://huzlr.com/blog/${slug}`;
+    const postUrl = absoluteUrl(`/blog/${slug}`);
 
     return {
-      title: `${post.title} | huzlr Blog`,
+      title: { absolute: `${post.title} | huzlr Blog` },
       description: post.description,
+      alternates: { canonical: postUrl },
       openGraph: {
         title: post.title,
         description: post.description,
@@ -88,7 +93,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
   let post: Partial<StrapiBlogPost> | null = null;
 
   try {
-    post = await strapiApi.getBlogPostBySlug(slug);
+    post = await getBlogPost(slug);
   } catch (error) {
     console.error(`Failed to fetch blog post with slug: ${slug}`, error);
   }
@@ -123,12 +128,12 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
       "name": "huzlr",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://huzlr.com/favicon.png"
+        "url": absoluteUrl('/favicon.png')
       }
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://huzlr.com/blog/${slug}`
+      "@id": absoluteUrl(`/blog/${slug}`)
     }
   }
 
@@ -136,7 +141,7 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       {/* Decorative background grid and gradient */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
@@ -188,9 +193,11 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
             <div className="flex items-center gap-3">
               {avatarUrl ? (
                 <div className="size-11 rounded-full overflow-hidden border border-border bg-muted shrink-0 relative flex items-center justify-center">
-                  <img 
-                    src={avatarUrl} 
-                    alt={post.author?.name || 'Author'} 
+                  <Image
+                    src={avatarUrl}
+                    alt={post.author?.name || 'Author'}
+                    fill
+                    sizes="44px"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -228,9 +235,11 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
         {/* Cover Image */}
         {coverUrl && (
           <div className="w-full aspect-[1.91/1] rounded-3xl overflow-hidden border border-border bg-muted/10 relative flex items-center justify-center shadow-lg">
-            <img 
-              src={coverUrl} 
-              alt={post.title} 
+            <Image
+              src={coverUrl}
+              alt={post.title || 'Article cover'}
+              fill
+              sizes="(max-width: 896px) 100vw, 896px"
               className="w-full h-full object-cover"
             />
           </div>
@@ -253,9 +262,11 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-4">
             {avatarUrl ? (
               <div className="size-14 rounded-full overflow-hidden border border-border bg-muted shrink-0 relative flex items-center justify-center">
-                <img 
-                  src={avatarUrl} 
-                  alt={post.author?.name || 'Author'} 
+                <Image
+                  src={avatarUrl}
+                  alt={post.author?.name || 'Author'}
+                  fill
+                  sizes="56px"
                   className="w-full h-full object-cover"
                 />
               </div>

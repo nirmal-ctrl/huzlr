@@ -12,12 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { TrackedLink } from "@/components/tracked-link";
 
 const navLinks = [
   { label: "Why huzlr", href: "/#why-huzlr" },
   { label: "How it works", href: "/#how-it-works" },
-  { label: "Coordination", href: "/#signals" },
-  { label: "FAQ", href: "/#faq" },
+  { label: "AI Scrum Master", href: "/ai-scrum-master" },
+  { label: "Blog", href: "/blog" },
 ];
 
 export function Navigation() {
@@ -31,7 +32,7 @@ export function Navigation() {
 function Navbar({ className }: { className?: string }) {
   return (
     <div
-      className={cn("fixed top-6 inset-x-0 max-w-3xl mx-auto z-50 px-4", className)}
+      className={cn("fixed top-6 inset-x-0 max-w-5xl mx-auto z-50 px-4", className)}
     >
       <nav className="relative rounded-full border border-hairline bg-paper/80 shadow-sm shadow-ink/5 flex items-center justify-between gap-6 pl-6 pr-3 py-2.5 backdrop-blur-md">
         {/* Logo */}
@@ -78,11 +79,15 @@ function Navbar({ className }: { className?: string }) {
 
           <AnimatedThemeToggler className="h-9 w-9 rounded-full text-ink/60 hover:text-ink hover:bg-sand p-2 flex items-center justify-center transition-colors" />
 
-          <Link href="/signup">
-            <Button className="rounded-full cursor-pointer h-9 px-4 text-[13px] font-medium bg-clay text-white hover:bg-clay-deep transition-colors">
+          <Button asChild className="rounded-full cursor-pointer h-9 px-4 text-[13px] font-medium bg-clay text-white hover:bg-clay-deep transition-colors">
+            <TrackedLink
+              href="/signup"
+              eventName="CTA Click"
+              eventProperties={{ location: "navigation", destination: "signup", label: "Get started" }}
+            >
               Get started
-            </Button>
-          </Link>
+            </TrackedLink>
+          </Button>
         </div>
       </nav>
     </div>

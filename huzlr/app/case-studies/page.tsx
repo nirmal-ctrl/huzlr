@@ -1,10 +1,31 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { strapiApi, StrapiCaseStudy, getStrapiMediaUrl } from "@/services/strapiApi";
 import { ArrowRight, ShieldCheck, Zap, TrendingUp, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "AI Delivery Coordination Case Studies",
+  description:
+    "See how product and engineering teams use huzlr to reduce status chasing, coordinate meetings, and turn delivery context into action.",
+  alternates: { canonical: "/case-studies" },
+  openGraph: {
+    title: "AI Delivery Coordination Case Studies | huzlr",
+    description:
+      "Stories from teams using AI to coordinate product and engineering delivery.",
+    url: "/case-studies",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Delivery Coordination Case Studies | huzlr",
+    description:
+      "Stories from teams using AI to coordinate product and engineering delivery.",
+  },
+};
 
 export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
@@ -74,9 +95,11 @@ export default async function CaseStudiesIndexPage() {
                     {/* Hero Image / Card Banner */}
                     <div className="w-full aspect-[1.91/1] rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
                       {heroUrl ? (
-                        <img 
-                          src={heroUrl} 
-                          alt={cs.title} 
+                        <Image
+                          src={heroUrl}
+                          alt={cs.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 50vw"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                       ) : (

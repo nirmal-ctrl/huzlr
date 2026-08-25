@@ -1,5 +1,5 @@
 import { ArrowRight, BellRing, BrainCircuit, CheckCircle2, Workflow } from "lucide-react"
-import Link from "next/link"
+import { TrackedLink } from "@/components/tracked-link"
 
 const steps = [
   {
@@ -74,13 +74,15 @@ export function HowItWorks() {
               Huzlr begins where coordination is most visible: product delivery. Over time, it becomes the shared management context for the hybrid organization.
             </p>
           </div>
-          <Link
-            href="/signup"
+          <TrackedLink
+            href="/ai-scrum-master"
+            eventName="CTA Click"
+            eventProperties={{ location: "how_it_works", destination: "ai-scrum-master", label: "Explore AI Scrum Master" }}
             className="group flex shrink-0 items-center gap-2 rounded-full bg-clay px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-clay-deep"
           >
-            Join the private beta
+            Explore AI Scrum Master
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </TrackedLink>
         </div>
       </div>
     </section>

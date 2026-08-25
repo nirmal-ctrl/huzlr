@@ -1,10 +1,31 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
 import { Calendar, ArrowRight, BookOpen, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "AI Project Management Resources",
+  description:
+    "Practical guides and engineering stories about AI project management, delivery coordination, automated standups, and meeting-to-action workflows.",
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    title: "AI Project Management Resources | huzlr",
+    description:
+      "Practical guides and engineering stories for teams coordinating delivery with AI.",
+    url: "/blog",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Project Management Resources | huzlr",
+    description:
+      "Practical guides and engineering stories for teams coordinating delivery with AI.",
+  },
+};
 
 export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
@@ -22,6 +43,8 @@ export default async function BlogIndexPage() {
 
   // Separate featured post from others
   const featuredPost = posts[0];
+  const featuredCoverUrl = getStrapiMediaUrl(featuredPost?.coverImage);
+  const featuredAuthorAvatarUrl = getStrapiMediaUrl(featuredPost?.author?.avatar);
   const remainingPosts = posts.slice(1);
 
   return (
@@ -73,10 +96,12 @@ export default async function BlogIndexPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 lg:p-8 items-center">
                   {/* Featured Image */}
                   <div className="lg:col-span-7 aspect-[1.91/1] w-full rounded-2xl overflow-hidden border border-border/40 bg-muted/20 relative flex items-center justify-center">
-                    {getStrapiMediaUrl(featuredPost.coverImage) ? (
-                      <img 
-                        src={getStrapiMediaUrl(featuredPost.coverImage)!} 
-                        alt={featuredPost.title} 
+                    {featuredCoverUrl ? (
+                      <Image
+                        src={featuredCoverUrl}
+                        alt={featuredPost.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 58vw"
                         className="w-full h-full object-cover group-hover:scale-[1.015] transition-transform duration-700"
                       />
                     ) : (
@@ -113,11 +138,13 @@ export default async function BlogIndexPage() {
 
                     <div className="pt-6 border-t border-border/40 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {getStrapiMediaUrl(featuredPost.author?.avatar) ? (
+                        {featuredAuthorAvatarUrl ? (
                           <div className="size-10 rounded-full overflow-hidden border border-border/50 bg-muted shrink-0 relative flex items-center justify-center">
-                            <img 
-                              src={getStrapiMediaUrl(featuredPost.author?.avatar)!} 
-                              alt={featuredPost.author?.name || 'Author'} 
+                            <Image
+                              src={featuredAuthorAvatarUrl}
+                              alt={featuredPost.author?.name || 'Author'}
+                              fill
+                              sizes="40px"
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -176,9 +203,11 @@ export default async function BlogIndexPage() {
                           {/* Card Cover Image */}
                           <div className="w-full aspect-[1.91/1] overflow-hidden border-b border-border/40 bg-muted/20 relative flex items-center justify-center">
                             {coverUrl ? (
-                              <img 
-                                src={coverUrl} 
-                                alt={post.title} 
+                              <Image
+                                src={coverUrl}
+                                alt={post.title}
+                                fill
+                                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               />
                             ) : (
@@ -222,9 +251,11 @@ export default async function BlogIndexPage() {
                           <div className="flex items-center gap-2.5">
                             {authorAvatarUrl ? (
                               <div className="size-8 rounded-full overflow-hidden border border-border/50 bg-muted shrink-0 relative flex items-center justify-center">
-                                <img 
-                                  src={authorAvatarUrl} 
-                                  alt={post.author?.name || 'Author'} 
+                                <Image
+                                  src={authorAvatarUrl}
+                                  alt={post.author?.name || 'Author'}
+                                  fill
+                                  sizes="32px"
                                   className="w-full h-full object-cover"
                                 />
                               </div>

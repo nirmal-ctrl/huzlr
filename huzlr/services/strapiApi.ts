@@ -64,6 +64,7 @@ export interface StrapiCaseStudy {
   results: string;
   publishDate: string;
   createdAt: string;
+  updatedAt: string;
   heroImage: StrapiImage | null;
   tags: StrapiTag[];
 }

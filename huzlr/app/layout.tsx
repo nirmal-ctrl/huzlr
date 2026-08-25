@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ReduxProvider } from "@/lib/redux/provider"
 import { Toaster } from "@/components/ui/sonner"
 import { SmoothScroll } from "@/components/smooth-scroll"
+import { siteConfig } from "@/lib/seo"
 
 import "./globals.css"
 
@@ -29,10 +30,12 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://huzlr.com"),
-  title: "huzlr | The coordination layer for teams working with AI",
-  description:
-    "huzlr keeps humans, AI workers, and existing systems aligned. Detect change, coordinate the response, and keep execution moving.",
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: `${siteConfig.title} | ${siteConfig.name}`,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
   keywords: [
     "AI coordination layer",
     "hybrid organization management",
@@ -56,19 +59,9 @@ export const metadata: Metadata = {
     "project milestone tracking",
     "AI-powered project dashboards",
   ],
-  openGraph: {
-    title: "huzlr | The coordination layer for teams working with AI",
-    description:
-      "Keep humans, AI workers, and existing systems aligned as work changes.",
-    images: ["/og-image.png"],
-    type: "website",
-  },
+  openGraph: { type: "website", siteName: siteConfig.name },
   twitter: {
     card: "summary_large_image",
-    title: "huzlr | The coordination layer for teams working with AI",
-    description:
-      "Keep humans, AI workers, and existing systems aligned as work changes.",
-    images: ["/twitter-image.png"],
   },
   icons: {
     icon: "/favicon.png",
@@ -80,28 +73,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "huzlr",
-    "operatingSystem": "All",
-    "applicationCategory": "BusinessApplication",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "description": "huzlr is a coordination layer that keeps humans, AI workers, and existing systems aligned as work changes.",
-    "featureList": "Hybrid workforce coordination, delivery intelligence, dependency detection, AI worker orchestration, proactive risk signals"
-  }
-
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <body className={`font-sans antialiased ${inter.variable} ${manrope.variable} ${sourceSerif.variable}`} suppressHydrationWarning={true}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
         <ReduxProvider>
           <ThemeProvider
             attribute="class"

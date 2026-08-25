@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
@@ -5,6 +7,10 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { FounderAgentWidget } from "@/components/founder-agent"
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default function AppLayout({
   children,

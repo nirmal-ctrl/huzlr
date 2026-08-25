@@ -1,7 +1,13 @@
 import fs from "node:fs"
 import path from "node:path"
+import type { Metadata } from "next"
 
 import { PitchDeckViewer } from "@/components/pitch-deck/pitch-deck-viewer"
+
+export const metadata: Metadata = {
+    title: "Pitch Deck",
+    robots: { index: false, follow: false },
+}
 
 const slidesDirectory = path.join(
     process.cwd(),

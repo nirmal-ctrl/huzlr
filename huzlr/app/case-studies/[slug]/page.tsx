@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { cache } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { strapiApi, StrapiCaseStudy, getStrapiMediaUrl } from "@/services/strapiApi";
@@ -7,23 +8,27 @@ import { ArrowLeft, ArrowRight, CheckCircle2, TrendingUp, HelpCircle, Sparkles, 
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import type { Metadata } from 'next';
+import { absoluteUrl, serializeJsonLd } from '@/lib/seo';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+const getCaseStudy = cache((slug: string) => strapiApi.getCaseStudyBySlug(slug));
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const cs = await strapiApi.getCaseStudyBySlug(slug);
+    const cs = await getCaseStudy(slug);
     if (!cs) return {};
     
     const heroUrl = getStrapiMediaUrl(cs.heroImage);
-    const csUrl = `https://huzlr.com/case-studies/${slug}`;
+    const csUrl = absoluteUrl(`/case-studies/${slug}`);
 
     return {
-      title: `${cs.clientName} Case Study: ${cs.title} | huzlr`,
+      title: { absolute: `${cs.clientName} Case Study: ${cs.title} | huzlr` },
       description: cs.subtitle,
+      alternates: { canonical: csUrl },
       openGraph: {
         title: cs.title,
         description: cs.subtitle,
@@ -86,7 +91,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
   let cs: Partial<StrapiCaseStudy> | null = null;
 
   try {
-    cs = await strapiApi.getCaseStudyBySlug(slug);
+    cs = await getCaseStudy(slug);
   } catch (error) {
     console.error(`Failed to fetch case study with slug: ${slug}`, error);
   }
@@ -102,7 +107,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "NewsArticle",
+    "@type": "Article",
     "headline": cs.title,
     "description": cs.subtitle,
     "image": heroUrl ? [heroUrl] : [],
@@ -111,19 +116,19 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
     "author": {
       "@type": "Organization",
       "name": "huzlr Marketing Team",
-      "url": "https://huzlr.com"
+      "url": absoluteUrl('/')
     },
     "publisher": {
       "@type": "Organization",
       "name": "huzlr",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://huzlr.com/favicon.png"
+        "url": absoluteUrl('/favicon.png')
       }
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": `https://huzlr.com/case-studies/${slug}`
+      "@id": absoluteUrl(`/case-studies/${slug}`)
     }
   }
 
@@ -131,7 +136,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
       />
       {/* Decorative background grid and gradient */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808005_1px,transparent_1px),linear-gradient(to_bottom,#80808005_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
@@ -170,9 +175,11 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
         {/* Hero Banner Image */}
         {heroUrl && (
           <div className="w-full aspect-[1.91/1] rounded-3xl overflow-hidden border border-border bg-muted/10 relative flex items-center justify-center shadow-lg">
-            <img 
-              src={heroUrl} 
-              alt={cs.title} 
+            <Image
+              src={heroUrl}
+              alt={cs.title || 'Case study cover'}
+              fill
+              sizes="(max-width: 1152px) 100vw, 1152px"
               className="w-full h-full object-cover"
             />
           </div>
