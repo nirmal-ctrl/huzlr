@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "huzlr — AI delivery coordination for hybrid teams"
+export const alt = "huzlr — AI project manager for engineering teams"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -10,8 +10,8 @@ export default function OpenGraphImage() {
       <div
         style={{
           alignItems: "center",
-          background: "#f4efe6",
-          color: "#29251f",
+          background: "#f7f9fc",
+          color: "#172033",
           display: "flex",
           height: "100%",
           justifyContent: "center",
@@ -21,7 +21,7 @@ export default function OpenGraphImage() {
       >
         <div
           style={{
-            border: "2px solid rgba(41, 37, 31, 0.14)",
+            border: "2px solid rgba(23, 32, 51, 0.14)",
             borderRadius: "32px",
             display: "flex",
             flexDirection: "column",
@@ -32,15 +32,15 @@ export default function OpenGraphImage() {
           }}
         >
           <div style={{ display: "flex", fontSize: 42, fontWeight: 700 }}>
-            huzlr<span style={{ color: "#a5573f" }}>.</span>
+            huzlr<span style={{ color: "#0874df" }}>.</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div style={{ color: "#a5573f", display: "flex", fontSize: 22, letterSpacing: 4 }}>
-              AI DELIVERY COORDINATION
+            <div style={{ color: "#0874df", display: "flex", fontSize: 22, letterSpacing: 4 }}>
+              AI PROJECT MANAGER FOR ENGINEERING TEAMS
             </div>
             <div style={{ display: "flex", fontSize: 68, fontWeight: 600, lineHeight: 1.05 }}>
-              Keep humans, AI workers,
-              <br />meetings, and tools aligned.
+              Know what humans—and AI—
+              <br />should do next.
             </div>
           </div>
         </div>

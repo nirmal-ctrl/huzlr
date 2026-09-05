@@ -163,7 +163,7 @@ function Navbar({ className }: { className?: string }) {
         <NavigationMenu className="hidden max-w-none flex-none lg:flex" delayDuration={80} skipDelayDuration={250}>
           <NavigationMenuList className="gap-0.5">
             <NavigationMenuItem>
-              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/60 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
+              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/70 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
                 Product
               </NavigationMenuTrigger>
               <NavigationMenuContent className="p-3 md:w-[880px]">
@@ -182,11 +182,11 @@ function Navbar({ className }: { className?: string }) {
                     </Link>
                   </NavigationMenuLink>
                   <div>
-                    <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">Product workflows</p>
+                    <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/55">Product workflows</p>
                     <div className="grid gap-1 sm:grid-cols-2">
                       {productLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
                     </div>
-                    <p className="mx-4 mt-2 border-t border-hairline px-0 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/35">For teams</p>
+                    <p className="mx-4 mt-2 border-t border-hairline px-0 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/55">For teams</p>
                     <div className="grid gap-1 sm:grid-cols-2">
                       {solutionLinks.map((item) => <MegaMenuLink key={item.href} item={item} />)}
                     </div>
@@ -196,21 +196,21 @@ function Navbar({ className }: { className?: string }) {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/60 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
+              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/70 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
                 Integrations
               </NavigationMenuTrigger>
               <NavigationMenuContent className="p-3 md:w-[560px]">
                 <div className="grid gap-2 sm:grid-cols-2">
                   {integrationLinks.map((item) => <MegaMenuLink key={item.label} item={item} />)}
                 </div>
-                <p className="mx-2 mt-2 border-t border-hairline pt-3 text-xs leading-relaxed text-ink/45">
+                <p className="mx-2 mt-2 border-t border-hairline pt-3 text-xs leading-relaxed text-ink/65">
                   Live connector coverage is intentionally limited during private beta. Each page states the current boundary.
                 </p>
               </NavigationMenuContent>
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/60 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
+              <NavigationMenuTrigger className="h-9 rounded-full bg-transparent px-3 text-[13px] text-ink/70 hover:bg-sand hover:text-ink data-[state=open]:bg-sand data-[state=open]:text-ink">
                 Resources
               </NavigationMenuTrigger>
               <NavigationMenuContent className="p-3 md:w-[640px]">
@@ -221,7 +221,7 @@ function Navbar({ className }: { className?: string }) {
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <NavigationMenuLink asChild className="rounded-full bg-transparent px-3 py-2 text-[13px] font-medium text-ink/60 hover:bg-sand hover:text-ink">
+              <NavigationMenuLink asChild className="rounded-full bg-transparent px-3 py-2 text-[13px] font-medium text-ink/70 hover:bg-sand hover:text-ink">
                 <Link href="/how-it-works">How it works</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -237,19 +237,19 @@ function Navbar({ className }: { className?: string }) {
                   <ChevronDown className="size-3 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="mt-2 max-h-[75vh] w-80 overflow-y-auto p-2">
-                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Product</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="mt-2 max-h-[75vh] w-[min(20rem,calc(100vw-2rem))] overflow-y-auto p-2">
+                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/60">Product</DropdownMenuLabel>
                 <MobileMenuItem label="Product overview" href="/product" />
                 {productLinks.map((item) => <MobileMenuItem key={item.href} label={item.label} href={item.href} />)}
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Solutions</DropdownMenuLabel>
+                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/60">Solutions</DropdownMenuLabel>
                 {solutionLinks.map((item) => <MobileMenuItem key={item.href} label={item.label} href={item.href} />)}
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Integrations</DropdownMenuLabel>
+                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/60">Integrations</DropdownMenuLabel>
                 <MobileMenuItem label="Jira" href="/integrations/jira" />
                 <MobileMenuItem label="Google Meet" href="/integrations/google-meet" />
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/40">Resources</DropdownMenuLabel>
+                <DropdownMenuLabel className="px-2 text-[10px] uppercase tracking-[0.14em] text-ink/60">Resources</DropdownMenuLabel>
                 <MobileMenuItem label="Blog" href="/blog" />
                 <MobileMenuItem label="Case studies" href="/case-studies" />
                 <MobileMenuItem label="Status report template" href="/templates/project-status-report" />
@@ -260,15 +260,15 @@ function Navbar({ className }: { className?: string }) {
             </DropdownMenu>
           </div>
 
-          <AnimatedThemeToggler className="flex size-9 items-center justify-center rounded-full p-2 text-ink/60 transition-colors hover:bg-sand hover:text-ink" />
+          <AnimatedThemeToggler className="hidden size-9 items-center justify-center rounded-full p-2 text-ink/70 transition-colors hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay sm:flex" />
 
-          <Button asChild className="h-9 cursor-pointer rounded-full bg-clay px-4 text-[13px] font-medium text-white transition-colors hover:bg-clay-deep">
+          <Button asChild className="hidden h-9 cursor-pointer rounded-full bg-clay px-4 text-[13px] font-medium text-white transition-colors hover:bg-clay-deep sm:inline-flex dark:text-paper">
             <TrackedLink
               href="/signup"
               eventName="CTA Click"
-              eventProperties={{ location: "navigation", destination: "signup", label: "Get started" }}
+              eventProperties={{ location: "navigation", destination: "signup", label: "Join the private beta" }}
             >
-              Get started
+              Join the private beta
             </TrackedLink>
           </Button>
         </div>
@@ -290,7 +290,7 @@ function MegaMenuLink({ item }: { item: MenuLink }) {
               <span className="text-sm font-semibold text-ink">{item.label}</span>
               {item.status && <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-clay">{item.status}</span>}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-ink/50">{item.description}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink/65">{item.description}</p>
           </div>
         </div>
       </Link>
