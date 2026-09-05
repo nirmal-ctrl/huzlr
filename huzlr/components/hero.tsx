@@ -54,12 +54,12 @@ export default function Hero() {
           </div>
 
           <h1 className="mt-7 animate-appear font-serif text-[clamp(3.15rem,5.2vw,5.45rem)] font-normal leading-[0.98] tracking-[-0.055em] text-balance motion-reduce:animate-none">
-            Know what humansand AI<em className="italic text-clay">should do next.</em>
+            Know what humans and AI <em className="italic text-clay">should do next.</em>
           </h1>
 
           <p className="mt-7 max-w-xl animate-appear text-base leading-relaxed text-ink/70 opacity-0 [animation-delay:120ms] sm:text-lg motion-reduce:animate-none motion-reduce:opacity-100">
             huzlr connects project work with live Google Meet standups, surfaces blockers,
-            and prepares next actions for human reviewso delivery keeps moving without status chasing.
+            and prepares next actions for human review, so delivery keeps moving without status chasing.
           </p>
 
           <div className="mt-8 flex animate-appear flex-col gap-3 opacity-0 [animation-delay:220ms] sm:flex-row sm:items-center motion-reduce:animate-none motion-reduce:opacity-100">

@@ -39,7 +39,7 @@ export default function OpenGraphImage() {
               AI PROJECT MANAGER FOR ENGINEERING TEAMS
             </div>
             <div style={{ display: "flex", fontSize: 68, fontWeight: 600, lineHeight: 1.05 }}>
-              Know what humansand AI
+              Know what humans and AI
               <br />should do next.
             </div>
           </div>

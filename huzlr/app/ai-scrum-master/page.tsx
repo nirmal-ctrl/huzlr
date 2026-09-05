@@ -69,7 +69,7 @@ const controls = [
 const limitations = [
   "Participant names are not inferred when the mixed meeting audio cannot support reliable diarization.",
   "Owners, due dates, decisions, and blockers should not be invented when the meeting did not establish them.",
-  "Outputs are proposed coordination artifacts for human reviewnot automatic proof that work is complete.",
+  "Outputs are proposed coordination artifacts for human review, not automatic proof that work is complete.",
 ]
 
 const faqs = [

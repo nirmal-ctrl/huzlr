@@ -25,7 +25,7 @@ export const metadata = createMarketingMetadata({
 
 const criteria = [
   { icon: MessagesSquare, title: "Collection model", description: "Does the tool ask for async check-ins, join live meetings, read systems of record, or combine several inputs?" },
-  { icon: Bot, title: "Action boundary", description: "Does it summarize, propose an action, or change project dataand where does human approval sit?" },
+  { icon: Bot, title: "Action boundary", description: "Does it summarize, propose an action, or change project data, and where does human approval sit?" },
   { icon: ShieldCheck, title: "Evidence and controls", description: "Can a reviewer see the source, permissions, uncertainty, identity, and retained-output policy?" },
 ]
 

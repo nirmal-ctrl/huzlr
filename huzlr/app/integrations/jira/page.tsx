@@ -54,7 +54,7 @@ const config = {
     "Connection status surfaced to the signed-in huzlr user.",
   ],
   notYet: [
-    "Generally available live Jira project and issue importthe current project selection experience uses demonstration data.",
+    "Generally available live Jira project and issue import, the current project selection experience uses demonstration data.",
     "Continuous bidirectional synchronization between huzlr and Jira.",
     "Automatic Jira issue creation or updates from meeting action items.",
   ],

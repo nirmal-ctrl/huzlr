@@ -29,7 +29,7 @@ const config = {
   name: "Automated Project Status Reporting",
   eyebrow: "AI project status reporting",
   status: "Design-partner preview",
-  title: <>Automate project status updatesnot another <em className="italic text-clay">status chase.</em></>,
+  title: <>Automate project status updates, not another <em className="italic text-clay">status chase.</em></>,
   description,
   proofNote: "Scheduled cross-tool report generation and stakeholder delivery are not generally available today; the current beta provides the meeting and project records that this workflow will use.",
   previewLabel: "Weekly delivery update",
