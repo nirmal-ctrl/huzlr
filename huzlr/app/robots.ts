@@ -12,7 +12,6 @@ export default function robots(): MetadataRoute.Robots {
     '/teams',
     '/scrum-master',
     '/onboarding',
-    '/signup',
     '/atlassian-callback',
     '/integrations/jira/callback',
   ]

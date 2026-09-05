@@ -141,11 +141,11 @@ export default function ProductPage() {
             </Button>
             <Button asChild size="lg" variant="ghost" className="h-11 rounded-full px-6 text-sm text-ink/70 hover:bg-sand hover:text-ink">
               <TrackedLink
-                href="#capabilities"
+                href="/how-it-works"
                 eventName="CTA Click"
-                eventProperties={{ location: "product_hero", destination: "capabilities", label: "Explore capabilities" }}
+                eventProperties={{ location: "product_hero", destination: "how-it-works", label: "See how it works" }}
               >
-                Explore capabilities
+                See how it works
               </TrackedLink>
             </Button>
           </div>

@@ -1,34 +1,34 @@
-import { ArrowRight, BellRing, BrainCircuit, CheckCircle2, Workflow } from "lucide-react"
+import { ArrowRight, CalendarCheck, FileCheck2, FolderKanban, ListChecks } from "lucide-react"
 import { TrackedLink } from "@/components/tracked-link"
 
 const steps = [
   {
     number: "01",
-    icon: BellRing,
-    title: "Detect what changed",
+    icon: FolderKanban,
+    title: "Organize delivery context",
     description:
-      "Huzlr continuously reads projects, conversations, meetings, documents, and connected systems.",
+      "Keep projects, issues, milestones, documents, and team context in one workspace.",
   },
   {
     number: "02",
-    icon: BrainCircuit,
-    title: "Understand the impact",
+    icon: CalendarCheck,
+    title: "Connect eligible meetings",
     description:
-      "It connects the change to goals, dependencies, owners, AI workers, and decisions already in motion.",
+      "Sync Google Calendar and choose which Google Meet events the identified AI participant may join.",
   },
   {
     number: "03",
-    icon: Workflow,
-    title: "Coordinate the response",
+    icon: FileCheck2,
+    title: "Create a reviewable record",
     description:
-      "Huzlr updates plans, delegates safe work, requests human judgment, and follows up across tools.",
+      "Retain enabled summaries, decisions, blockers, transcripts, and proposed action items after the meeting.",
   },
   {
     number: "04",
-    icon: CheckCircle2,
-    title: "Learn from execution",
+    icon: ListChecks,
+    title: "Confirm the next move",
     description:
-      "Every outcome improves how priorities, risks, and interventions are handled the next time.",
+      "Review owners, dates, risks, and wording before an output becomes a delivery fact or external update.",
   },
 ]
 
@@ -38,14 +38,14 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-clay">
-            Push coordination
+            How huzlr works
           </p>
           <h2 className="mt-4 font-serif text-4xl tracking-tight text-ink text-balance sm:text-5xl">
             Work moves before someone asks <em className="italic text-clay">for an update.</em>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink/60 sm:text-lg">
-            Most management systems wait for people to find context and drive the next step.
-            Huzlr understands the operating picture and brings the right action to the right actor.
+            huzlr connects project records with controlled Google Meet workflows, then keeps generated
+            outputs visible for human review before the team acts.
           </p>
         </div>
 
@@ -75,12 +75,12 @@ export function HowItWorks() {
             </p>
           </div>
           <TrackedLink
-            href="/ai-scrum-master"
+            href="/how-it-works"
             eventName="CTA Click"
-            eventProperties={{ location: "how_it_works", destination: "ai-scrum-master", label: "Explore AI Scrum Master" }}
+            eventProperties={{ location: "how_it_works", destination: "how-it-works", label: "See how huzlr works" }}
             className="group flex shrink-0 items-center gap-2 rounded-full bg-clay px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-clay-deep"
           >
-            Explore AI Scrum Master
+            See how huzlr works
             <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
           </TrackedLink>
         </div>

@@ -222,7 +222,7 @@ function Navbar({ className }: { className?: string }) {
 
             <NavigationMenuItem>
               <NavigationMenuLink asChild className="rounded-full bg-transparent px-3 py-2 text-[13px] font-medium text-ink/60 hover:bg-sand hover:text-ink">
-                <Link href="/#why-huzlr">Why huzlr</Link>
+                <Link href="/how-it-works">How it works</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
@@ -254,6 +254,7 @@ function Navbar({ className }: { className?: string }) {
                 <MobileMenuItem label="Case studies" href="/case-studies" />
                 <MobileMenuItem label="Status report template" href="/templates/project-status-report" />
                 <MobileMenuItem label="Compare workflows" href="/compare" />
+                <MobileMenuItem label="How it works" href="/how-it-works" />
                 <MobileMenuItem label="Why huzlr" href="/#why-huzlr" />
               </DropdownMenuContent>
             </DropdownMenu>

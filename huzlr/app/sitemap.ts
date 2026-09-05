@@ -31,6 +31,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: absoluteUrl('/how-it-works'),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: absoluteUrl('/ai-project-manager'),
       changeFrequency: 'monthly',
       priority: 0.9,

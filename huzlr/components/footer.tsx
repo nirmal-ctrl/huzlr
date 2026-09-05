@@ -10,6 +10,7 @@ export function Footer() {
       heading: "Product",
       links: [
         { label: "Product overview", href: "/product" },
+        { label: "How it works", href: "/how-it-works" },
         { label: "AI Project Manager", href: "/ai-project-manager" },
         { label: "AI Scrum Master", href: "/ai-scrum-master" },
         { label: "Automated standups", href: "/automated-daily-standups" },

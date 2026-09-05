@@ -9,8 +9,10 @@
     "deploy": "strapi deploy",
     "dev": "strapi develop",
     "develop": "strapi develop",
+    "publish:blog": "node scripts/publish-blog.mjs",
     "start": "strapi start",
     "strapi": "strapi",
+    "test:publish-blog": "node --test scripts/publish-blog.test.mjs",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },

@@ -16,6 +16,17 @@ interface PageProps {
 
 const getBlogPost = cache((slug: string) => strapiApi.getBlogPostBySlug(slug));
 
+export async function generateStaticParams() {
+  try {
+    const response = await strapiApi.getBlogPosts();
+
+    return (response.data ?? []).map(({ slug }) => ({ slug }));
+  } catch (error) {
+    console.error('Failed to generate static blog post routes', error);
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
@@ -53,7 +64,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
+// Blog content is public and shared by every visitor. Pre-render known CMS slugs
+// and keep on-demand slugs in the ISR cache instead of querying Strapi for every
+// crawler request.
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+export const revalidate = 3600;
 
 function renderStrapiBlocks(content: any): string {
   if (!content) return '';

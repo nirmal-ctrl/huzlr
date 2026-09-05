@@ -1,5 +1,53 @@
 # 🚀 Getting started with Strapi
 
+## Publish a blog from the command line
+
+The publisher accepts a Markdown file (recommended) or a JSON file containing
+the Blog content-type fields. Markdown headings, paragraphs, quotes, and lists
+are converted to Strapi Blocks used by the Huzlr blog page.
+
+1. In Strapi, create an API token with `Blog: create` permission.
+2. Add the token and CMS URL to `huzlr-cms/.env`:
+
+   ```dotenv
+   HUZLR_CMS_URL=https://your-cms.example.com
+   HUZLR_CMS_API_TOKEN=your_token
+   # Optional: prints the public article URL after publishing
+   HUZLR_SITE_URL=https://huzlr.com
+   ```
+
+3. Preview the payload without making a request:
+
+   ```sh
+   cd huzlr-cms
+   npm run publish:blog -- scripts/blog.example.md --dry-run
+   ```
+
+4. Publish it:
+
+   ```sh
+   npm run publish:blog -- path/to/article.md
+   ```
+
+The first H1 is used as the title, the first paragraph as the description, and
+the slug and publication date are generated automatically. Override metadata or
+connect existing CMS records with command-line options:
+
+```sh
+npm run publish:blog -- path/to/article.md \
+  --slug my-custom-slug \
+  --author AUTHOR_DOCUMENT_ID \
+  --tag TAG_DOCUMENT_ID \
+  --cover-image-id 12
+```
+
+Run `npm run publish:blog -- --help` for every option. The API token must have
+permission to create blogs and access any related records in the request.
+
+For JSON input, `title`, `description`, and `content` are required. `content`
+can be a Markdown string or a Strapi Blocks array. Optional fields are `slug`,
+`publishDate`, `authorDocumentId`, `tagDocumentIds`, and `coverImageId`.
+
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
 
 ### `develop`
