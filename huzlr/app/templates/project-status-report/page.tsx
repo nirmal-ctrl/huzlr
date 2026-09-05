@@ -31,8 +31,8 @@ const reportSections = [
   },
   {
     title: "2. Overall status",
-    prompt: "On track / Needs attention / At risk — followed by one evidence-based sentence",
-    example: "Needs attention — preview validation is progressing, but production credential approval is blocking the migration rehearsal.",
+    prompt: "On track / Needs attention / At risk  followed by one evidence-based sentence",
+    example: "Needs attention  preview validation is progressing, but production credential approval is blocking the migration rehearsal.",
   },
   {
     title: "3. Progress this period",

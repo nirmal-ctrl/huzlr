@@ -63,7 +63,7 @@ const config = {
         "Progress: what completed or materially changed during the period.",
         "Risk: the source signal, its possible impact, and the confidence boundary.",
         "Decision: what was decided, by whom, and when it becomes effective.",
-        "Next action: an owner and due date—or an explicit request to confirm them.",
+        "Next action: an owner and due dateor an explicit request to confirm them.",
       ],
     },
     {

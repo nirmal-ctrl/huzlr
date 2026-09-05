@@ -198,7 +198,7 @@ export function CommercialPage({ config }: { config: CommercialPageConfig }) {
         <div className="mx-auto max-w-6xl px-6">
           <div className="max-w-3xl">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-clay">Product truth</p>
-            <h2 className="mt-4 font-serif text-4xl tracking-tight sm:text-5xl">What is available—and what is not yet.</h2>
+            <h2 className="mt-4 font-serif text-4xl tracking-tight sm:text-5xl">What is availableand what is not yet.</h2>
             <p className="mt-5 text-base leading-relaxed text-ink/60">
               Private-beta pages should make the current boundary clear enough for a buyer to evaluate without guessing.
             </p>

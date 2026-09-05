@@ -9,7 +9,7 @@ import { CommercialPage, type CommercialPageConfig } from "@/components/marketin
 import { createMarketingMetadata } from "@/lib/seo"
 
 const description =
-  "Explore review-first AI project risk detection for stated blockers, dependencies, and delivery context—without presenting project delay prediction as certainty."
+  "Explore review-first AI project risk detection for stated blockers, dependencies, and delivery contextwithout presenting project delay prediction as certainty."
 
 export const metadata = createMarketingMetadata({
   title: "AI Project Risk Detection and Blocker Signals",
@@ -69,7 +69,7 @@ const config = {
     { href: "/solutions/delivery-leaders", label: "For delivery leaders", description: "Connect risk signals to portfolio review and intervention decisions." },
     { href: "/ai-project-manager", label: "AI project manager", description: "See how risk signals fit into the broader coordination model." },
   ],
-  ctaTitle: "Design a risk signal your team will act on—not ignore.",
+  ctaTitle: "Design a risk signal your team will act onnot ignore.",
   ctaDescription: "Join the design-partner preview to validate signals, explanations, review controls, and intervention timing.",
   ctaLabel: "Join the risk preview",
 } satisfies CommercialPageConfig

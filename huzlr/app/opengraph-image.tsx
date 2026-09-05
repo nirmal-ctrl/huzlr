@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og"
 
-export const alt = "huzlr — AI project manager for engineering teams"
+export const alt = "huzlr  AI project manager for engineering teams"
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -39,7 +39,7 @@ export default function OpenGraphImage() {
               AI PROJECT MANAGER FOR ENGINEERING TEAMS
             </div>
             <div style={{ display: "flex", fontSize: 68, fontWeight: 600, lineHeight: 1.05 }}>
-              Know what humans—and AI—
+              Know what humansand AI
               <br />should do next.
             </div>
           </div>
