@@ -122,9 +122,18 @@ export const strapiApi = {
   /**
    * Get all blog posts
    */
-  async getBlogPosts(): Promise<StrapiResponse<StrapiBlogPost[]>> {
+  async getBlogPosts(page = 1, pageSize = 6): Promise<StrapiResponse<StrapiBlogPost[]>> {
+    const params = new URLSearchParams({
+      'populate[coverImage]': 'true',
+      'populate[author][populate][avatar]': 'true',
+      'populate[tags]': 'true',
+      'sort[0]': 'publishDate:desc',
+      'pagination[page]': String(page),
+      'pagination[pageSize]': String(pageSize),
+    });
+
     return fetchStrapi<StrapiResponse<StrapiBlogPost[]>>(
-      '/blogs?populate[coverImage]=true&populate[author][populate][avatar]=true&populate[tags]=true&sort[0]=publishDate:desc'
+      `/blogs?${params.toString()}`
     );
   },
 

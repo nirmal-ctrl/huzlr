@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
-import { Calendar, ArrowRight, BookOpen, Clock } from "lucide-react";
+import { Calendar, ArrowLeft, ArrowRight, BookOpen, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -29,6 +29,12 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600; // ISR cache for 1 hour, loaded instantly from Edge CDN!
 
+const BLOG_PAGE_SIZE = 6;
+
+interface BlogIndexPageProps {
+  searchParams: Promise<{ page?: string | string[] }>;
+}
+
 const huzlrGuides = [
   {
     href: "/blog/how-to-automate-project-status-reports",
@@ -46,13 +52,19 @@ const huzlrGuides = [
   },
 ]
 
-export default async function BlogIndexPage() {
+export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps) {
+  const { page: pageParam } = await searchParams;
+  const requestedPage = Array.isArray(pageParam) ? pageParam[0] : pageParam;
+  const parsedPage = Number.parseInt(requestedPage || '1', 10);
+  const page = Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   let posts: StrapiBlogPost[] = [];
   let errorMsg: string | null = null;
+  let pageCount = 1;
 
   try {
-    const response = await strapiApi.getBlogPosts();
+    const response = await strapiApi.getBlogPosts(page, BLOG_PAGE_SIZE);
     posts = response.data || [];
+    pageCount = response.meta.pagination?.pageCount || 1;
   } catch (error: any) {
     console.error("Failed to fetch blog posts from Strapi:", error);
     errorMsg = error?.message || "Could not retrieve blog posts. Please check your Strapi configuration.";
@@ -323,6 +335,40 @@ export default async function BlogIndexPage() {
                   })}
                 </div>
               </div>
+            )}
+
+            {pageCount > 1 && (
+              <nav aria-label="Blog pagination" className="flex items-center justify-center gap-4 border-t border-border/40 pt-8">
+                {page > 1 ? (
+                  <Link href={`/blog?page=${page - 1}`}>
+                    <Button variant="outline" size="sm" className="gap-2 rounded-full">
+                      <ArrowLeft className="size-4" />
+                      Previous
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button variant="outline" size="sm" disabled className="gap-2 rounded-full">
+                    <ArrowLeft className="size-4" />
+                    Previous
+                  </Button>
+                )}
+                <span className="text-sm text-muted-foreground" aria-current="page">
+                  Page {page} of {pageCount}
+                </span>
+                {page < pageCount ? (
+                  <Link href={`/blog?page=${page + 1}`}>
+                    <Button variant="outline" size="sm" className="gap-2 rounded-full">
+                      Next
+                      <ArrowRight className="size-4" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button variant="outline" size="sm" disabled className="gap-2 rounded-full">
+                    Next
+                    <ArrowRight className="size-4" />
+                  </Button>
+                )}
+              </nav>
             )}
           </div>
         )}
