@@ -23,6 +23,9 @@
     "content": {
       "type": "blocks"
     },
+    "contentMarkdown": {
+      "type": "richtext"
+    },
     "publishDate": {
       "type": "datetime"
     },

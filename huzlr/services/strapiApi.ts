@@ -37,13 +37,89 @@ export interface StrapiTag {
   slug: string;
 }
 
+export interface StrapiTextNode {
+  type: 'text';
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
+  code?: boolean;
+}
+
+export interface StrapiLinkNode {
+  type: 'link';
+  url: string;
+  children: StrapiTextNode[];
+}
+
+export type StrapiInlineNode = StrapiTextNode | StrapiLinkNode;
+
+export interface StrapiParagraphBlock {
+  type: 'paragraph';
+  children: StrapiInlineNode[];
+}
+
+export interface StrapiHeadingBlock {
+  type: 'heading';
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  children: StrapiInlineNode[];
+}
+
+export interface StrapiQuoteBlock {
+  type: 'quote';
+  children: StrapiInlineNode[];
+}
+
+export interface StrapiCodeBlock {
+  type: 'code';
+  children: StrapiInlineNode[];
+}
+
+export interface StrapiListItemNode {
+  type: 'list-item';
+  children: Array<StrapiInlineNode | StrapiListBlock>;
+}
+
+export interface StrapiListBlock {
+  type: 'list';
+  format: 'ordered' | 'unordered';
+  children: Array<StrapiListItemNode | StrapiListBlock>;
+}
+
+export interface StrapiBlockImage {
+  url: string;
+  alternativeText?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+export interface StrapiImageBlock {
+  type: 'image';
+  image: StrapiBlockImage;
+  children?: StrapiTextNode[];
+}
+
+export type StrapiBlock =
+  | StrapiParagraphBlock
+  | StrapiHeadingBlock
+  | StrapiQuoteBlock
+  | StrapiCodeBlock
+  | StrapiListBlock
+  | StrapiImageBlock;
+
+export type StrapiBlocksContent = StrapiBlock[];
+export type StrapiBlogContent = StrapiBlocksContent | string | null;
+
 export interface StrapiBlogPost {
   id: number;
   documentId: string;
   title: string;
   slug: string;
   description: string;
-  content: string; // Dynamic zone or markdown rich text depending on Strapi config
+  content: StrapiBlogContent;
+  contentMarkdown?: string | null;
   publishDate: string;
   createdAt: string;
   updatedAt: string;

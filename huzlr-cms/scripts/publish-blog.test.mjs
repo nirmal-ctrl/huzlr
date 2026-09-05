@@ -4,17 +4,17 @@ import test from 'node:test';
 import {
   buildBlogData,
   inferMarkdownFields,
-  markdownToBlocks,
   parseArguments,
   publishBlog,
   slugify,
+  stripFirstMarkdownH1,
 } from './publish-blog.mjs';
 
 test('slugify creates a URL-safe blog slug', () => {
   assert.equal(slugify('  AI Project Management: What’s Next?  '), 'ai-project-management-what-s-next');
 });
 
-test('Markdown fields and supported blocks are converted for the Huzlr renderer', () => {
+test('Markdown metadata is inferred and only the title H1 is removed from the body', () => {
   const markdown = `# A Useful Article
 
 This is the article summary.
@@ -34,30 +34,25 @@ This is the article summary.
     title: 'A Useful Article',
     description: 'This is the article summary.',
   });
-  assert.deepEqual(markdownToBlocks(markdown, { skipFirstH1: true }), [
-    { type: 'paragraph', children: [{ type: 'text', text: 'This is the article summary.' }] },
-    { type: 'heading', level: 2, children: [{ type: 'text', text: 'Why it matters' }] },
-    { type: 'quote', children: [{ type: 'text', text: 'A concise observation.' }] },
-    {
-      type: 'list',
-      format: 'unordered',
-      children: [
-        { type: 'list-item', children: [{ type: 'text', text: 'First point' }] },
-        { type: 'list-item', children: [{ type: 'text', text: 'Second important point' }] },
-      ],
-    },
-    {
-      type: 'list',
-      format: 'ordered',
-      children: [
-        { type: 'list-item', children: [{ type: 'text', text: 'Start here' }] },
-        { type: 'list-item', children: [{ type: 'text', text: 'Finish there' }] },
-      ],
-    },
-  ]);
+  assert.equal(
+    stripFirstMarkdownH1(markdown),
+    `
+This is the article summary.
+
+## Why it matters
+
+> A concise observation.
+
+- First point
+- Second **important** point
+
+1. Start here
+2. Finish there
+`,
+  );
 });
 
-test('buildBlogData validates fields and connects optional CMS records', () => {
+test('buildBlogData sends Markdown source without converting it to Blocks', () => {
   const data = buildBlogData(
     {
       title: 'Ship Better',
@@ -76,6 +71,26 @@ test('buildBlogData validates fields and connects optional CMS records', () => {
   assert.deepEqual(data.author, { connect: ['author-doc'] });
   assert.deepEqual(data.tags, { connect: ['tag-one', 'tag-two'] });
   assert.equal(data.coverImage, 7);
+  assert.equal(data.contentMarkdown, '## Begin\n\nDo the work.');
+  assert.equal('content' in data, false);
+});
+
+test('buildBlogData preserves a legacy Strapi Blocks payload', () => {
+  const blocks = [
+    { type: 'paragraph', children: [{ type: 'text', text: 'Legacy article body.' }] },
+  ];
+  const data = buildBlogData(
+    {
+      title: 'Legacy article',
+      description: 'Still supported.',
+      content: blocks,
+    },
+    {},
+    new Date('2026-09-05T10:00:00.000Z'),
+  );
+
+  assert.deepEqual(data.content, blocks);
+  assert.equal('contentMarkdown' in data, false);
 });
 
 test('parseArguments supports repeatable tags and overrides', () => {

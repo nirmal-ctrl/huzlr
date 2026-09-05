@@ -3,11 +3,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { BlogContent } from "@/components/blog-content";
 import { strapiApi, StrapiBlogPost, getStrapiMediaUrl } from "@/services/strapiApi";
-import { Calendar, ArrowLeft, ArrowRight, Clock, Share2, Sparkles } from "lucide-react";
+import { Calendar, ArrowLeft, ArrowRight, Clock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
 import type { Metadata } from 'next';
+import { estimateBlogReadingTime } from '@/lib/blog-content';
 import { absoluteUrl, serializeJsonLd } from '@/lib/seo';
 
 interface PageProps {
@@ -71,39 +73,6 @@ export const dynamic = 'force-static';
 export const dynamicParams = true;
 export const revalidate = 3600;
 
-function renderStrapiBlocks(content: any): string {
-  if (!content) return '';
-  if (typeof content === 'string') return content;
-  if (!Array.isArray(content)) return '';
-
-  return content.map((block: any) => {
-    const textContent = (block.children || [])
-      .map((child: any) => child.text || '')
-      .join('');
-
-    switch (block.type) {
-      case 'heading':
-        const level = block.level || 2;
-        return `<h${level}>${textContent}</h${level}>`;
-      case 'paragraph':
-        if (textContent.trim().startsWith('<') && textContent.trim().endsWith('>')) {
-          return textContent;
-        }
-        return `<p>${textContent}</p>`;
-      case 'quote':
-        return `<blockquote>${textContent}</blockquote>`;
-      case 'list':
-        const tag = block.format === 'ordered' ? 'ol' : 'ul';
-        const items = (block.children || [])
-          .map((item: any) => `<li>${item.children?.map((c: any) => c.text).join('') || ''}</li>`)
-          .join('');
-        return `<${tag}>${items}</${tag}>`;
-      default:
-        return textContent;
-    }
-  }).join('\n');
-}
-
 export default async function BlogPostDetailPage({ params }: PageProps) {
   const { slug } = await params;
   let post: Partial<StrapiBlogPost> | null = null;
@@ -118,13 +87,14 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const renderedContent = renderStrapiBlocks(post.content);
   const coverUrl = getStrapiMediaUrl(post.coverImage);
   const avatarUrl = getStrapiMediaUrl(post.author?.avatar);
 
-  // Approximate reading time
-  const wordCount = post.description?.split(/\s+/).length || 0 + (renderedContent?.split(/\s+/).length || 0);
-  const readTime = Math.max(1, Math.ceil(wordCount / 225));
+  const readTime = estimateBlogReadingTime(
+    post.description,
+    post.contentMarkdown,
+    post.content ?? null,
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -269,9 +239,16 @@ export default async function BlogPostDetailPage({ params }: PageProps) {
             prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:font-bold
             prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:text-base prose-p:mb-6
             prose-li:text-muted-foreground prose-li:leading-relaxed
+            prose-a:text-primary prose-a:font-medium prose-a:underline prose-a:underline-offset-4
+            prose-code:before:content-none prose-code:after:content-none prose-pre:overflow-x-auto
+            prose-img:rounded-2xl prose-table:block prose-table:overflow-x-auto
             prose-blockquote:border-l-primary/60 prose-blockquote:bg-muted/20 prose-blockquote:p-6 prose-blockquote:rounded-r-2xl prose-blockquote:italic prose-blockquote:text-foreground/90 prose-blockquote:not-italic"
-          dangerouslySetInnerHTML={{ __html: renderedContent }}
-        />
+        >
+          <BlogContent
+            contentMarkdown={post.contentMarkdown}
+            content={post.content ?? null}
+          />
+        </article>
 
         {/* Bottom Author Bio / CTA */}
         <div className="mt-16 p-8 rounded-3xl border border-border/60 bg-muted/5 flex flex-col md:flex-row items-center gap-6 justify-between">

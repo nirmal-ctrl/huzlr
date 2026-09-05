@@ -1,10 +1,27 @@
 # 🚀 Getting started with Strapi
 
+## Author a Markdown blog in Strapi
+
+The Blog content type has a **Content Markdown** field backed by Strapi's Rich
+Text (Markdown) editor. After this schema is deployed and the Strapi admin is
+rebuilt:
+
+1. Open **Content Manager → Blog** in the deployed Strapi admin.
+2. Paste the article body into **Content Markdown**.
+3. Use the editor's **Preview** mode to check the formatting, then save and
+   publish the entry.
+
+The page renders the blog title separately, so omit a duplicate H1 from the
+body when authoring directly in Strapi. Do not paste Markdown into the legacy
+**Content** Blocks field: the Blocks editor stores structured JSON and can keep
+pasted Markdown syntax as plain text. The Blocks field remains available so
+existing entries continue to work during the migration.
+
 ## Publish a blog from the command line
 
 The publisher accepts a Markdown file (recommended) or a JSON file containing
-the Blog content-type fields. Markdown headings, paragraphs, quotes, and lists
-are converted to Strapi Blocks used by the Huzlr blog page.
+the Blog content-type fields. Markdown source is stored in `contentMarkdown`
+without being converted to Strapi Blocks.
 
 1. In Strapi, create an API token with `Blog: create` permission.
 2. Add the token and CMS URL to `huzlr-cms/.env`:
@@ -29,9 +46,11 @@ are converted to Strapi Blocks used by the Huzlr blog page.
    npm run publish:blog -- path/to/article.md
    ```
 
-The first H1 is used as the title, the first paragraph as the description, and
-the slug and publication date are generated automatically. Override metadata or
-connect existing CMS records with command-line options:
+The first H1 is used as the title and removed from `contentMarkdown` so the page
+does not render it twice. The first paragraph is used as the description, while
+the slug and publication date are generated automatically. All other Markdown
+is preserved. Override metadata or connect existing CMS records with
+command-line options:
 
 ```sh
 npm run publish:blog -- path/to/article.md \
@@ -44,9 +63,12 @@ npm run publish:blog -- path/to/article.md \
 Run `npm run publish:blog -- --help` for every option. The API token must have
 permission to create blogs and access any related records in the request.
 
-For JSON input, `title`, `description`, and `content` are required. `content`
-can be a Markdown string or a Strapi Blocks array. Optional fields are `slug`,
-`publishDate`, `authorDocumentId`, `tagDocumentIds`, and `coverImageId`.
+For JSON input, `title`, `description`, and one content field are required. Use
+`contentMarkdown` for a Markdown string. For backward compatibility, a Markdown
+string in `content` is also mapped to `contentMarkdown`, while a Strapi Blocks
+array in `content` is sent unchanged to the legacy Blocks field. Optional fields
+are `slug`, `publishDate`, `authorDocumentId`, `tagDocumentIds`, and
+`coverImageId`.
 
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
 

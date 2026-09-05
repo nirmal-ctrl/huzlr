@@ -49,83 +49,9 @@ function inlineText(value) {
     .trim();
 }
 
-function textNode(text) {
-  return { type: 'text', text: inlineText(text) };
-}
-
-/** Convert Markdown supported by the Huzlr renderer into Strapi Blocks. */
-export function markdownToBlocks(markdown, { skipFirstH1 = false } = {}) {
-  const lines = markdown.replace(/\r\n?/g, '\n').split('\n');
-  const blocks = [];
-  let paragraph = [];
-  let skippedH1 = false;
-
-  const flushParagraph = () => {
-    const text = inlineText(paragraph.join(' '));
-    if (text) blocks.push({ type: 'paragraph', children: [{ type: 'text', text }] });
-    paragraph = [];
-  };
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim();
-    if (!trimmed) {
-      flushParagraph();
-      continue;
-    }
-
-    const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
-    if (heading) {
-      flushParagraph();
-      const level = heading[1].length;
-      if (skipFirstH1 && level === 1 && !skippedH1) {
-        skippedH1 = true;
-        continue;
-      }
-      blocks.push({ type: 'heading', level, children: [textNode(heading[2])] });
-      continue;
-    }
-
-    const quote = /^>\s?(.*)$/.exec(trimmed);
-    if (quote) {
-      flushParagraph();
-      const quoteLines = [quote[1]];
-      while (index + 1 < lines.length) {
-        const nextQuote = /^>\s?(.*)$/.exec(lines[index + 1].trim());
-        if (!nextQuote) break;
-        quoteLines.push(nextQuote[1]);
-        index += 1;
-      }
-      blocks.push({ type: 'quote', children: [textNode(quoteLines.join(' '))] });
-      continue;
-    }
-
-    const listItem = /^(?:([-+*])|(\d+)\.)\s+(.+)$/.exec(trimmed);
-    if (listItem) {
-      flushParagraph();
-      const ordered = Boolean(listItem[2]);
-      const items = [listItem[3]];
-      while (index + 1 < lines.length) {
-        const nextItem = /^(?:([-+*])|(\d+)\.)\s+(.+)$/.exec(lines[index + 1].trim());
-        if (!nextItem || Boolean(nextItem[2]) !== ordered) break;
-        items.push(nextItem[3]);
-        index += 1;
-      }
-      blocks.push({
-        type: 'list',
-        format: ordered ? 'ordered' : 'unordered',
-        children: items.map((item) => ({
-          type: 'list-item',
-          children: [textNode(item)],
-        })),
-      });
-      continue;
-    }
-
-    paragraph.push(trimmed);
-  }
-
-  flushParagraph();
-  return blocks;
+/** Remove the H1 used as the entry title while preserving the remaining Markdown. */
+export function stripFirstMarkdownH1(markdown) {
+  return markdown.replace(/^#\s+.*(?:\r?\n|$)/m, '');
 }
 
 export function inferMarkdownFields(markdown) {
@@ -199,7 +125,7 @@ function readInput(inputPath) {
   }
 
   const inferred = inferMarkdownFields(source);
-  return { ...inferred, content: markdownToBlocks(source, { skipFirstH1: true }) };
+  return { ...inferred, contentMarkdown: stripFirstMarkdownH1(source) };
 }
 
 function cleanString(value, field) {
@@ -215,10 +141,24 @@ export function buildBlogData(input, overrides = {}, now = new Date()) {
   const slug = slugify(overrides.slug ?? input.slug ?? title);
   if (!slug) throw new Error('Blog slug must contain at least one letter or number.');
 
-  const rawContent = input.content;
-  const content = typeof rawContent === 'string' ? markdownToBlocks(rawContent) : rawContent;
-  if (!Array.isArray(content) || content.length === 0) {
-    throw new Error('Blog content must be a non-empty Markdown string or Strapi Blocks array.');
+  const legacyContent = input.content;
+  const rawContentMarkdown = input.contentMarkdown ??
+    (typeof legacyContent === 'string' ? legacyContent : undefined);
+  const contentMarkdown = rawContentMarkdown === undefined
+    ? undefined
+    : cleanString(rawContentMarkdown, 'contentMarkdown');
+  const content = Array.isArray(legacyContent) ? legacyContent : undefined;
+
+  if (legacyContent !== undefined && typeof legacyContent !== 'string' && !Array.isArray(legacyContent)) {
+    throw new Error('Blog content must be a non-empty Strapi Blocks array when provided.');
+  }
+  if (content && content.length === 0) {
+    throw new Error('Blog content must be a non-empty Strapi Blocks array when provided.');
+  }
+  if (!contentMarkdown && !content) {
+    throw new Error(
+      'Blog contentMarkdown must be a non-empty Markdown string, or content must be a non-empty Strapi Blocks array.',
+    );
   }
 
   const rawPublishDate = overrides.publishDate ?? input.publishDate ?? now.toISOString();
@@ -231,9 +171,10 @@ export function buildBlogData(input, overrides = {}, now = new Date()) {
     title,
     slug,
     description,
-    content,
     publishDate: parsedPublishDate.toISOString(),
   };
+  if (contentMarkdown) data.contentMarkdown = contentMarkdown;
+  if (content) data.content = content;
 
   const authorDocumentId = overrides.authorDocumentId ?? input.authorDocumentId;
   if (authorDocumentId) data.author = { connect: [authorDocumentId] };
