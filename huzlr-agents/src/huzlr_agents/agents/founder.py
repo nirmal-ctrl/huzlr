@@ -3,6 +3,7 @@ import json
 import logging
 
 from huzlr_agents.config import AgentSettings
+from huzlr_agents.context import context_tools, record_context_evidence, CONTEXT_INSTRUCTIONS
 
 from livekit.agents import (
     Agent,
@@ -171,6 +172,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
     settings = AgentSettings.from_environment()
     api = HuzlrApiClient.from_settings(settings)
+    pending = set()
     try:
         llm_kwargs = {"api_key": settings.gemini_api_key} if settings.gemini_api_key else {}
         vad = silero.VAD.load()
@@ -178,11 +180,13 @@ async def entrypoint(ctx: JobContext) -> None:
         llm_model = google.LLM(model="gemini-3.5-flash", **llm_kwargs)
         tts = google.TTS()
         session = AgentSession(vad=vad, stt=stt, llm=llm_model, tts=tts)
+        pending = record_context_evidence(session, getattr(ctx.job, "metadata", None), settings.api_url)
         assistant = FounderAgent(
             room=ctx.room,
             api=api,
             user_id=user_id,
-            instructions=FOUNDER_INSTRUCTIONS,
+            instructions=FOUNDER_INSTRUCTIONS + CONTEXT_INSTRUCTIONS,
+            tools=context_tools(getattr(ctx.job, "metadata", None), settings.api_url),
             chat_ctx=llm.ChatContext(),
         )
         await session.start(room=ctx.room, agent=assistant)
@@ -196,6 +200,8 @@ async def entrypoint(ctx: JobContext) -> None:
     except asyncio.CancelledError:
         logger.info("Founder voice assistant stopped")
     finally:
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
         await api.aclose()
 
 

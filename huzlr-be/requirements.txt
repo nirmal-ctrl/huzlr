@@ -64,3 +64,4 @@ google-cloud-storage==3.13.1
 # The `livekit` package is the realtime client SDK; backend token/dispatch APIs
 # are provided by `livekit-api`.
 livekit-api==1.1.0
+neo4j>=5.26,<6

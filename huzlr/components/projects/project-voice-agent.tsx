@@ -16,7 +16,7 @@ import { RoomEvent } from "livekit-client"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export function ProjectVoiceAgent() {
+export function ProjectVoiceAgent({ projectId }: { projectId?: number }) {
     const [token, setToken] = React.useState<string | null>(null)
     const [serverUrl, setServerUrl] = React.useState<string | null>(null)
     const [isConnecting, setIsConnecting] = React.useState(false)
@@ -43,7 +43,9 @@ export function ProjectVoiceAgent() {
                 headers.Authorization = `Bearer ${localToken}`
             }
 
-            const response = await fetch(`${apiUrl}/livekit/token?room_name=brainstorm-room`, {
+            const query = new URLSearchParams({ room_name: "brainstorm-room" })
+            if (projectId) query.set("project_id", String(projectId))
+            const response = await fetch(`${apiUrl}/livekit/token?${query}`, {
                 headers,
             })
 

@@ -39,6 +39,7 @@ from schemas.scrum_master import (
     WorkerStatusUpdate,
 )
 from services.meeting_outputs import finalize_meeting_outputs
+from services.meeting_context import meeting_context_metadata
 
 
 router = APIRouter()
@@ -718,6 +719,7 @@ async def claim_worker_job(
                         {
                             "agent_prompt": policy.agent_prompt,
                             "introduction_message": policy.introduction_message,
+                            **await meeting_context_metadata(db, selected),
                         }
                     ),
                 )

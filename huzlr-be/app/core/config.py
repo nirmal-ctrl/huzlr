@@ -36,6 +36,19 @@ class Settings(BaseSettings):
     LIVEKIT_URL: str = "wss://huzl-hdzkgm0u.livekit.cloud"
     GEMINI_API_KEY: str = ""
 
+    # Context graphs apply to every workspace/project when the global service is enabled.
+    CONTEXT_ENABLED: bool = True
+    NEO4J_URI: str = "bolt://localhost:7687"
+    NEO4J_USER: str = "neo4j"
+    NEO4J_PASSWORD: str = ""
+    NEO4J_DATABASE: str = "neo4j"
+    CONTEXT_EMBEDDINGS_ENABLED: bool = False
+    CONTEXT_EXTRACTION_ENABLED: bool = False
+    CONTEXT_EMBEDDING_MODEL: str = "gemini-embedding-001"
+    CONTEXT_EMBEDDING_DIMENSIONS: int = 768
+    CONTEXT_MODEL: str = "gemini-2.5-flash"
+    CONTEXT_DELEGATION_SECRET: str = ""
+
     # Google Cloud Storage
     GCS_BUCKET_NAME: str = ""
     GCS_PROJECT_ID: str = ""

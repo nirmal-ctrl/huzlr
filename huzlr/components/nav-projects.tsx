@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { IconFolder, IconListCheck } from "@tabler/icons-react"
+import { Network } from "lucide-react"
 
 import { useAppSelector } from "@/lib/redux/hooks"
 import {
@@ -18,6 +19,7 @@ export function NavProjects() {
   const activeTeamId = useAppSelector((state) => state.workspace.activeTeamId)
   const issuesUrl = activeTeamId ? `/teams/${activeTeamId}/issues` : "/issues"
   const isIssuesRoute = pathname === "/issues" || /^\/teams\/[^/]+\/issues(?:\/|$)/.test(pathname)
+  const isContextGraphRoute = pathname === "/context-graphs" || /^\/projects\/[^/]+\/context(?:\/|$)/.test(pathname)
 
   return (
     <SidebarGroup>
@@ -27,11 +29,23 @@ export function NavProjects() {
           <SidebarMenuButton
             asChild
             tooltip="Projects"
-            data-active={pathname === "/projects" || pathname.startsWith("/projects/")}
+            data-active={!isContextGraphRoute && (pathname === "/projects" || pathname.startsWith("/projects/"))}
           >
             <Link href="/projects">
               <IconFolder />
               <span>Projects</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            asChild
+            tooltip="Context Graphs"
+            data-active={isContextGraphRoute}
+          >
+            <Link href="/context-graphs">
+              <Network />
+              <span>Context Graphs</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

@@ -4,6 +4,7 @@ import logging
 from typing import Optional
 
 from huzlr_agents.config import AgentSettings
+from huzlr_agents.context import context_tools, record_context_evidence, CONTEXT_INSTRUCTIONS
 
 from livekit.agents import (
     Agent,
@@ -94,9 +95,11 @@ async def entrypoint(ctx: JobContext) -> None:
     llm_model = google.LLM(model="gemini-3.5-flash", **llm_kwargs)
     tts = "deepgram/aura-2:odysseus"
     session = AgentSession(vad=vad, stt=stt, llm=llm_model, tts=tts)
+    pending = record_context_evidence(session, getattr(ctx.job, "metadata", None), settings.api_url)
     assistant = BrainstormAgent(
         room=ctx.room,
-        instructions=BRAINSTORM_INSTRUCTIONS,
+        instructions=BRAINSTORM_INSTRUCTIONS + CONTEXT_INSTRUCTIONS,
+        tools=context_tools(getattr(ctx.job, "metadata", None), settings.api_url),
         chat_ctx=llm.ChatContext(),
     )
 
@@ -111,6 +114,9 @@ async def entrypoint(ctx: JobContext) -> None:
             await asyncio.sleep(1)
     except asyncio.CancelledError:
         logger.info("Brainstorming voice assistant stopped")
+    finally:
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
 
 
 async def request_fnc(request: JobRequest) -> None:

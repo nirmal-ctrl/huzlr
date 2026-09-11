@@ -103,6 +103,27 @@ Project-document bodies can be stored in a private Google Cloud Storage bucket. 
 
 When `GCS_BUCKET_NAME` is empty, legacy database-backed content remains available for local development. Once a document has a GCS object, GCS configuration is required to read, update, or delete it.
 
+## Project context graphs
+
+Context graphs keep operational data in PostgreSQL and maintain a derived, per-project knowledge graph in Neo4j. Enable them only after configuring the dedicated Neo4j credentials in `.env`.
+
+1. Set `CONTEXT_ENABLED=true`, `NEO4J_PASSWORD`, and a unique `CONTEXT_DELEGATION_SECRET`. Context graphs apply to every workspace and project; authorization still controls which projects each user can access.
+2. Start PostgreSQL and Neo4j:
+   ```bash
+   docker compose --profile context up -d postgres neo4j
+   ```
+3. Apply the PostgreSQL migration:
+   ```bash
+   .venv/bin/alembic upgrade head
+   ```
+4. Start the durable projection worker in a separate process. `--reconcile` queues every existing project on startup:
+   ```bash
+   PYTHONPATH=app .venv/bin/python -m context_worker --reconcile
+   ```
+5. Start the API and frontend. Open a saved project and choose **Context graph**, or navigate to `/projects/{projectId}/context`.
+
+`CONTEXT_EMBEDDINGS_ENABLED` and `CONTEXT_EXTRACTION_ENABLED` are independently opt-in and require `GEMINI_API_KEY`. The graph viewer and keyword retrieval work without them. In production, run the context worker as a long-lived service rather than in the request-driven API process.
+
 ## 🤝 Contributing
 
 See the [documentation](docs/) for development guides and best practices.

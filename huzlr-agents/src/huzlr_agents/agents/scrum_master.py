@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from huzlr_agents.config import AgentSettings
+from huzlr_agents.context import context_tools, CONTEXT_INSTRUCTIONS
 
 from livekit import rtc
 from livekit.agents import (
@@ -54,7 +55,8 @@ async def entrypoint(ctx: JobContext) -> None:
         llm=google.LLM(model="gemini-2.5-flash", **llm_kwargs),
         tts="deepgram/aura-2:odysseus",
     )
-    agent = Agent(instructions=conversation.agent_prompt)
+    agent = Agent(instructions=conversation.agent_prompt + CONTEXT_INSTRUCTIONS,
+                  tools=context_tools(getattr(ctx.job, "metadata", None), settings.api_url))
 
     async def persist_message(event) -> None:
         item = event.item

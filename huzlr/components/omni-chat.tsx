@@ -18,11 +18,16 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { useAppSelector } from "@/lib/redux/hooks"
+import { ProjectContextPicker } from "@/components/project-context-picker"
+import { ContextActionPreview } from "@/components/context-action-preview"
+import { contextError, useContextChatMutation, useRememberContextMutation, type ContextSession, type ContextAnswer } from "@/services/contextApi"
 
 type ChatMessage = {
   id: string
   role: "user" | "assistant"
   content: string
+  context?: ContextAnswer
 }
 
 const quickActions = [
@@ -82,6 +87,13 @@ const appLogos = [
 ]
 
 export function OmniChat() {
+  const workspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+  const [contextSession, setContextSession] = useState<ContextSession | null>(null)
+  const [contextLabels, setContextLabels] = useState<string[]>([])
+  const [contextChat] = useContextChatMutation()
+  const [rememberContext, { isLoading: remembering }] = useRememberContextMutation()
+  const [rememberProject, setRememberProject] = useState("")
+  const scopeVersion = useRef(0)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState("")
   const [isResponding, setIsResponding] = useState(false)
@@ -89,6 +101,16 @@ export function OmniChat() {
   const [showAppContext, setShowAppContext] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    scopeVersion.current += 1
+    setContextSession(null)
+    setContextLabels([])
+    setMessages([])
+    setError(null)
+    setIsResponding(false)
+    setRememberProject("")
+  }, [workspaceId])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -112,8 +134,15 @@ export function OmniChat() {
     setInput("")
     setError(null)
     setIsResponding(true)
+    const version = scopeVersion.current
 
     try {
+      if (contextSession) {
+        const data = await contextChat({ session_id: contextSession.id, message: content }).unwrap()
+        if (scopeVersion.current !== version) return
+        setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: data.message, context: data }])
+        return
+      }
       const response = await fetch("/api/omni", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,6 +154,7 @@ export function OmniChat() {
         }),
       })
       const data = await response.json()
+      if (scopeVersion.current !== version) return
 
       if (!response.ok) {
         throw new Error(data.error || "Omni could not respond")
@@ -139,9 +169,9 @@ export function OmniChat() {
         },
       ])
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "Omni could not respond")
+      if (scopeVersion.current === version) setError(requestError instanceof Error ? requestError.message : contextError(requestError))
     } finally {
-      setIsResponding(false)
+      if (scopeVersion.current === version) setIsResponding(false)
     }
   }
 
@@ -155,6 +185,12 @@ export function OmniChat() {
 
   const renderComposer = (withExtras = false) => (
     <div className="w-full">
+      {contextSession && <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+        {contextLabels.map((label, i) => <span key={contextSession.project_ids[i]} className="rounded-full bg-muted px-3 py-1">{label}</span>)}
+        <button type="button" disabled={isResponding} aria-label="Clear project context" onClick={() => {
+          scopeVersion.current += 1; setContextSession(null); setContextLabels([]); setMessages([]); setError(null)
+        }}>Clear context</button>
+      </div>}
       <div className="relative z-10 w-full rounded-[24px] border-2 border-primary bg-card/95 p-2 shadow-xl shadow-primary/10 transition-shadow focus-within:shadow-primary/20">
         <Textarea
           ref={inputRef}
@@ -173,17 +209,10 @@ export function OmniChat() {
         />
         <div className="flex items-center justify-between px-2 pb-1">
           <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled
-              aria-label="Add context"
-              title="Add context coming soon"
-              className="size-8 rounded-full text-muted-foreground disabled:opacity-70"
-            >
-              <Plus className="size-4" />
-            </Button>
+            <ProjectContextPicker key={workspaceId} workspaceId={workspaceId} disabled={isResponding}
+              onSelect={(session, labels) => {
+                scopeVersion.current += 1; setContextSession(session); setContextLabels(labels); setMessages([]); setError(null)
+              }} />
             <Button
               type="button"
               variant="ghost"
@@ -226,6 +255,23 @@ export function OmniChat() {
           </div>
         </div>
       </div>
+
+      {contextSession && <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <select aria-label="Project to remember information in" value={rememberProject} onChange={(event) => setRememberProject(event.target.value)}
+          className="max-w-52 rounded border bg-background px-2 py-1">
+          <option value="">Remember draft in project…</option>
+          {contextSession.project_ids.map((id, i) => <option key={id} value={id}>{contextLabels[i]}</option>)}
+        </select>
+        <Button type="button" size="sm" variant="ghost" disabled={!rememberProject || !input.trim() || remembering}
+          onClick={async () => {
+            const version = scopeVersion.current
+            try {
+              await rememberContext({ id: crypto.randomUUID(), project_id: Number(rememberProject), text: input.trim() }).unwrap()
+              if (scopeVersion.current === version) { setInput(""); setError(null) }
+            } catch (e) { if (scopeVersion.current === version) setError(contextError(e)) }
+          }}>{remembering ? "Saving…" : "Remember"}</Button>
+        <span>New information is indexed in the background.</span>
+      </div>}
 
       {withExtras && showAppContext && (
         <div className="mx-1 -mt-1 flex min-h-12 items-center justify-between gap-3 rounded-b-2xl border border-t-0 border-border bg-muted/70 px-4 pb-2 pt-3">
@@ -319,6 +365,16 @@ export function OmniChat() {
               )}
             >
               {message.content}
+              {message.context && <>
+                {message.context.freshness.some((p) => p.pending || !p.indexed_at) && <p className="mt-2 text-xs text-muted-foreground">Some project context is still being indexed.</p>}
+                {message.context.sources.length > 0 && <ol className="mt-2 list-inside list-decimal text-xs text-muted-foreground">
+                  {message.context.sources.map((source, i) => <li key={`${source.canonical_id}-${i}`}>
+                    <a className="underline" href={source.path}>{source.title}</a> · Project {source.project_id}
+                    {source.status === "proposed" && " · Unconfirmed"}
+                  </li>)}
+                </ol>}
+                {message.context.action && <ContextActionPreview action={message.context.action} />}
+              </>}
             </div>
           </div>
         ))}

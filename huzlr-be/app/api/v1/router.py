@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 from api.v1.endpoints import agent_data, issues, projects, auth, health, jira, meta, milestones, workspaces, teams, invites, livekit, project_documents, scrum_master
+from api.v1.endpoints import context
 
 api_router = APIRouter()
+api_router.include_router(context.router, prefix="/context", tags=["context"])
 
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])

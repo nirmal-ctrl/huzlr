@@ -19,6 +19,29 @@ services:
     networks:
       - huzlr-network
 
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: huzlr-neo4j
+    profiles: ["context"]
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-change-this-context-password}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 1g
+      NEO4J_server_memory_pagecache_size: 512m
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-change-this-context-password}", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - huzlr-network
+
   # Optional: pgAdmin for database management
   # Uncomment the section below if you want a web UI to manage your database
   pgadmin:
@@ -36,6 +59,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  neo4j_data:
     driver: local
 
 networks:

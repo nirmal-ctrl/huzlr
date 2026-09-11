@@ -25,6 +25,7 @@ import {
     Flag,
     Layers3,
     Loader2,
+    Network,
     Plus,
     Trash2,
 } from "lucide-react"
@@ -553,7 +554,18 @@ export function CreateProjectModal({
                             <Button type="button" variant="ghost" size="sm" onClick={handleCloseDraft}>
                                 Close
                             </Button>
-                            <ProjectVoiceAgent />
+                            <ProjectVoiceAgent projectId={draftProjectId ?? undefined} />
+                            {draftProjectId && !isProjectDraft && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.push(`/projects/${draftProjectId}/context`)}
+                                >
+                                    <Network className="size-4" />
+                                    Context graph
+                                </Button>
+                            )}
                             <Button
                                 type="submit"
                                 size="sm"
