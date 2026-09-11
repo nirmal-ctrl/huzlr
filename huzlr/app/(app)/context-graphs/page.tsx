@@ -9,13 +9,55 @@ import { WorkspaceSetupState } from "@/components/workspace-setup-state"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { contextError, useContextProjectsQuery } from "@/services/contextApi"
 
+// Keep the complete context-graphs experience in place while the feature is hidden.
+// Flip this to true when the page is ready to be exposed.
+const CONTEXT_GRAPHS_AVAILABLE = false
+
 export default function ContextGraphsPage() {
   const activeWorkspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
   const workspaces = useAppSelector((state) => state.workspace.workspaces)
   const hasWorkspace = workspaces.some((workspace) => workspace.id === activeWorkspaceId)
   const { data, error, isLoading, refetch } = useContextProjectsQuery(activeWorkspaceId ?? 0, {
-    skip: !activeWorkspaceId || !hasWorkspace,
+    skip: !CONTEXT_GRAPHS_AVAILABLE || !activeWorkspaceId || !hasWorkspace,
   })
+
+  if (!CONTEXT_GRAPHS_AVAILABLE) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader title="Context Graphs" />
+        <main className="flex flex-1 items-center justify-center bg-muted/20 px-4 py-10 sm:px-6 lg:px-8">
+          <section className="relative w-full max-w-2xl overflow-hidden rounded-2xl border bg-card px-6 py-14 text-center shadow-sm sm:px-12 sm:py-16">
+            <div
+              className="absolute inset-x-16 top-0 h-40 rounded-full bg-primary/8 blur-3xl"
+              aria-hidden="true"
+            />
+
+            <div className="relative mx-auto flex size-14 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary shadow-sm">
+              <Network className="size-6" aria-hidden="true" />
+            </div>
+
+            <p className="relative mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Coming soon
+            </p>
+            <h1 className="relative mx-auto mt-3 max-w-lg text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              See the full story behind every project.
+            </h1>
+            <p className="relative mx-auto mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+              Context Graphs will bring issues, milestones, documents, meetings, risks, and validated
+              decisions into one connected, explainable view.
+            </p>
+
+            <Button asChild className="relative mt-8 rounded-full px-6">
+              <Link href="/projects">
+                Back to projects
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </section>
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

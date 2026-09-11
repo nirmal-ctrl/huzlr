@@ -65,9 +65,6 @@ export default function Hero() {
       <div className="mx-auto w-full max-w-[1280px]">
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
           <div className="animate-appear inline-flex items-center gap-2 rounded-full border border-clay/20 bg-paper/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-clay shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--clay)_35%,transparent)] backdrop-blur-xl">
-            <span className="flex size-5 items-center justify-center rounded-full bg-clay text-white shadow-sm" aria-hidden="true">
-              <Sparkles className="size-3" />
-            </span>
             The coordination layer for modern teams
           </div>
 
