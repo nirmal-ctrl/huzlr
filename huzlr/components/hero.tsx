@@ -30,25 +30,25 @@ export default function Hero() {
       />
       <NoiseTexture className="pointer-events-none absolute inset-0 -z-10 opacity-[0.09]" />
 
-      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#0b1527] text-white shadow-[0_40px_110px_-45px_rgba(20,54,108,0.65)] sm:rounded-[2rem]">
+      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[1.5rem] border border-hairline bg-[#f8faff] text-ink shadow-[0_40px_110px_-45px_rgba(20,54,108,0.3)] dark:border-white/10 dark:bg-[#0b1527] dark:shadow-[0_40px_110px_-45px_rgba(20,54,108,0.65)] sm:rounded-[2rem]">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_50%_-40%,rgba(78,130,225,0.23),transparent_70%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_50%_-40%,rgba(78,130,225,0.13),transparent_70%)] dark:bg-[radial-gradient(ellipse_at_50%_-40%,rgba(78,130,225,0.23),transparent_70%)]"
           aria-hidden="true"
         />
         <div className="relative px-4 pb-5 pt-14 sm:px-8 sm:pb-8 sm:pt-16 lg:px-12 lg:pb-9 lg:pt-16">
           <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-            <p className="animate-appear text-[10px] font-semibold uppercase tracking-[0.23em] text-[#9abaff] motion-reduce:animate-none">
+            <p className="animate-appear text-[10px] font-semibold uppercase tracking-[0.23em] text-clay-deep dark:text-[#9abaff] motion-reduce:animate-none">
               The coordination layer for modern teams
             </p>
 
             <h1 className="mt-5 animate-appear font-serif text-[clamp(2.7rem,5vw,4.5rem)] font-medium leading-[0.99] tracking-[-0.07em] text-balance motion-reduce:animate-none">
               Every project signal.
               <span className="mt-1 block">
-                One clear <em className="font-normal italic text-[#9abaff]">next move.</em>
+                One clear <em className="font-normal italic text-clay-deep dark:text-[#9abaff]">next move.</em>
               </span>
             </h1>
 
-            <p className="mt-5 max-w-[38rem] animate-appear text-sm leading-relaxed text-white/65 opacity-0 [animation-delay:100ms] sm:text-base motion-reduce:animate-none motion-reduce:opacity-100">
+            <p className="mt-5 max-w-[38rem] animate-appear text-sm leading-relaxed text-ink/65 opacity-0 [animation-delay:100ms] sm:text-base motion-reduce:animate-none motion-reduce:opacity-100">
               Huzlr connects project work with live standups, surfaces blockers, and turns scattered
               context into human-reviewed actions your team can trust.
             </p>
@@ -72,7 +72,7 @@ export default function Hero() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="h-11 rounded-full border-white/20 bg-white/5 px-6 text-sm text-white/85 hover:border-white/40 hover:bg-white/10 hover:text-white"
+                className="h-11 rounded-full border-hairline bg-white/80 px-6 text-sm text-ink/85 hover:border-clay/35 hover:bg-sand hover:text-ink dark:border-white/20 dark:bg-white/5 dark:text-white/85 dark:hover:border-white/40 dark:hover:bg-white/10 dark:hover:text-white"
               >
                 <TrackedLink
                   href="#how-it-works"
@@ -85,14 +85,14 @@ export default function Hero() {
             </div>
           </div>
 
-          <ol className="mx-auto mb-5 mt-10 flex max-w-2xl items-center justify-center gap-x-1 text-[11px] text-white/60 sm:mb-6 sm:gap-x-4 sm:text-xs">
+          <ol className="mx-auto mb-5 mt-10 flex max-w-2xl items-center justify-center gap-x-1 text-[11px] text-ink/60 sm:mb-6 sm:gap-x-4 sm:text-xs">
             {stages.map((stage, index) => (
               <li key={stage.full} className="flex items-center gap-2 sm:gap-4">
-                <span className={index === 0 ? "rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-white" : "px-2 py-1.5"}>
+                <span className={index === 0 ? "rounded-full border border-hairline bg-white px-3 py-1.5 text-ink shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-white" : "px-2 py-1.5"}>
                   <span className="sm:hidden">{stage.short}</span>
                   <span className="hidden sm:inline">{stage.full}</span>
                 </span>
-                {index < stages.length - 1 && <span className="text-white/25" aria-hidden="true">/</span>}
+                {index < stages.length - 1 && <span className="text-ink/25" aria-hidden="true">/</span>}
               </li>
             ))}
           </ol>
@@ -122,45 +122,45 @@ export default function Hero() {
               </div>
             </article>
 
-            <article className="flex min-h-[190px] flex-col rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
-              <CalendarCheck className="size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+            <article className="flex min-h-[190px] flex-col rounded-2xl border border-[#dce5f3] bg-white p-6 transition-colors hover:bg-[#f2f6ff] dark:border-white/[0.07] dark:bg-white/[0.055] dark:hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
+              <CalendarCheck className="size-7 text-clay dark:text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
               <div className="mt-auto pt-7">
-                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Standups, captured</h2>
-                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-ink sm:text-2xl">Standups, captured</h2>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-ink/60">
                   Bring meeting decisions, blockers, and action items into the project record.
                 </p>
               </div>
             </article>
 
-            <article className="flex min-h-[190px] flex-col rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
-              <CircleAlert className="size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+            <article className="flex min-h-[190px] flex-col rounded-2xl border border-[#dce5f3] bg-white p-6 transition-colors hover:bg-[#f2f6ff] dark:border-white/[0.07] dark:bg-white/[0.055] dark:hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
+              <CircleAlert className="size-7 text-clay dark:text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
               <div className="mt-auto pt-7">
-                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Blockers, surfaced</h2>
-                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-ink sm:text-2xl">Blockers, surfaced</h2>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-ink/60">
                   See the risks hiding across conversations and project work before they drift.
                 </p>
               </div>
             </article>
 
-            <article className="relative flex min-h-[190px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-4">
+            <article className="relative flex min-h-[190px] flex-col overflow-hidden rounded-2xl border border-[#dce5f3] bg-white p-6 transition-colors hover:bg-[#f2f6ff] dark:border-white/[0.07] dark:bg-white/[0.055] dark:hover:bg-white/[0.075] sm:p-7 lg:col-span-4">
               <div className="pointer-events-none absolute -right-10 top-1/2 hidden h-px w-[45%] -rotate-12 bg-gradient-to-r from-[#729ef2]/50 to-transparent lg:block" aria-hidden="true" />
-              <FileCheck2 className="relative size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+              <FileCheck2 className="relative size-7 text-clay dark:text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
               <div className="relative mt-auto pt-7">
-                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Actions, ready for review</h2>
-                <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-white/60">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-ink sm:text-2xl">Actions, ready for review</h2>
+                <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-ink/60">
                   Turn scattered context into proposed next steps, with people confirming what becomes a delivery fact.
                 </p>
               </div>
             </article>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-white/60 sm:mt-8">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-ink/60 sm:mt-8">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-[#9abaff]" aria-hidden="true" />
+              <ShieldCheck className="size-3.5 text-clay dark:text-[#9abaff]" aria-hidden="true" />
               Human-reviewed outputs
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Check className="size-3.5 text-[#9abaff]" aria-hidden="true" />
+              <Check className="size-3.5 text-clay dark:text-[#9abaff]" aria-hidden="true" />
               No credit card required
             </span>
           </div>

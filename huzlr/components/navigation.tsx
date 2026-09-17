@@ -260,7 +260,7 @@ function Navbar({ className }: { className?: string }) {
             </DropdownMenu>
           </div>
 
-          <AnimatedThemeToggler className="hidden size-9 items-center justify-center rounded-full p-2 text-ink/70 transition-colors hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay sm:flex" />
+          <AnimatedThemeToggler className="flex size-9 items-center justify-center rounded-full p-2 text-ink/70 transition-colors hover:bg-sand hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay" />
 
           <Button asChild className="hidden h-9 cursor-pointer rounded-full bg-clay px-4 text-[13px] font-medium text-white transition-colors hover:bg-clay-deep sm:inline-flex dark:text-paper">
             <TrackedLink
