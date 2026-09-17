@@ -1,4 +1,3 @@
-import Image from "next/image"
 import {
   ArrowRight,
   CalendarCheck,
@@ -6,182 +5,165 @@ import {
   CircleAlert,
   FileCheck2,
   ShieldCheck,
-  Sparkles,
-  UserRoundCheck,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { NoiseTexture } from "@/components/ui/noise-texture"
 import { TrackedLink } from "@/components/tracked-link"
 
-const workflowSteps = [
-  {
-    label: "Standup captured",
-    detail: "Shared context",
-    icon: CalendarCheck,
-  },
-  {
-    label: "Blocker surfaced",
-    detail: "Right owner notified",
-    icon: CircleAlert,
-  },
-  {
-    label: "Human review",
-    detail: "Team stays in control",
-    icon: UserRoundCheck,
-  },
-  {
-    label: "Action assigned",
-    detail: "The next move is clear",
-    icon: FileCheck2,
-  },
+const stages = [
+  { short: "Connect", full: "Connect the work" },
+  { short: "Capture", full: "Capture the signal" },
+  { short: "Review", full: "Review the next move" },
 ]
 
 export default function Hero() {
   return (
-    <section className="relative isolate overflow-clip border-b border-hairline px-4 pb-14 pt-28 text-ink sm:px-6 sm:pb-20 sm:pt-32 lg:px-8 lg:pt-36">
+    <section className="relative isolate overflow-hidden border-b border-hairline bg-paper px-3 pb-14 pt-28 sm:px-6 sm:pb-20 sm:pt-32 lg:px-8 lg:pt-32">
       <div
-        className="absolute inset-0 -z-30 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--paper)_94%,var(--clay))_0%,var(--paper)_58%,var(--paper)_100%)]"
+        className="pointer-events-none absolute -right-48 -top-48 -z-10 size-[42rem] rounded-full bg-clay/20 blur-[110px] dark:bg-clay/15"
         aria-hidden="true"
       />
       <div
-        className="absolute left-1/2 top-[-22rem] -z-20 h-[46rem] w-[68rem] max-w-[130vw] -translate-x-1/2 rounded-[50%] bg-[radial-gradient(circle_at_center,var(--clay),transparent_68%)] opacity-[0.22] blur-[90px] dark:opacity-[0.28]"
+        className="pointer-events-none absolute -bottom-56 -left-52 -z-10 size-[42rem] rounded-full bg-clay-deep/20 blur-[120px] dark:bg-clay-deep/15"
         aria-hidden="true"
       />
-      <div
-        className="absolute -left-28 top-[31rem] -z-20 size-[28rem] rounded-full bg-clay/10 blur-[100px] dark:bg-clay/15"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -right-40 top-[25rem] -z-20 size-[34rem] rounded-full bg-clay-deep/10 blur-[110px] dark:bg-clay-deep/15"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-x-0 top-0 -z-10 h-[44rem] opacity-[0.28] [background-image:linear-gradient(to_right,color-mix(in_oklab,var(--ink)_10%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--ink)_10%,transparent)_1px,transparent_1px)] [background-size:64px_64px] [mask-image:radial-gradient(ellipse_70%_62%_at_50%_20%,black,transparent)]"
-        aria-hidden="true"
-      />
-      <NoiseTexture className="absolute inset-0 -z-10 opacity-[0.08] [mask-image:linear-gradient(to_bottom,black,transparent_72%)]" />
+      <NoiseTexture className="pointer-events-none absolute inset-0 -z-10 opacity-[0.09]" />
 
-      <div className="mx-auto w-full max-w-[1280px]">
-        <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-          <div className="animate-appear inline-flex items-center gap-2 rounded-full border border-clay/20 bg-paper/70 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-clay shadow-[0_8px_30px_-12px_color-mix(in_oklab,var(--clay)_35%,transparent)] backdrop-blur-xl">
-            The coordination layer for modern teams
+      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#0b1527] text-white shadow-[0_40px_110px_-45px_rgba(20,54,108,0.65)] sm:rounded-[2rem]">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_50%_-40%,rgba(78,130,225,0.23),transparent_70%)]"
+          aria-hidden="true"
+        />
+        <div className="relative px-4 pb-5 pt-14 sm:px-8 sm:pb-8 sm:pt-16 lg:px-12 lg:pb-9 lg:pt-16">
+          <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+            <p className="animate-appear text-[10px] font-semibold uppercase tracking-[0.23em] text-[#9abaff] motion-reduce:animate-none">
+              The coordination layer for modern teams
+            </p>
+
+            <h1 className="mt-5 animate-appear font-serif text-[clamp(2.7rem,5vw,4.5rem)] font-medium leading-[0.99] tracking-[-0.07em] text-balance motion-reduce:animate-none">
+              Every project signal.
+              <span className="mt-1 block">
+                One clear <em className="font-normal italic text-[#9abaff]">next move.</em>
+              </span>
+            </h1>
+
+            <p className="mt-5 max-w-[38rem] animate-appear text-sm leading-relaxed text-white/65 opacity-0 [animation-delay:100ms] sm:text-base motion-reduce:animate-none motion-reduce:opacity-100">
+              Huzlr connects project work with live standups, surfaces blockers, and turns scattered
+              context into human-reviewed actions your team can trust.
+            </p>
+
+            <div className="mt-7 flex w-full animate-appear flex-col justify-center gap-3 opacity-0 [animation-delay:180ms] sm:w-auto sm:flex-row motion-reduce:animate-none motion-reduce:opacity-100">
+              <Button
+                asChild
+                size="lg"
+                className="group h-11 rounded-full border-0 bg-clay px-6 text-sm font-medium text-white shadow-[0_12px_30px_-12px_rgba(79,131,230,0.7)] transition-all hover:-translate-y-0.5 hover:bg-clay-deep dark:text-white"
+              >
+                <TrackedLink
+                  href="/signup"
+                  eventName="CTA Click"
+                  eventProperties={{ location: "hero", destination: "/signup", label: "Join the private beta" }}
+                >
+                  Join the private beta
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </TrackedLink>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-11 rounded-full border-white/20 bg-white/5 px-6 text-sm text-white/85 hover:border-white/40 hover:bg-white/10 hover:text-white"
+              >
+                <TrackedLink
+                  href="#how-it-works"
+                  eventName="CTA Click"
+                  eventProperties={{ location: "hero", destination: "#how-it-works", label: "See how it works" }}
+                >
+                  See how it works
+                </TrackedLink>
+              </Button>
+            </div>
           </div>
 
-          <h1 className="mt-7 animate-appear font-serif text-[clamp(3rem,7.2vw,6.75rem)] font-normal leading-[0.91] tracking-[-0.065em] text-balance motion-reduce:animate-none">
-            Every project signal.
-            <span className="mt-1 block bg-gradient-to-r from-clay-deep to-clay bg-clip-text pb-[0.08em] text-transparent">
-              One clear next move.
-            </span>
-          </h1>
+          <ol className="mx-auto mb-5 mt-10 flex max-w-2xl items-center justify-center gap-x-1 text-[11px] text-white/60 sm:mb-6 sm:gap-x-4 sm:text-xs">
+            {stages.map((stage, index) => (
+              <li key={stage.full} className="flex items-center gap-2 sm:gap-4">
+                <span className={index === 0 ? "rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-white" : "px-2 py-1.5"}>
+                  <span className="sm:hidden">{stage.short}</span>
+                  <span className="hidden sm:inline">{stage.full}</span>
+                </span>
+                {index < stages.length - 1 && <span className="text-white/25" aria-hidden="true">/</span>}
+              </li>
+            ))}
+          </ol>
 
-          <p className="mt-7 max-w-2xl animate-appear text-base leading-relaxed text-ink/68 opacity-0 [animation-delay:120ms] sm:text-lg sm:leading-relaxed motion-reduce:animate-none motion-reduce:opacity-100">
-            Huzlr connects project work with live standups, surfaces blockers, and turns scattered
-            context into human-reviewed actions your team can trust.
-          </p>
+          <div className="grid gap-3 lg:grid-cols-6 lg:grid-rows-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-4">
+            <article className="group relative flex min-h-[340px] flex-col justify-end overflow-hidden rounded-2xl border border-[#84aefd]/20 bg-[#112b51] p-6 sm:p-8 lg:col-span-2 lg:row-span-2 lg:min-h-[396px]">
+              <div
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_55%_12%,rgba(99,155,255,0.75),transparent_42%),linear-gradient(155deg,#1c4a8a_4%,#152e57_48%,#0d1a30_100%)] transition-transform duration-700 group-hover:scale-105"
+                aria-hidden="true"
+              />
+              <div className="pointer-events-none absolute -right-14 -top-20 size-72 rounded-full border border-white/20 sm:size-96" aria-hidden="true" />
+              <div className="pointer-events-none absolute -right-2 -top-10 size-56 rounded-full border border-white/20 sm:size-72" aria-hidden="true" />
+              <div className="pointer-events-none absolute right-9 top-12 size-32 rounded-full border border-white/20 sm:size-44" aria-hidden="true" />
+              <span className="absolute left-6 top-6 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/70 sm:left-8 sm:top-8">
+                A shared view of delivery
+              </span>
+              <div className="relative">
+                <span className="mb-5 flex size-10 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-[#b8ceff] backdrop-blur-sm">
+                  <Check className="size-5" strokeWidth={2.4} aria-hidden="true" />
+                </span>
+                <h2 className="font-serif text-[clamp(1.75rem,2.7vw,2.35rem)] leading-[1.1] tracking-[-0.045em] text-white">
+                  Know what needs attention next.
+                </h2>
+                <p className="mt-3 max-w-[18rem] text-sm leading-relaxed text-white/75">
+                  One place for project context, delivery signals, and the decisions that move work forward.
+                </p>
+              </div>
+            </article>
 
-          <div className="mt-8 flex w-full animate-appear flex-col justify-center gap-3 opacity-0 [animation-delay:220ms] sm:w-auto sm:flex-row sm:items-center motion-reduce:animate-none motion-reduce:opacity-100">
-            <Button
-              asChild
-              size="lg"
-              className="group h-12 rounded-full border-0 bg-clay px-7 text-sm font-medium text-white shadow-[0_16px_40px_-14px_color-mix(in_oklab,var(--clay)_65%,transparent)] transition-all hover:-translate-y-0.5 hover:bg-clay-deep dark:text-white"
-            >
-              <TrackedLink
-                href="/signup"
-                eventName="CTA Click"
-                eventProperties={{ location: "hero", destination: "/signup", label: "Join the private beta" }}
-              >
-                Join the private beta
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </TrackedLink>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 rounded-full border-hairline bg-paper/60 px-7 text-sm text-ink/75 shadow-[0_8px_30px_-18px_color-mix(in_oklab,var(--ink)_35%,transparent)] backdrop-blur-xl hover:bg-sand hover:text-ink"
-            >
-              <TrackedLink
-                href="#how-it-works"
-                eventName="CTA Click"
-                eventProperties={{ location: "hero", destination: "#how-it-works", label: "See how it works" }}
-              >
-                See how it works
-              </TrackedLink>
-            </Button>
+            <article className="flex min-h-[190px] flex-col rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
+              <CalendarCheck className="size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+              <div className="mt-auto pt-7">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Standups, captured</h2>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
+                  Bring meeting decisions, blockers, and action items into the project record.
+                </p>
+              </div>
+            </article>
+
+            <article className="flex min-h-[190px] flex-col rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-2">
+              <CircleAlert className="size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+              <div className="mt-auto pt-7">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Blockers, surfaced</h2>
+                <p className="mt-2 max-w-sm text-[13px] leading-relaxed text-white/60">
+                  See the risks hiding across conversations and project work before they drift.
+                </p>
+              </div>
+            </article>
+
+            <article className="relative flex min-h-[190px] flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.055] p-6 transition-colors hover:bg-white/[0.075] sm:p-7 lg:col-span-4">
+              <div className="pointer-events-none absolute -right-10 top-1/2 hidden h-px w-[45%] -rotate-12 bg-gradient-to-r from-[#729ef2]/50 to-transparent lg:block" aria-hidden="true" />
+              <FileCheck2 className="relative size-7 text-[#a9c5ff]" strokeWidth={1.6} aria-hidden="true" />
+              <div className="relative mt-auto pt-7">
+                <h2 className="font-serif text-xl tracking-[-0.035em] text-white sm:text-2xl">Actions, ready for review</h2>
+                <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-white/60">
+                  Turn scattered context into proposed next steps, with people confirming what becomes a delivery fact.
+                </p>
+              </div>
+            </article>
           </div>
 
-          <div className="mt-6 flex animate-appear flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-ink/55 opacity-0 [animation-delay:320ms] motion-reduce:animate-none motion-reduce:opacity-100">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-white/60 sm:mt-8">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="size-3.5 text-emerald-500" aria-hidden="true" />
+              <ShieldCheck className="size-3.5 text-[#9abaff]" aria-hidden="true" />
               Human-reviewed outputs
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Check className="size-3.5 text-emerald-500" aria-hidden="true" />
+              <Check className="size-3.5 text-[#9abaff]" aria-hidden="true" />
               No credit card required
             </span>
           </div>
-        </div>
-
-        <div className="relative mx-auto mt-14 w-full animate-appear opacity-0 [animation-delay:360ms] sm:mt-16 motion-reduce:animate-none motion-reduce:opacity-100">
-          <div className="absolute -inset-4 -z-10 rounded-[2.5rem] bg-clay/15 blur-2xl sm:-inset-8" aria-hidden="true" />
-
-          <figure className="relative w-full overflow-hidden rounded-[1.5rem] border border-clay/25 bg-paper/60 shadow-[0_45px_100px_-38px_color-mix(in_oklab,var(--clay)_58%,transparent)] sm:rounded-[2rem]">
-            <div className="overflow-hidden bg-ink">
-              <div className="relative aspect-[4/3] overflow-hidden sm:aspect-[1672/941]">
-                <Image
-                  src="/aiworkers.png"
-                  alt="People and AI workers coordinating around one shared delivery plan"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1280px) calc(100vw - 3rem), 1280px"
-                  className="object-cover object-center"
-                />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_58%,rgba(3,12,46,0.54)_100%)]" aria-hidden="true" />
-
-                <div className="absolute left-4 top-4 hidden items-center gap-3 rounded-2xl border border-paper/20 bg-ink/80 px-4 py-3 text-paper shadow-2xl backdrop-blur-xl md:flex lg:left-7 lg:top-7">
-                  <span className="relative flex size-9 items-center justify-center rounded-xl bg-emerald-400 text-[#052437]">
-                    <Check className="size-4" strokeWidth={3} aria-hidden="true" />
-                    <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-ink bg-emerald-300" />
-                  </span>
-                  <span>
-                    <span className="block text-xs text-paper/55">Delivery health</span>
-                    <span className="mt-0.5 block text-sm font-semibold">All systems moving</span>
-                  </span>
-                </div>
-
-                <div className="absolute bottom-4 right-4 hidden w-[15rem] rounded-2xl border border-hairline bg-paper/90 p-4 text-ink shadow-2xl backdrop-blur-xl md:block lg:bottom-7 lg:right-7">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold">Coordination score</span>
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">+12%</span>
-                  </div>
-                  <div className="mt-3 flex items-end gap-3">
-                    <span className="font-serif text-4xl font-semibold tracking-[-0.06em]">92</span>
-                    <div className="mb-1 h-2 flex-1 overflow-hidden rounded-full bg-sand">
-                      <div className="h-full w-[92%] rounded-full bg-clay" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </figure>
-        </div>
-
-        <div className="relative z-10 mx-auto -mt-px grid w-[calc(100%-1rem)] overflow-hidden rounded-b-2xl border border-t-0 border-hairline bg-paper/72 shadow-[0_20px_60px_-34px_color-mix(in_oklab,var(--ink)_35%,transparent)] backdrop-blur-xl sm:w-[calc(100%-3rem)] sm:grid-cols-2 xl:w-[calc(100%-6rem)] xl:grid-cols-4">
-          {workflowSteps.map(({ label, detail, icon: Icon }, index) => (
-            <div
-              key={label}
-              className={`group flex items-center gap-3 px-4 py-4 sm:px-5 ${index > 0 ? "border-t border-ink/8 sm:border-t-0" : ""} ${index % 2 === 1 ? "sm:border-l" : ""} ${index === 2 ? "sm:border-t xl:border-l xl:border-t-0" : ""}`}
-            >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-clay/10 text-clay transition-transform group-hover:scale-105">
-                <Icon className="size-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-[13px] font-semibold text-ink/80">{label}</span>
-                <span className="mt-0.5 block text-[11px] text-ink/50">{detail}</span>
-              </span>
-            </div>
-          ))}
         </div>
       </div>
     </section>
