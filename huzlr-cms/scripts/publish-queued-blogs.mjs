@@ -67,6 +67,35 @@ async function resolveTags(tags) {
   return ids;
 }
 
+
+async function uploadCover(input, slug) {
+  if (typeof input.coverImagePath !== 'string' ||
+      !/^huzlr-cms\/articles\/images\/[a-z0-9-]+\.json$/.test(input.coverImagePath)) {
+    throw new Error('Provide coverImagePath inside huzlr-cms/articles/images.');
+  }
+  const asset = JSON.parse(readFileSync(input.coverImagePath, 'utf8'));
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(asset.mimeType) ||
+      typeof asset.base64 !== 'string' || typeof asset.altText !== 'string' || !asset.altText.trim()) {
+    throw new Error('Cover asset requires mimeType, base64, and descriptive altText.');
+  }
+  const bytes = Buffer.from(asset.base64, 'base64');
+  if (bytes.length < 100 || bytes.length > 15 * 1024 * 1024) throw new Error('Cover image must be between 100 bytes and 15 MB.');
+  const extension = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }[asset.mimeType];
+  const form = new FormData();
+  form.append('files', new Blob([bytes], { type: asset.mimeType }), slug + '.' + extension);
+  form.append('fileInfo', JSON.stringify({ name: slug + '.' + extension, alternativeText: asset.altText.trim(), caption: '' }));
+  // An interrupted upload may have succeeded; do not blindly retry it.
+  const response = await fetch(base + '/api/upload', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: form,
+    signal: AbortSignal.timeout(120000)
+  });
+  if (!response.ok) throw new Error('Cover upload HTTP ' + response.status + '; check Upload upload permission.');
+  const media = await response.json();
+  if (!Array.isArray(media) || !Number.isInteger(media[0]?.id) || !media[0]?.url) throw new Error('Cover upload was not confirmed.');
+  if (media[0].alternativeText !== asset.altText.trim()) throw new Error('Cover alt text was not saved.');
+  return media[0].id;
+}
+
 const recent = await get(base + '/api/blogs?status=published&pagination[pageSize]=1');
 if (!Array.isArray(recent.data)) throw new Error('Unexpected CMS response.');
 const tagAccess = await get(base + '/api/tags?status=published&pagination[pageSize]=1');
@@ -83,7 +112,7 @@ for (const file of files) {
   const links = [...data.contentMarkdown.matchAll(/\]\((https:\/\/[^)\s]+)\)/g)];
   if (links.length < 2) throw new Error(file + ': at least two HTTPS sources required.');
   const lookupUrl = base + '/api/blogs?' + new URLSearchParams({
-    'filters[slug][$eq]': data.slug, status: 'published', 'pagination[pageSize]': '1', 'populate[tags]': 'true'
+    'filters[slug][$eq]': data.slug, status: 'published', 'pagination[pageSize]': '1', 'populate[tags]': 'true', 'populate[coverImage]': 'true'
   });
   const existing = await get(lookupUrl);
   if (!Array.isArray(existing.data)) throw new Error('Unexpected duplicate lookup response.');
@@ -93,6 +122,7 @@ for (const file of files) {
   }
   const tagIds = await resolveTags(input.tags);
   data.tags = { connect: tagIds };
+  data.coverImage = await uploadCover(input, data.slug);
   // Never automatically repeat a POST: an interrupted response may have committed.
   let published;
   try {
@@ -113,6 +143,7 @@ for (const file of files) {
   if (!verified.data?.some(post => post.documentId === published.documentId)) throw new Error('Published article could not be verified.');
   const linkedTags = verified.data[0]?.tags?.map(tag => tag.documentId) ?? [];
   if (!tagIds.every(id => linkedTags.includes(id))) throw new Error('Published blog tags could not be verified.');
+  if (verified.data[0]?.coverImage?.id !== data.coverImage) throw new Error('Cover image attachment could not be verified.');
   const url = 'https://www.huzlr.com/blog/' + data.slug;
   console.log('Published and verified in CMS: ' + url);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, '- Published: [' + data.title + '](' + url + ')\n');
