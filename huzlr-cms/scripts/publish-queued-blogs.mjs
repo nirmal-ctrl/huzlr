@@ -12,7 +12,7 @@ async function get(url) {
   for (let attempt = 0; attempt < 8; attempt++) {
     try {
       const response = await fetch(url, { headers, signal: AbortSignal.timeout(60000) });
-      if (response.status === 401 || response.status === 403) throw new Error('TOKEN_PERMISSION: check Blog find/findOne/create permissions.');
+      if (response.status === 401 || response.status === 403) throw new Error('TOKEN_PERMISSION: check Blog and Tag find/findOne/create permissions.');
       if (!response.ok) throw new Error('CMS HTTP ' + response.status);
       return await response.json();
     } catch (error) {
@@ -21,9 +21,57 @@ async function get(url) {
     }
   }
 }
+
+async function resolveTags(tags) {
+  if (!Array.isArray(tags) || tags.length < 2 || tags.length > 4) throw new Error('Provide 2–4 relevant tags as { title, slug }.');
+  const ids = [];
+  const slugs = new Set();
+  for (const tag of tags) {
+    if (!tag || typeof tag.title !== 'string' || !tag.title.trim() ||
+        typeof tag.slug !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tag.slug)) {
+      throw new Error('Each tag needs a title and lowercase hyphenated slug.');
+    }
+    if (slugs.has(tag.slug)) continue;
+    slugs.add(tag.slug);
+    const url = base + '/api/tags?' + new URLSearchParams({
+      'filters[slug][$eq]': tag.slug, status: 'published', 'pagination[pageSize]': '2'
+    });
+    let found = await get(url);
+    if (!Array.isArray(found.data)) throw new Error('Invalid tag response.');
+    if (found.data.length > 1) throw new Error('Duplicate published tag slug: ' + tag.slug);
+    let record = found.data[0];
+    if (!record) {
+      const drafts = await get(base + '/api/tags?' + new URLSearchParams({
+        'filters[slug][$eq]': tag.slug, status: 'draft', 'pagination[pageSize]': '1'
+      }));
+      if (drafts.data?.length) throw new Error('Tag exists as a draft: ' + tag.slug + '. Publish it in Strapi before retrying.');
+      try {
+        const response = await fetch(base + '/api/tags?status=published', {
+          method: 'POST', headers,
+          body: JSON.stringify({ data: { title: tag.title.trim(), slug: tag.slug } }),
+          signal: AbortSignal.timeout(90000)
+        });
+        if (!response.ok) throw new Error('Tag create HTTP ' + response.status + '; enable Tag create permission.');
+        const result = await response.json();
+        record = result.data;
+        if (!record?.publishedAt) throw new Error('Tag publication was not confirmed.');
+      } catch (error) {
+        found = await get(url);
+        record = found.data?.[0];
+        if (!record?.publishedAt) throw error;
+      }
+    }
+    if (!record.documentId) throw new Error('Tag documentId missing.');
+    ids.push(record.documentId);
+  }
+  return ids;
+}
+
 const recent = await get(base + '/api/blogs?status=published&pagination[pageSize]=1');
 if (!Array.isArray(recent.data)) throw new Error('Unexpected CMS response.');
-console.log('CMS connection and Blog read permission verified.');
+const tagAccess = await get(base + '/api/tags?status=published&pagination[pageSize]=1');
+if (!Array.isArray(tagAccess.data)) throw new Error('Unexpected Tag API response.');
+console.log('CMS connection, Blog read, and Tag read permissions verified.');
 if (process.argv.includes('--preflight')) process.exit(0);
 const directory = 'huzlr-cms/articles';
 const files = readdirSync(directory).filter(name => /^\d{4}-\d{2}-\d{2}\.json$/.test(name)).sort();
@@ -35,7 +83,7 @@ for (const file of files) {
   const links = [...data.contentMarkdown.matchAll(/\]\((https:\/\/[^)\s]+)\)/g)];
   if (links.length < 2) throw new Error(file + ': at least two HTTPS sources required.');
   const lookupUrl = base + '/api/blogs?' + new URLSearchParams({
-    'filters[slug][$eq]': data.slug, status: 'published', 'pagination[pageSize]': '1'
+    'filters[slug][$eq]': data.slug, status: 'published', 'pagination[pageSize]': '1', 'populate[tags]': 'true'
   });
   const existing = await get(lookupUrl);
   if (!Array.isArray(existing.data)) throw new Error('Unexpected duplicate lookup response.');
@@ -43,6 +91,8 @@ for (const file of files) {
     console.log('Already published: ' + data.slug);
     continue;
   }
+  const tagIds = await resolveTags(input.tags);
+  data.tags = { connect: tagIds };
   // Never automatically repeat a POST: an interrupted response may have committed.
   let published;
   try {
@@ -61,6 +111,8 @@ for (const file of files) {
   }
   const verified = await get(lookupUrl);
   if (!verified.data?.some(post => post.documentId === published.documentId)) throw new Error('Published article could not be verified.');
+  const linkedTags = verified.data[0]?.tags?.map(tag => tag.documentId) ?? [];
+  if (!tagIds.every(id => linkedTags.includes(id))) throw new Error('Published blog tags could not be verified.');
   const url = 'https://www.huzlr.com/blog/' + data.slug;
   console.log('Published and verified in CMS: ' + url);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, '- Published: [' + data.title + '](' + url + ')\n');
