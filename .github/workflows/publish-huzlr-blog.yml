@@ -1,0 +1,41 @@
+name: Publish Huzlr blogs
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'huzlr-cms/articles/*.json'
+      - '.github/workflows/publish-huzlr-blog.yml'
+  workflow_dispatch:
+    inputs:
+      preflight:
+        description: Check CMS access without publishing
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: huzlr-blog-publisher
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check publisher syntax
+        run: node --check huzlr-cms/scripts/publish-queued-blogs.mjs
+      - name: Check CMS or publish queued articles
+        env:
+          HUZLR_CMS_URL: ${{ vars.HUZLR_CMS_URL }}
+          HUZLR_CMS_API_TOKEN: ${{ secrets.HUZLR_CMS_API_TOKEN }}
+          PREFLIGHT: ${{ github.event.inputs.preflight }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$PREFLIGHT" = "true" ] || [ ! -d huzlr-cms/articles ]; then
+            node huzlr-cms/scripts/publish-queued-blogs.mjs --preflight
+          else
+            node huzlr-cms/scripts/publish-queued-blogs.mjs
+          fi
