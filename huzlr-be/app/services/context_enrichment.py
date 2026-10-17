@@ -1,7 +1,7 @@
 """Optional provider work. Evidence spans are validated before claims are stored."""
 import json
 from google import genai
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from core.config import settings
 from models.context import ContextArtifact, ContextClaim
@@ -46,6 +46,7 @@ async def extract(text):
 
 
 async def enrich(db, project_id, nodes, artifacts):
+    added_claims = False
     for source in artifacts:
         cache_key = digest(f"{project_id}:{source['source_id']}:{source['version']}:"
                            f"{settings.CONTEXT_EMBEDDING_MODEL}:{settings.CONTEXT_EMBEDDING_DIMENSIONS}:"
@@ -66,12 +67,22 @@ async def enrich(db, project_id, nodes, artifacts):
                 cid = digest(f"{project_id}:{source['source_id']}:{source['version']}:{candidate.predicate}:{candidate.statement}")
                 if not await db.get(ContextClaim, cid):
                     db.add(ContextClaim(id=cid, project_id=project_id, source_id=source["source_id"],
+                        jira_object_id=source.get("jira_object_id"),
                         source_version=source["version"], predicate=candidate.predicate, statement=candidate.statement,
                         evidence=candidate.evidence, confidence=candidate.confidence, status="proposed"))
                     await db.flush()
+                    added_claims = True
             db.add(ContextArtifact(id=cache_key, project_id=project_id, source_id=source["source_id"],
+                jira_object_id=source.get("jira_object_id"),
                 version=source["version"], text=source["text"], enrichment={"vectors": vectors}))
             await db.flush()
         for n, vector in zip(source_chunks, vectors):
             n["embedding"] = vector
             n["embedding_model"] = settings.CONTEXT_EMBEDDING_MODEL
+        if added_claims:
+            await db.execute(text("""SELECT context_enqueue(p.project_id, t.workspace_id,
+                'context.claims.extracted', '{}'::jsonb)
+                FROM projects p JOIN teams t ON t.id = p.team_id WHERE p.project_id = :pid"""), {"pid": project_id})
+            added_claims = False
+        # Preserve successful artifacts across a later provider failure or job timeout.
+        await db.commit()

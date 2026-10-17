@@ -60,10 +60,13 @@ export interface ScrumMeetingDetail extends ScrumMeeting {
   transcript: TranscriptSegment[]
 }
 
+export type ScrumMasterVoiceMode = "pipeline" | "gemini_live"
+
 export interface ScrumMasterSettings {
   workspaceId: number
   botName: string
   botAccountEmail?: string
+  voiceMode: ScrumMasterVoiceMode
   agentPrompt: string
   introductionMessage: string
   autoJoin: boolean
@@ -132,6 +135,7 @@ interface ApiSettings {
   workspace_id: number
   bot_name: string
   bot_account_email?: string
+  voice_mode?: ScrumMasterVoiceMode
   agent_prompt: string
   introduction_message: string
   auto_join: boolean
@@ -166,6 +170,7 @@ const mapSettings = (value: ApiSettings): ScrumMasterSettings => ({
   workspaceId: value.workspace_id,
   botName: value.bot_name,
   botAccountEmail: value.bot_account_email,
+  voiceMode: value.voice_mode ?? "pipeline",
   agentPrompt: value.agent_prompt,
   introductionMessage: value.introduction_message,
   autoJoin: value.auto_join,
@@ -181,6 +186,7 @@ const mapSettings = (value: ApiSettings): ScrumMasterSettings => ({
 const toApiSettings = (value: ScrumMasterSettings) => ({
   bot_name: value.botName,
   bot_account_email: value.botAccountEmail || null,
+  voice_mode: value.voiceMode,
   agent_prompt: value.agentPrompt,
   introduction_message: value.introductionMessage,
   auto_join: value.autoJoin,

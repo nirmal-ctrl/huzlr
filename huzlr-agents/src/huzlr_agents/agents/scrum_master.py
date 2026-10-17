@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from google.genai import types
 from huzlr_agents.config import AgentSettings
 from huzlr_agents.context import context_tools, CONTEXT_INSTRUCTIONS
 
@@ -37,24 +38,64 @@ def _meeting_id_from_room(room_name: str) -> int:
         raise RuntimeError(f"Invalid Scrum Master room name: {room_name}") from exc
 
 
+def build_session(settings: AgentSettings, conversation: ScrumMasterConversationConfig) -> AgentSession:
+    llm_kwargs = {"api_key": settings.gemini_api_key} if settings.gemini_api_key else {}
+    if conversation.voice_mode == "gemini_live":
+        if not settings.gemini_api_key:
+            raise RuntimeError("GOOGLE_API_KEY or GEMINI_API_KEY is required for Gemini Live")
+        return AgentSession(
+            llm=google.realtime.RealtimeModel(
+                model=settings.gemini_live_model,
+                voice=settings.gemini_live_voice,
+                modalities=[types.Modality.AUDIO],
+                input_audio_transcription=types.AudioTranscriptionConfig(),
+                output_audio_transcription=types.AudioTranscriptionConfig(),
+                context_window_compression=types.ContextWindowCompressionConfig(
+                    sliding_window=types.SlidingWindow(),
+                ),
+                thinking_config=types.ThinkingConfig(include_thoughts=False),
+                **llm_kwargs,
+            ),
+        )
+    if conversation.voice_mode != "pipeline":
+        raise ValueError(f"Unsupported Scrum Master voice mode: {conversation.voice_mode!r}")
+    return AgentSession(
+        vad=silero.VAD.load(),
+        stt=deepgram.STT(),
+        llm=google.LLM(model="gemini-2.5-flash", **llm_kwargs),
+        tts="deepgram/aura-2:odysseus",
+    )
+
+
+async def introduce(session: AgentSession, conversation: ScrumMasterConversationConfig) -> None:
+    if conversation.voice_mode == "gemini_live":
+        # Native audio has no separate TTS for session.say(). Ask the realtime
+        # model to deliver the configured greeting through its own audio output.
+        await session.generate_reply(
+            instructions=(
+                "Open the meeting with the following introduction. Say only this message "
+                "and then wait for participants. Do not call tools for this introduction.\n"
+                + conversation.introduction_message
+            ),
+            allow_interruptions=True,
+            tool_choice="none",
+        )
+    else:
+        await session.say(conversation.introduction_message, allow_interruptions=True)
+
+
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     participant = await ctx.wait_for_participant()
     logger.info("Meet bridge participant connected: %s", participant.identity)
 
     settings = AgentSettings.from_environment()
-    api = HuzlrApiClient.from_settings(settings)
     meeting_id = _meeting_id_from_room(ctx.room.name)
     conversation = ScrumMasterConversationConfig.from_metadata(getattr(ctx.job, "metadata", None))
+    session = build_session(settings, conversation)
+    api = HuzlrApiClient.from_settings(settings)
     pending_writes: set[asyncio.Task] = set()
-
-    llm_kwargs = {"api_key": settings.gemini_api_key} if settings.gemini_api_key else {}
-    session = AgentSession(
-        vad=silero.VAD.load(),
-        stt=deepgram.STT(),
-        llm=google.LLM(model="gemini-2.5-flash", **llm_kwargs),
-        tts="deepgram/aura-2:odysseus",
-    )
+    logger.info("Using Scrum Master voice mode: %s", conversation.voice_mode)
     agent = Agent(instructions=conversation.agent_prompt + CONTEXT_INSTRUCTIONS,
                   tools=context_tools(getattr(ctx.job, "metadata", None), settings.api_url))
 
@@ -106,15 +147,18 @@ async def entrypoint(ctx: JobContext) -> None:
                 participant_kinds=[rtc.ParticipantKind.PARTICIPANT_KIND_STANDARD],
             ),
         )
-        await session.say(conversation.introduction_message, allow_interruptions=True)
+        await introduce(session, conversation)
         while True:
             await asyncio.sleep(1)
     except asyncio.CancelledError:
         logger.info("Scrum Master agent stopped")
     finally:
-        if pending_writes:
-            await asyncio.gather(*pending_writes, return_exceptions=True)
-        await api.aclose()
+        try:
+            await session.aclose()
+        finally:
+            if pending_writes:
+                await asyncio.gather(*pending_writes, return_exceptions=True)
+            await api.aclose()
 
 
 async def request_fnc(request: JobRequest) -> None:

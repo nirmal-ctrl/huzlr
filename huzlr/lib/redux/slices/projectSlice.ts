@@ -13,7 +13,6 @@ interface ProjectState {
     items: Project[];
     loading: boolean;
     error: string | null;
-    importing: boolean;
     lastFetchedWorkspaceId: number | null;
     lastFetchedTeamId: number | null;
 }
@@ -22,7 +21,6 @@ const initialState: ProjectState = {
     items: [],
     loading: true,  // Start with loading true to prevent empty state flash
     error: null,
-    importing: false,
     lastFetchedWorkspaceId: null,
     lastFetchedTeamId: null,
 };
@@ -172,45 +170,6 @@ export const updateProject = createAsyncThunk(
 );
 
 // Thunk to handle importing multiple Jira projects
-// This iterates over the selection and creates a project for each
-export const importJiraProjects = createAsyncThunk(
-    'projects/importJira',
-    async ({ projectsToImport, teamId }: { projectsToImport: any[], teamId: number }, { dispatch, rejectWithValue }) => {
-        try {
-            const results = [];
-            for (const proj of projectsToImport) {
-                // Ensure required fields are present
-                if (!proj.project_title) {
-                    console.error("Missing required fields for import:", proj);
-                    continue;
-                }
-
-                const projectCreateData: ProjectCreate = {
-                    team_id: teamId,
-                    lead_id: proj.lead_id,
-                    properties: {
-                        project_title: proj.project_title,
-                        description: proj.description || null,
-                        status: proj.status || "Draft",
-                        source: proj.source || "native",
-                        external_id: proj.external_id || null,
-                        external_url: proj.external_url || null,
-                        // Spread any additional properties (uses index signature)
-                        ...proj
-                    }
-                };
-
-                // Dispatch createProject for each one
-                const result = await dispatch(createProject(projectCreateData)).unwrap();
-                results.push(result);
-            }
-            return results;
-        } catch (error: any) {
-            return rejectWithValue(error.message || 'Failed to import projects');
-        }
-    }
-);
-
 const projectSlice = createSlice({
     name: 'projects',
     initialState,
@@ -270,18 +229,6 @@ const projectSlice = createSlice({
                 if (existingIndex >= 0) {
                     state.items[existingIndex] = action.payload;
                 }
-            })
-            // Import Jira Projects
-            .addCase(importJiraProjects.pending, (state) => {
-                state.importing = true;
-                state.error = null;
-            })
-            .addCase(importJiraProjects.fulfilled, (state) => {
-                state.importing = false;
-            })
-            .addCase(importJiraProjects.rejected, (state, action) => {
-                state.importing = false;
-                state.error = action.payload as string;
             });
     },
 });

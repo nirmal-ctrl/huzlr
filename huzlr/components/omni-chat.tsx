@@ -88,6 +88,7 @@ const appLogos = [
 
 export function OmniChat() {
   const workspaceId = useAppSelector((state) => state.workspace.activeWorkspaceId)
+  const contextUserId = useAppSelector((state) => state.auth.user?.id)
   const [contextSession, setContextSession] = useState<ContextSession | null>(null)
   const [contextLabels, setContextLabels] = useState<string[]>([])
   const [contextChat] = useContextChatMutation()
@@ -110,7 +111,7 @@ export function OmniChat() {
     setError(null)
     setIsResponding(false)
     setRememberProject("")
-  }, [workspaceId])
+  }, [workspaceId, contextUserId])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({

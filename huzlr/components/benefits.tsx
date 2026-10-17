@@ -1,67 +1,58 @@
-import { Radar, Bot, Network, Eye } from "lucide-react"
+const benefits = [
+  { number: "01", title: "Risks surface early", description: "See dependencies and drift while there is still time to act." },
+  { number: "02", title: "AI stays aligned", description: "Keep agents inside current priorities and constraints." },
+  { number: "03", title: "Handoffs keep moving", description: "Carry ownership across people, agents, and tools." },
+  { number: "04", title: "One operating picture", description: "Connect decisions, execution, and outcomes." },
+]
 
 export function Benefits() {
-  const benefits = [
-    {
-      title: "Risks surface early",
-      desc: "Dependencies, drifting scope, and stalled work are connected to their real impact while there is still time to act.",
-      icon: Radar,
-    },
-    {
-      title: "AI workers stay aligned",
-      desc: "Agents receive current priorities, constraints, and context instead of operating from an outdated prompt or isolated task.",
-      icon: Bot,
-    },
-    {
-      title: "Handoffs keep moving",
-      desc: "Huzlr follows up across people, agents, and tools so ownership does not disappear between systems.",
-      icon: Network,
-    },
-    {
-      title: "One operating picture",
-      desc: "Decisions, execution, and outcomes remain connected without another dashboard to maintain or status meeting to schedule.",
-      icon: Eye,
-    },
-  ]
-
   return (
-    <section className="relative py-24 sm:py-28 px-4 sm:px-6 lg:px-8 border-t border-hairline overflow-hidden">
-      <div className="relative max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="max-w-2xl">
-          <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
-            The management harness
-          </p>
-          <h2 className="mt-4 font-serif text-4xl sm:text-5xl tracking-tight text-ink text-balance">
-            More capacity. <em className="italic text-clay">Less coordination overhead.</em>
-          </h2>
-          <p className="mt-5 text-base sm:text-lg leading-relaxed text-ink/60">
-            Huzlr provides the alignment, prioritization, accountability, and follow-through
-            a hybrid team needs to execute as one organization.
-          </p>
+    <section className="bg-[#10151d] px-5 py-24 text-white sm:py-32 md:px-8">
+      <div className="mx-auto max-w-[1344px]">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#91b4f5]">The management harness</p>
+          </div>
+          <div className="lg:col-span-8">
+            <h2 className="max-w-5xl font-serif text-[clamp(3rem,6vw,5.75rem)] font-medium leading-[0.95] tracking-[-0.075em] text-balance">
+              More capacity. Less coordination overhead.
+            </h2>
+          </div>
         </div>
 
-        {/* Cards */}
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5">
-          {benefits.map((benefit) => {
-            const Icon = benefit.icon
-            return (
-              <div
-                key={benefit.title}
-                className="group rounded-lg border border-hairline bg-sand/40 p-7 transition-colors duration-300 hover:bg-sand/70"
+        <div className="mt-20 grid border-y border-white/15 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="relative flex min-h-[520px] items-center justify-center overflow-hidden border-b border-white/15 p-8 lg:border-b-0 lg:border-r">
+            <svg viewBox="0 0 500 500" className="w-full max-w-[470px]" fill="none" aria-label="Signal, decision, action, and outcome coordination loop">
+              <circle cx="250" cy="250" r="184" stroke="white" strokeOpacity=".12" />
+              <circle cx="250" cy="250" r="116" stroke="#91B4F5" strokeOpacity=".35" />
+              <path d="M250 66A184 184 0 0 1 434 250" stroke="#91B4F5" strokeWidth="2" />
+              <path d="M434 250A184 184 0 0 1 250 434" stroke="#91B4F5" strokeOpacity=".65" strokeWidth="2" />
+              <path d="M250 434A184 184 0 0 1 66 250" stroke="#91B4F5" strokeOpacity=".4" strokeWidth="2" />
+              <path d="M66 250A184 184 0 0 1 250 66" stroke="#91B4F5" strokeOpacity=".2" strokeWidth="2" />
+              <circle cx="250" cy="66" r="7" fill="#91B4F5" /><circle cx="434" cy="250" r="7" fill="#91B4F5" /><circle cx="250" cy="434" r="7" fill="#91B4F5" /><circle cx="66" cy="250" r="7" fill="#91B4F5" />
+              <text x="250" y="238" fill="white" textAnchor="middle" fontSize="13" opacity=".45" letterSpacing="2">HUZLR</text>
+              <text x="250" y="270" fill="white" textAnchor="middle" fontSize="23">Shared context</text>
+              <text x="250" y="34" fill="white" textAnchor="middle" fontSize="13" opacity=".65">Signal</text>
+              <text x="466" y="255" fill="white" textAnchor="start" fontSize="13" opacity=".65">Decision</text>
+              <text x="250" y="474" fill="white" textAnchor="middle" fontSize="13" opacity=".65">Action</text>
+              <text x="34" y="255" fill="white" textAnchor="end" fontSize="13" opacity=".65">Outcome</text>
+            </svg>
+          </div>
+
+          <div className="grid sm:grid-cols-2">
+            {benefits.map((benefit, index) => (
+              <article
+                key={benefit.number}
+                className={`flex min-h-[260px] flex-col justify-between border-white/15 p-7 sm:p-8 ${index > 1 ? "border-t" : ""} ${index % 2 === 1 ? "sm:border-l" : ""} ${index === 1 ? "max-sm:border-t" : ""}`}
               >
-                <div className="w-10 h-10 rounded-full bg-clay/10 text-clay flex items-center justify-center">
-                  <Icon size={18} strokeWidth={2} />
+                <span className="font-mono text-[10px] tracking-[0.14em] text-[#91b4f5]">{benefit.number}</span>
+                <div>
+                  <h3 className="font-serif text-2xl tracking-[-0.04em] sm:text-3xl">{benefit.title}</h3>
+                  <p className="mt-3 max-w-sm text-sm leading-relaxed text-white/45">{benefit.description}</p>
                 </div>
-                <h3 className="mt-5 font-serif text-2xl tracking-tight text-ink">
-                  {benefit.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink/60">
-                  {benefit.desc}
-                </p>
-              </div>
-            )
-          })}
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -1,3 +1,4 @@
+import json
 import unittest
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -14,6 +15,7 @@ from api.v1.endpoints.scrum_master import (
     _is_google_meet_url,
     _refresh_calendar_access_token,
     _valid_calendar_access_token,
+    claim_worker_job,
 )
 from models.scrum_master import ScrumMeeting
 from schemas.scrum_master import ScrumMasterSettingsUpdate, WorkerStatusUpdate
@@ -72,6 +74,15 @@ class ScrumMasterContractTests(unittest.TestCase):
         self.assertFalse(policy.auto_join)
         self.assertTrue(policy.join_only_organized)
         self.assertIsNone(policy.bot_account_email)
+        self.assertEqual(policy.voice_mode, "pipeline")
+
+    def test_policy_accepts_native_audio_and_rejects_unknown_modes(self):
+        self.assertEqual(
+            ScrumMasterSettingsUpdate(bot_name="Huzlr", voice_mode="gemini_live").voice_mode,
+            "gemini_live",
+        )
+        with self.assertRaises(ValidationError):
+            ScrumMasterSettingsUpdate(bot_name="Huzlr", voice_mode="unknown")
 
     def test_policy_rejects_unbounded_duration(self):
         with self.assertRaises(ValidationError):
@@ -214,6 +225,44 @@ class CalendarTokenTests(unittest.IsolatedAsyncioTestCase):
                 await _refresh_calendar_access_token(db, connection)
 
         self.assertEqual(error.exception.status_code, 409)
+
+
+class MeetingVoiceDispatchTests(unittest.IsolatedAsyncioTestCase):
+    async def test_claim_passes_selected_mode_and_context_to_the_existing_worker(self):
+        for mode in ("pipeline", "gemini_live"):
+            with self.subTest(mode=mode):
+                now = datetime.now(timezone.utc)
+                meeting = ScrumMeeting(
+                    id=17, workspace_id=3, title="Standup", meet_url="https://meet.google.com/abc-defg-hij",
+                    starts_at=now, ends_at=now + timedelta(minutes=30), attempt_count=0, force_join=True,
+                )
+                stale, candidates = MagicMock(), MagicMock()
+                stale.scalars.return_value.all.return_value = []
+                candidates.scalars.return_value.all.return_value = [meeting]
+                db = SimpleNamespace(execute=AsyncMock(side_effect=[stale, candidates]), commit=AsyncMock())
+                policy = ScrumMasterSettingsUpdate(bot_name="Huzlr", voice_mode=mode)
+                dispatch = AsyncMock()
+                client = SimpleNamespace(agent_dispatch=SimpleNamespace(create_dispatch=dispatch), aclose=AsyncMock())
+                config = SimpleNamespace(
+                    HUZL_WORKER_KEY="test-worker-key", LIVEKIT_URL="wss://example.livekit.cloud",
+                    LIVEKIT_API_KEY="test-api-key", LIVEKIT_API_SECRET="test-secret-" + "x" * 32,
+                )
+                context = {"context_token": "scoped-delegation", "context_project_ids": [4]}
+                with patch("api.v1.endpoints.scrum_master.settings", config), \
+                        patch("api.v1.endpoints.scrum_master._get_or_create_settings", AsyncMock(return_value=policy)), \
+                        patch("api.v1.endpoints.scrum_master.meeting_context_metadata", AsyncMock(return_value=context)), \
+                        patch("api.v1.endpoints.scrum_master.livekit_api.LiveKitAPI", return_value=client):
+                    result = await claim_worker_job(x_huzl_worker_key="test-worker-key", db=db)
+                request = dispatch.await_args.args[0]
+                metadata = json.loads(request.metadata)
+                self.assertEqual(request.agent_name, "huzlr-scrum-master")
+                self.assertEqual(metadata["voice_mode"], mode)
+                self.assertEqual(metadata["agent_prompt"], policy.agent_prompt)
+                self.assertEqual(metadata["context_token"], "scoped-delegation")
+                self.assertEqual(result.livekit_room, request.room)
+                self.assertTrue(result.livekit_token)
+                self.assertEqual(meeting.outputs["voice_mode"], mode)
+                client.aclose.assert_awaited_once()
 
 
 if __name__ == "__main__":

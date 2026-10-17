@@ -36,6 +36,9 @@ export type ContextGraphNode = {
   source_id?: string | null
   source_version?: string | null
   updated_at?: string | null
+  source_system?: string | null
+  issue_key?: string | null
+  issue_status?: string | null
 }
 
 export type ContextGraphEdge = {
@@ -54,9 +57,22 @@ export type ProjectContextGraph = {
   freshness: { status: "not_indexed" | "pending" | "ready" | "failed"; indexed_at: string | null; error: string | null }
 }
 
+export type ContextProjectSummary = {
+  id: number
+  title: string
+  summary: string | null
+  project_status: string | null
+  updated_at: string
+  graph: {
+    status: "not_indexed" | "pending" | "ready" | "failed"
+    indexed_at: string | null
+    has_error: boolean
+  }
+}
+
 export const contextApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    contextProjects: builder.query<{ enabled: boolean; projects: { id: number; title: string }[] }, number>({
+    contextProjects: builder.query<{ enabled: boolean; projects: ContextProjectSummary[] }, number>({
       query: (workspaceId) => `/context/projects?workspace_id=${workspaceId}`,
     }),
     createContextSession: builder.mutation<ContextSession, { workspace_id: number; project_ids: number[] }>({

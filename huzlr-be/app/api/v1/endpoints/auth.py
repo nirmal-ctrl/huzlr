@@ -312,7 +312,8 @@ async def read_users_me(
         "is_waitlisted": current_user.is_waitlisted,
         "integrations": {
             "jira": {
-                "connected": jira_connection is not None,
+                "connected": jira_connection is not None and jira_connection.status == "connected",
+                "status": jira_connection.status if jira_connection else "disconnected",
                 "expires_at": jira_connection.expires_at.isoformat() if jira_connection else None
             }
         }

@@ -23,6 +23,7 @@ async def finalize_meeting_outputs(meeting_id: int):
         if not meeting:
             return
         requested = meeting.outputs.get("requested", {}) if meeting.outputs else {}
+        voice_mode = (meeting.outputs or {}).get("voice_mode", "pipeline")
         if not any(requested.values()):
             return
         result = await db.execute(
@@ -58,6 +59,7 @@ was not explicitly stated. Transcript:
         cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", response.text.strip())
         generated = json.loads(cleaned)
         outputs = {
+            "voice_mode": voice_mode,
             "requested": requested,
             "summary": generated.get("summary") if requested.get("summary") else None,
             "decisions": generated.get("decisions", []),

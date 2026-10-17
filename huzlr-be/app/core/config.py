@@ -15,6 +15,17 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = "your-google-client-id"
     GOOGLE_CLIENT_SECRET: str = "your-google-client-secret"
     GOOGLE_CALENDAR_REDIRECT_URI: str = "http://localhost:8001/api/v1/scrum-master/calendar/google/callback"
+    JIRA_CLIENT_ID: str = ""
+    JIRA_CLIENT_SECRET: str = ""
+    JIRA_REDIRECT_URI: str = "http://localhost:3001/atlassian-callback"
+    JIRA_SCOPES: str = "read:jira-work read:jira-user offline_access read:board-scope:jira-software read:board-scope.admin:jira-software read:project:jira read:sprint:jira-software"
+    JIRA_SYNC_INTERVAL_SECONDS: int = 300
+    JIRA_RECONCILE_INTERVAL_SECONDS: int = 86400
+    JIRA_MAX_VISIBILITY_SOURCES: int = 80
+    JIRA_MAX_ATTACHMENT_BYTES: int = 2 * 1024 * 1024
+    JIRA_ATTACHMENT_TEXT_ENABLED: bool = True
+    JIRA_WEBHOOKS_ENABLED: bool = False
+    JIRA_WEBHOOK_BASE_URL: str = ""
     
     # URLs
     FRONTEND_BASE_URL: str = "http://localhost:3001"

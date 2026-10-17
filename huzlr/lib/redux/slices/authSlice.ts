@@ -50,7 +50,7 @@ export const signupUser = createAsyncThunk(
 
 export const fetchCurrentUser = createAsyncThunk(
   'auth/me',
-  async (_, { getState, rejectWithValue }) => {
+  async (_force: boolean | undefined, { getState, rejectWithValue }) => {
     try {
       const state = getState() as { auth: AuthState };
       const token = state.auth.token || localStorage.getItem('token');
@@ -72,9 +72,9 @@ export const fetchCurrentUser = createAsyncThunk(
     }
   },
   {
-    condition: (_, { getState }) => {
+    condition: (force, { getState }) => {
       const state = getState() as { auth: AuthState };
-      if (state.auth.user) {
+      if (state.auth.user && !force) {
         return false;
       }
       return true;

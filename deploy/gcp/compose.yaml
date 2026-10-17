@@ -25,7 +25,30 @@ x-agent: &agent
     retries: 3
     start_period: 30s
 
+x-context-worker: &context-worker
+  build:
+    context: ../../huzlr-be
+    dockerfile: Dockerfile.worker
+  env_file:
+    - ../../huzlr-be/.env
+  profiles: [context]
+  init: true
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
 services:
+  jira-worker:
+    <<: *context-worker
+    command: [python, -m, jira_worker]
+
+  context-worker:
+    <<: *context-worker
+    command: [python, -m, context_worker, --reconcile]
+
   brainstorm:
     <<: *agent
     environment:

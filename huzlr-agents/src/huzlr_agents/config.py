@@ -9,6 +9,9 @@ load_dotenv()
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
 os.environ.setdefault("WEBSOCKET_CLIENT_CA_BUNDLE", certifi.where())
 
+DEFAULT_GEMINI_LIVE_MODEL = "gemini-3.8-live"
+DEFAULT_GEMINI_LIVE_VOICE = "Puck"
+
 
 @dataclass(frozen=True)
 class AgentSettings:
@@ -16,6 +19,8 @@ class AgentSettings:
     api_url: str
     service_key: str
     gemini_api_key: str
+    gemini_live_model: str = DEFAULT_GEMINI_LIVE_MODEL
+    gemini_live_voice: str = DEFAULT_GEMINI_LIVE_VOICE
 
     @classmethod
     def from_environment(cls) -> "AgentSettings":
@@ -24,6 +29,8 @@ class AgentSettings:
             api_url=os.getenv("HUZLR_API_URL", "").rstrip("/"),
             service_key=os.getenv("HUZLR_AGENT_SERVICE_KEY", ""),
             gemini_api_key=os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY", ""),
+            gemini_live_model=os.getenv("GEMINI_LIVE_MODEL", "").strip() or DEFAULT_GEMINI_LIVE_MODEL,
+            gemini_live_voice=os.getenv("GEMINI_LIVE_VOICE", "").strip() or DEFAULT_GEMINI_LIVE_VOICE,
         )
 
     def require_backend_api(self) -> None:

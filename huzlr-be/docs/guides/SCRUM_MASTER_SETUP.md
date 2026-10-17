@@ -27,6 +27,8 @@ HUZLR_API_URL=https://<fastapi-project>.vercel.app
 HUZLR_AGENT_SERVICE_KEY=<same-value-as-backend-AGENT_SERVICE_KEY>
 DEEPGRAM_API_KEY=<deepgram-api-key>
 GEMINI_API_KEY=<gemini-api-key>
+GEMINI_LIVE_MODEL=gemini-3.8-live
+GEMINI_LIVE_VOICE=Puck
 ```
 
 Configure the frontend with the same JWT signing secret and the public service URLs:
@@ -53,6 +55,14 @@ Apply the database migration:
 ```bash
 alembic upgrade head
 ```
+
+Migration `d4e5f6a7b8c9` adds the workspace voice-mode setting. In Scrum Master
+settings, choose Standard (the existing default) or Gemini Live — speech-to-speech.
+The selection takes effect on the next claimed meeting. Gemini Live requires the
+updated `huzlr-agents` image and Google API access to the configured native audio
+model. Both modes use the same LiveKit room, audio bridge, project tools, transcript
+API, and post-meeting output service. See `huzlr-agents/README.md` for configuration
+and the live-call comparison checklist.
 
 ## Runtime flow
 

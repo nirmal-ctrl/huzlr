@@ -59,7 +59,8 @@ async def get_livekit_token(
             db.add(context_session)
             await db.flush()
     if context_session:
-        metadata = {"context_session_id": context_session.id, "context_token": delegate(context_session),
+        metadata = {"context_session_id": context_session.id, "context_token": delegate(context_session, jira_private=True),
+                    "context_project_ids": context_session.project_ids,
                     "context_evidence_token": delegate(context_session, "context-evidence")}
         await db.commit()
 

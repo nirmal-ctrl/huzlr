@@ -35,6 +35,10 @@ class ContextJob(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     lease_token: Mapped[str | None] = mapped_column(String(36), nullable=True)
     lease_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    enrichment_revision: Mapped[int] = mapped_column(BigInteger, default=0)
+    enrichment_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    enrichment_available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    enrichment_error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class ContextEvent(Base):
@@ -62,6 +66,7 @@ class ContextClaim(Base):
     project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.project_id", ondelete="CASCADE"))
     source_id: Mapped[str] = mapped_column(String(500))
     source_version: Mapped[str] = mapped_column(String(64))
+    jira_object_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("jira_source_objects.id", ondelete="CASCADE"), nullable=True)
     predicate: Mapped[str] = mapped_column(String(40))
     statement: Mapped[str] = mapped_column(Text)
     evidence: Mapped[str] = mapped_column(Text)
@@ -96,6 +101,7 @@ class ContextArtifact(Base):
     project_id: Mapped[int] = mapped_column(Integer, ForeignKey("projects.project_id", ondelete="CASCADE"))
     source_id: Mapped[str] = mapped_column(String(500))
     version: Mapped[str] = mapped_column(String(64))
+    jira_object_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("jira_source_objects.id", ondelete="CASCADE"), nullable=True)
     text: Mapped[str] = mapped_column(Text)
     enrichment: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

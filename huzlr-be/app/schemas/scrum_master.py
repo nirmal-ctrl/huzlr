@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -12,6 +12,7 @@ from core.scrum_master_defaults import (
 class ScrumMasterSettingsUpdate(BaseModel):
     bot_name: str = Field(min_length=1, max_length=120)
     bot_account_email: Optional[str] = Field(default=None, max_length=255)
+    voice_mode: Literal["pipeline", "gemini_live"] = "pipeline"
     agent_prompt: str = Field(
         default=DEFAULT_SCRUM_MASTER_AGENT_PROMPT,
         min_length=1,

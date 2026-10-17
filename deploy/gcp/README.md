@@ -51,3 +51,5 @@ To deploy a later source update:
 ```bash
 docker compose --env-file huzl/.env -f deploy/gcp/compose.yaml up --build -d
 ```
+
+Jira ingestion and context projection are separate persistent services in the opt-in `context` profile. Configure `huzlr-be/.env`, apply the database migrations first, and follow the [Jira connector runbook](../../huzlr-be/docs/jira-context-connector.md) before starting `jira-worker` and `context-worker`.

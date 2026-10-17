@@ -7,12 +7,14 @@ import { SiteHeader } from "@/components/site-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useAppSelector } from "@/lib/redux/hooks"
 import {
   ScrumMasterSettings,
+  ScrumMasterVoiceMode,
   useGetScrumMasterSettingsQuery,
   useUpdateScrumMasterSettingsMutation,
 } from "@/services/scrumMasterApi"
@@ -88,6 +90,17 @@ export default function ScrumMasterSettingsPage() {
               <div><h2 className="text-sm font-semibold">Agent conversation</h2><p className="mt-1 text-xs leading-5 text-muted-foreground">Set how the Scrum Master behaves and what it says when joining a meeting.</p></div>
               <div className="grid gap-5 rounded-lg border p-4">
                 <div>
+                  <Label htmlFor="voice-mode" className="text-xs">Voice agent</Label>
+                  <Select value={draft.voiceMode} onValueChange={(value) => updateSetting("voiceMode", value as ScrumMasterVoiceMode)}>
+                    <SelectTrigger id="voice-mode" className="mt-2 w-full max-w-md"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pipeline">Standard — Gemini with Deepgram voice</SelectItem>
+                      <SelectItem value="gemini_live">Gemini Live — speech-to-speech</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1.5 text-xs text-muted-foreground">{draft.voiceMode === "gemini_live" ? "Understands audio and generates speech directly. Uses a Gemini voice and applies to the next meeting the bot joins." : "Uses speech recognition, Gemini reasoning, and Deepgram voice. Applies to the next meeting the bot joins."}</p>
+                </div>
+                <div>
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="agent-prompt" className="text-xs">Agent prompt</Label><span className="text-[11px] text-muted-foreground">{draft.agentPrompt.length}/8000</span></div>
                   <Textarea id="agent-prompt" className="mt-2 min-h-44 resize-y leading-6" maxLength={8000} value={draft.agentPrompt} onChange={(event) => updateSetting("agentPrompt", event.target.value)} aria-invalid={!draft.agentPrompt.trim()} />
                   <p className="mt-1.5 text-xs text-muted-foreground">Instructions used for every Scrum Master conversation in this workspace.</p>
@@ -95,7 +108,7 @@ export default function ScrumMasterSettingsPage() {
                 <div>
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="introduction-message" className="text-xs">Introduction message</Label><span className="text-[11px] text-muted-foreground">{draft.introductionMessage.length}/1000</span></div>
                   <Textarea id="introduction-message" className="mt-2 min-h-24 resize-y leading-6" maxLength={1000} value={draft.introductionMessage} onChange={(event) => updateSetting("introductionMessage", event.target.value)} aria-invalid={!draft.introductionMessage.trim()} />
-                  <p className="mt-1.5 text-xs text-muted-foreground">The exact opening message the agent speaks after it joins.</p>
+                  <p className="mt-1.5 text-xs text-muted-foreground">{draft.voiceMode === "gemini_live" ? "Gemini Live is instructed to speak this introduction; wording may vary." : "The exact opening message the agent speaks after it joins."}</p>
                 </div>
               </div>
             </section>

@@ -127,6 +127,18 @@ function DraggableRow<TData>({
   )
 }
 
+function StaticRow<TData>({ row }: { row: Row<TData> }) {
+  return (
+    <TableRow data-state={row.getIsSelected() && "selected"}>
+      {row.getVisibleCells().map((cell) => (
+        <TableCell key={cell.id}>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
+    </TableRow>
+  )
+}
+
 export interface DataTableProps<TData> {
   data: TData[]
   columns: ColumnDef<TData>[]
@@ -169,6 +181,10 @@ export function DataTable<TData>({
     pageIndex: 0,
     pageSize: defaultPageSize,
   })
+  React.useEffect(() => {
+    setData(initialData)
+    setPagination((current) => ({ ...current, pageIndex: 0 }))
+  }, [initialData])
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -315,9 +331,9 @@ export function DataTable<TData>({
         <div className="overflow-hidden rounded-2xl shadow-sm">
           <DndContext
             collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
+            modifiers={enableDragDrop ? [restrictToVerticalAxis] : undefined}
+            onDragEnd={enableDragDrop ? handleDragEnd : undefined}
+            sensors={enableDragDrop ? sensors : []}
             id={sortableId}
           >
             <Table>
@@ -345,9 +361,9 @@ export function DataTable<TData>({
                     items={dataIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
-                    ))}
+                    {table.getRowModel().rows.map((row) => enableDragDrop
+                      ? <DraggableRow key={row.id} row={row} />
+                      : <StaticRow key={row.id} row={row} />)}
                   </SortableContext>
                 ) : (
                   <TableRow>
@@ -364,10 +380,10 @@ export function DataTable<TData>({
           </DndContext>
         </div>
         <div className="flex items-center justify-between px-4">
-          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+          {enableRowSelection ? <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
             {table.getFilteredSelectedRowModel().rows.length} of{" "}
             {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
+          </div> : <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">{table.getFilteredRowModel().rows.length} row(s)</div>}
           <div className="flex w-full items-center gap-8 lg:w-fit">
             <div className="hidden items-center gap-2 lg:flex">
               <Label htmlFor="rows-per-page" className="text-sm font-medium">

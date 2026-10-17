@@ -688,6 +688,7 @@ async def claim_worker_job(
     selected.attempt_count += 1
     selected.job_id = selected.job_id or str(uuid.uuid4())
     selected.outputs = {
+        "voice_mode": policy.voice_mode,
         "requested": {
             "transcript": policy.transcript_enabled,
             "summary": policy.summary_enabled,
@@ -719,6 +720,7 @@ async def claim_worker_job(
                         {
                             "agent_prompt": policy.agent_prompt,
                             "introduction_message": policy.introduction_message,
+                            "voice_mode": policy.voice_mode,
                             **await meeting_context_metadata(db, selected),
                         }
                     ),

@@ -52,26 +52,26 @@ export function Footer() {
   ];
 
   return (
-    <footer className="border-t border-hairline py-14 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-7">
+    <footer className="bg-paper px-5 pb-8 pt-16 md:px-8 md:pt-24">
+      <div className="mx-auto max-w-[1344px]">
+        <div className="mb-16 grid grid-cols-2 gap-x-8 gap-y-12 border-t border-hairline pt-10 lg:grid-cols-[2fr_repeat(5,1fr)]">
           {/* Brand */}
-          <div className="col-span-2 space-y-4">
+          <div className="col-span-2 space-y-5 lg:col-span-1">
             <Logo size="lg" />
-            <p className="text-sm leading-relaxed text-ink/50 max-w-xs">
-              The coordination layer for teams working with AI.
+            <p className="max-w-[16rem] font-serif text-xl leading-snug tracking-[-0.03em] text-ink/70">
+              One clear next move for every modern team.
             </p>
           </div>
 
           {columns.map((col) => (
-            <div key={col.heading} className="space-y-4">
-              <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-ink/40">
+            <div key={col.heading} className="space-y-5">
+              <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink/35">
                 {col.heading}
               </h3>
-              <ul className="space-y-2.5 text-sm text-ink/60">
+              <ul className="space-y-3 text-sm text-ink/55">
                 {col.links.map((link) => (
                   <li key={link.label}>
-                    <Link href={link.href} className="hover:text-clay transition-colors">
+                    <Link href={link.href} className="transition-colors hover:text-clay">
                       {link.label}
                     </Link>
                   </li>
@@ -81,9 +81,9 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-hairline pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-ink/40">© {year} huzlr. All rights reserved.</p>
-          <p className="text-xs text-ink/40">Currently in private beta.</p>
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-hairline pt-7 sm:flex-row">
+          <p className="text-xs text-ink/35">© {year} huzlr. All rights reserved.</p>
+          <div className="flex items-center gap-2 text-xs text-ink/35"><span className="size-1.5 rounded-full bg-emerald-500" />Currently in private beta.</div>
         </div>
       </div>
     </footer>

@@ -7,6 +7,7 @@ import importlib.util
 import os
 from pathlib import Path
 import unittest
+import logging
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -38,6 +39,7 @@ from context_worker import claim_job, process
 from schemas.context import ClaimCandidate
 
 PG_URL = "postgresql+asyncpg://context_test:context_test_only@127.0.0.1:55439/context_test"
+logging.getLogger("neo4j.notifications").setLevel(logging.ERROR)
 PIDS = [810001, 810002, 810003]
 
 
@@ -52,8 +54,11 @@ class GraphIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.engine = create_async_engine(PG_URL, poolclass=NullPool, connect_args={"server_settings": {"search_path": self.schema}})
         self.sessions = async_sessionmaker(self.engine, expire_on_commit=False)
         async with self.engine.begin() as conn:
-            core = [t for t in Base.metadata.sorted_tables if not t.name.startswith("context_") and t.name != "meeting_projects"]
+            core = [t for t in Base.metadata.sorted_tables if not t.name.startswith(("context_", "jira_")) and t.name != "meeting_projects"]
+            core.append(Base.metadata.tables["jira_connections"])
             await conn.run_sync(lambda c: Base.metadata.create_all(c, tables=core))
+            for column in ["account_id", "sites", "status"]:
+                await conn.execute(text(f"ALTER TABLE jira_connections DROP COLUMN {column}"))
             path = Path(__file__).resolve().parents[1] / "alembic/versions/b2c3d4e5f6a7_context_graphs.py"
             spec = importlib.util.spec_from_file_location("context_migration", path)
             migration = importlib.util.module_from_spec(spec)
@@ -61,6 +66,11 @@ class GraphIntegrationTests(unittest.IsolatedAsyncioTestCase):
             def upgrade(c):
                 with Operations.context(MigrationContext.configure(c)):
                     migration.upgrade()
+            await conn.run_sync(upgrade)
+            path = Path(__file__).resolve().parents[1] / "alembic/versions/c3d4e5f6a7b8_jira_context_connector.py"
+            spec = importlib.util.spec_from_file_location("jira_migration", path)
+            migration = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(migration)
             await conn.run_sync(upgrade)
         self.driver = AsyncGraphDatabase.driver("bolt://127.0.0.1:57689", auth=("neo4j", "context_test_only"))
         await initialize(self.driver)
@@ -175,14 +185,23 @@ class GraphIntegrationTests(unittest.IsolatedAsyncioTestCase):
             first = await claim_job()
             second = await claim_job()
             self.assertNotEqual(first["project_id"], second["project_id"])
-            # Provider failure leaves revision unapplied and makes the job retryable.
+            await process(self.driver, first)
+            await process(self.driver, second)
+            while job := await claim_job():
+                if job["phase"] == "enrichment":
+                    first = job
+                    break
+                await process(self.driver, job)
+            # Optional provider failure preserves the usable graph and retries enrichment.
             with patch("context_worker.enrich", AsyncMock(side_effect=RuntimeError("provider failed"))):
                 await process(self.driver, first)
             async with self.sessions() as db:
                 failed = await db.get(ContextJob, first["project_id"])
-                self.assertEqual(failed.applied_revision, 0)
+                self.assertEqual(failed.applied_revision, failed.revision)
+                self.assertEqual(failed.enrichment_revision, 0)
+                self.assertEqual(failed.enrichment_error, "RuntimeError")
                 self.assertIsNone(failed.lease_token)
-                failed.available_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+                failed.enrichment_available_at = datetime.now(timezone.utc) - timedelta(seconds=1)
                 await db.commit()
             # Claim work again and generate a proposed claim only from source evidence.
             with patch("services.context_enrichment.extract", AsyncMock(return_value=[candidate])):

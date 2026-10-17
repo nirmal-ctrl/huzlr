@@ -27,6 +27,19 @@ class ScrumMasterConversationConfigTests(unittest.TestCase):
 
         self.assertEqual(config.agent_prompt, DEFAULT_SCRUM_MASTER_AGENT_PROMPT)
         self.assertEqual(config.introduction_message, DEFAULT_SCRUM_MASTER_INTRODUCTION)
+        self.assertEqual(config.voice_mode, "pipeline")
+
+    def test_selects_native_audio_from_dispatch_metadata(self):
+        config = ScrumMasterConversationConfig.from_metadata('{"voice_mode": "gemini_live"}')
+        self.assertEqual(config.voice_mode, "gemini_live")
+
+    def test_missing_voice_mode_preserves_existing_pipeline(self):
+        self.assertEqual(ScrumMasterConversationConfig.from_metadata("{}").voice_mode, "pipeline")
+
+    def test_invalid_voice_modes_fail_instead_of_switching_providers(self):
+        for mode in ("fish_audio", "", None, [], {}):
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                ScrumMasterConversationConfig.from_metadata(json.dumps({"voice_mode": mode}))
 
 
 if __name__ == "__main__":

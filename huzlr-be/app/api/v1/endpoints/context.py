@@ -24,20 +24,34 @@ from models.workspace_membership import WorkspaceMembership
 from models.scrum_master import ScrumMeeting
 from schemas.context import SessionCreate, SearchRequest, NoteCreate, ClaimReview, ActionCreate, ChatRequest, ChatAnswer, MeetingProjects
 from schemas.context import VoiceEvidence
+from schemas.jira import JiraContextRequest
 from services.context_access import enabled, authorize_projects, session_for_user, delegated_session
-from services.context_graph import graph_driver, project_graph, search
+from services.context_graph import graph_driver, project_graph, search, jira_candidates
 from services.context_enrichment import embed
 
 router = APIRouter()
 logger = logging.getLogger("huzlr.context_api")
 
 
-async def packet(db, session, query, limit=12):
+async def packet(db, session, query, limit=12, jira_private=True):
     try:
         async with asyncio.timeout(30):
-            vector = (await embed([query], query=True))
+            embedding_warning = None
+            try:
+                async with asyncio.timeout(8):
+                    vector = await embed([query], query=True)
+            except Exception:
+                vector = []
+                embedding_warning = "Semantic search is unavailable; using keyword and relationship retrieval"
             async with graph_driver() as driver:
-                result = await search(driver, session.workspace_id, session.project_ids, query, vector[0] if vector else [], limit)
+                from services.jira.access import verify_sources
+                ids, bounded = await jira_candidates(driver, session.workspace_id, session.project_ids, session.user_id,
+                    query, vector[0] if vector else [], settings.JIRA_MAX_VISIBILITY_SOURCES) if jira_private else ([], False)
+                allowed = await verify_sources(db, session.user_id, session.project_ids, ids)
+                result = await search(driver, session.workspace_id, session.project_ids, query, vector[0] if vector else [], limit, jira_ids=allowed)
+                result["jira_visibility"] = {"candidate_limit_reached": bounded, "unavailable_or_changed": len(ids) - len(allowed)}
+                if embedding_warning:
+                    result.setdefault("warnings", []).append(embedding_warning)
     except Exception as exc:
         logger.warning("context retrieval failed: %s", type(exc).__name__)
         raise HTTPException(503, "Project context is temporarily unavailable") from exc
@@ -57,9 +71,29 @@ async def list_context_projects(workspace_id: int, db=Depends(get_db), user=Depe
         .join(Team).join(Workspace).join(TeamMembership, TeamMembership.team_id == Team.id)
         .join(WorkspaceMembership, WorkspaceMembership.workspace_id == Workspace.id)
         .where(Workspace.id == workspace_id, Team.deleted_at.is_(None), Workspace.deleted_at.is_(None),
-               TeamMembership.user_id == user.id, WorkspaceMembership.user_id == user.id))).all()
-    return {"enabled": True, "projects": [{"id": p.project_id,
-        "title": p.properties.get("project_title") or f"Project {p.project_id}"} for p in projects]}
+               TeamMembership.user_id == user.id, WorkspaceMembership.user_id == user.id)
+        .order_by(Project.updated_at.desc(), Project.project_id.desc()))).all()
+    jobs = {job.project_id: job for job in (await db.scalars(select(ContextJob)
+        .where(ContextJob.project_id.in_([project.project_id for project in projects])))).all()} if projects else {}
+
+    def graph_summary(project):
+        job = jobs.get(project.project_id)
+        status = ("not_indexed" if not job else "failed" if job.attempts >= 5 else
+                  "pending" if job.revision > job.applied_revision else "ready")
+        return {
+            "id": project.project_id,
+            "title": project.properties.get("project_title") or f"Project {project.project_id}",
+            "summary": project.properties.get("short_summary") or project.properties.get("description"),
+            "project_status": project.properties.get("status"),
+            "updated_at": project.updated_at,
+            "graph": {
+                "status": status,
+                "indexed_at": job.indexed_at if job else None,
+                "has_error": bool(job and job.error),
+            },
+        }
+
+    return {"enabled": True, "projects": [graph_summary(project) for project in projects]}
 
 
 @router.post("/sessions", status_code=201)
@@ -83,7 +117,7 @@ async def internal_search(payload: SearchRequest, x_huzlr_context_token: Annotat
     session = await delegated_session(db, x_huzlr_context_token)
     if session.id != payload.session_id:
         raise HTTPException(403, "Delegation does not match context session")
-    return await packet(db, session, payload.query, payload.limit)
+    return await packet(db, session, payload.query, payload.limit, jira_private=getattr(session, "jira_private", False))
 
 
 @router.post("/internal/evidence", status_code=201)
@@ -91,6 +125,10 @@ async def voice_evidence(payload: VoiceEvidence, x_huzlr_context_token: Annotate
     session = await delegated_session(db, x_huzlr_context_token, purpose="context-evidence")
     if len(session.project_ids) != 1:
         raise HTTPException(409, "Select one project before attributing conversation evidence")
+    from services.jira.access import bindings_for
+    if await bindings_for(db, session.user_id, session.project_ids):
+        # Private Jira conversation text must not become a shared native project note automatically.
+        return {"id": payload.id, "status": "private_context_not_persisted"}
     previous = await db.get(ContextNote, payload.id)
     if previous:
         if previous.user_id != session.user_id or previous.project_id != session.project_ids[0] or previous.text != payload.text:
@@ -115,7 +153,9 @@ async def graph_status(project_id: int, db=Depends(get_db), user=Depends(get_cur
     job = await db.get(ContextJob, project_id)
     return {"project_id": project_id, "status": "not_indexed" if not job else
             "failed" if job.attempts >= 5 else "pending" if job.revision > job.applied_revision else "ready",
-            "indexed_at": job.indexed_at if job else None, "error": job.error if job else None}
+            "indexed_at": job.indexed_at if job else None, "error": job.error if job else None,
+            "enrichment": None if not job else {"pending": job.enrichment_revision < job.revision,
+                "error": job.enrichment_error, "attempts": job.enrichment_attempts}}
 
 
 @router.get("/projects/{project_id}/graph")
@@ -126,7 +166,11 @@ async def get_project_graph(project_id: int, limit: int = 500, db=Depends(get_db
     try:
         async with asyncio.timeout(30):
             async with graph_driver() as driver:
-                result = await project_graph(driver, wid, project_id, limit)
+                from services.jira.access import verify_sources
+                ids, bounded = await jira_candidates(driver, wid, [project_id], user.id, limit=settings.JIRA_MAX_VISIBILITY_SOURCES)
+                allowed = await verify_sources(db, user.id, [project_id], ids)
+                result = await project_graph(driver, wid, project_id, limit, jira_ids=allowed)
+                result["truncated"] |= bounded
     except Exception as exc:
         logger.warning("context graph read failed: %s", type(exc).__name__)
         raise HTTPException(503, "Project context graph is temporarily unavailable") from exc
@@ -179,6 +223,8 @@ async def claims(project_id: int, db=Depends(get_db), user=Depends(get_current_u
     await authorized_project(db, user, project_id)
     rows = (await db.scalars(select(ContextClaim).where(ContextClaim.project_id == project_id)
         .order_by(ContextClaim.created_at.desc(), ContextClaim.id).limit(100))).all()
+    from services.jira.context import visible_claims
+    rows = await visible_claims(db, user.id, project_id, rows)
     return [{"id": c.id, "predicate": c.predicate, "statement": c.statement, "evidence": c.evidence,
              "source_id": c.source_id, "status": c.status, "confidence": c.confidence} for c in rows]
 
@@ -189,10 +235,15 @@ async def review_claim(claim_id: str, payload: ClaimReview, db=Depends(get_db), 
     if not claim:
         raise HTTPException(404, "Claim not found")
     wid = await authorized_project(db, user, claim.project_id)
+    from services.jira.context import visible_claims
+    if not await visible_claims(db, user.id, claim.project_id, [claim]):
+        raise HTTPException(404, "Claim not found")
     if payload.supersedes_id:
         old = await db.get(ContextClaim, payload.supersedes_id, with_for_update=True)
         if not old or old.project_id != claim.project_id or old.id == claim.id or payload.status != "active":
             raise HTTPException(422, "Invalid superseded claim")
+        if not await visible_claims(db, user.id, old.project_id, [old]):
+            raise HTTPException(404, "Claim not found")
         old.status = "superseded"
         old.reviewed_by = user.id
         old.reviewed_at = datetime.now(timezone.utc)
@@ -258,10 +309,22 @@ async def confirm_action(action_id: str, db=Depends(get_db), user=Depends(get_cu
 async def chat(payload: ChatRequest, db=Depends(get_db), user=Depends(get_current_user)):
     session = await session_for_user(db, payload.session_id, user.id)
     context = await packet(db, session, payload.message)
+    from services.jira.context import context_tool
+    from schemas.jira import JiraContextRequest
+    for project_id in session.project_ids:
+        try:
+            async with asyncio.timeout(30):
+                jira = await context_tool(db, session, JiraContextRequest(session_id=session.id, project_id=project_id))
+            context["facts"].extend(jira["facts"])
+        except (TimeoutError, HTTPException):
+            context.setdefault("warnings", []).append("Jira overview is currently unavailable")
     if not settings.GEMINI_API_KEY:
         raise HTTPException(503, "Omni is not configured")
     history = (await db.scalars(select(ContextTurn).where(ContextTurn.session_id == session.id)
                                 .order_by(ContextTurn.created_at.desc()).limit(6))).all()
+    # Previously retrieved private Jira evidence cannot survive source permission changes in chat history.
+    history = [t for t in history if not t.answer.get("jira_context") and
+        not any(s.get("source_system") == "jira" for s in t.answer.get("sources", []))]
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
     try:
         async with asyncio.timeout(60):
@@ -282,11 +345,18 @@ async def chat(payload: ChatRequest, db=Depends(get_db), user=Depends(get_curren
     finally:
         await client.aio.aclose()
     await authorize_projects(db, user.id, session.workspace_id, session.project_ids)
+    from services.jira.context import assert_current_facts
+    try:
+        async with asyncio.timeout(30):
+            await assert_current_facts(db, session, context["facts"])
+    except TimeoutError:
+        raise HTTPException(409, "Jira source verification timed out; please retry") from None
     facts = {f["canonical_id"]: f for f in context["facts"]}
     if any(s not in facts for s in answer.source_ids):
         raise HTTPException(502, "Omni returned an unsupported citation; please retry")
     result = {"message": answer.message, "sources": [facts[s] for s in answer.source_ids],
-              "freshness": context["freshness"], "action": None}
+              "freshness": context["freshness"], "action": None,
+              "jira_context": any(f.get("source_system") == "jira" for f in context["facts"])}
     if answer.proposed_issue:
         proposal = answer.proposed_issue
         if proposal.project_id not in session.project_ids:
@@ -298,7 +368,32 @@ async def chat(payload: ChatRequest, db=Depends(get_db), user=Depends(get_curren
     db.add(ContextTurn(session_id=session.id, user_text=payload.message, answer=result))
     # A single selected project is an unambiguous attribution for new user evidence.
     # Multi-project conversations require the user to choose a project via /notes.
-    if len(session.project_ids) == 1:
+    from services.jira.access import bindings_for
+    if len(session.project_ids) == 1 and not await bindings_for(db, user.id, session.project_ids):
         db.add(ContextNote(project_id=session.project_ids[0], user_id=user.id, text=payload.message))
     await db.commit()
+    return result
+
+
+@router.post("/jira")
+async def jira_context(payload: JiraContextRequest, db=Depends(get_db), user=Depends(get_current_user)):
+    session = await session_for_user(db, payload.session_id, user.id)
+    return await jira_tool_packet(db, session, payload)
+
+
+@router.post("/internal/jira")
+async def internal_jira_context(payload: JiraContextRequest, x_huzlr_context_token: Annotated[str, Header()], db=Depends(get_db)):
+    session = await delegated_session(db, x_huzlr_context_token)
+    if session.id != payload.session_id:
+        raise HTTPException(403, "Delegation does not match context session")
+    if not getattr(session, "jira_private", False):
+        return {"facts": [], "warnings": ["Personal Jira context is unavailable in shared meetings"]}
+    return await jira_tool_packet(db, session, payload)
+
+
+async def jira_tool_packet(db, session, payload):
+    from services.jira.context import context_tool
+    async with asyncio.timeout(30):
+        result = await context_tool(db, session, payload)
+    await authorize_projects(db, session.user_id, session.workspace_id, session.project_ids)
     return result

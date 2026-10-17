@@ -1,16 +1,23 @@
 "use client"
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
+import { useAppDispatch } from "@/lib/redux/hooks"
+import { fetchCurrentUser } from "@/lib/redux/slices/authSlice"
+
 function CallbackContent() {
+    const dispatch = useAppDispatch()
+    const handled = useRef(false)
     const router = useRouter()
     const searchParams = useSearchParams()
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
     const [message, setMessage] = useState('Connecting to Jira...')
 
     useEffect(() => {
+        if (handled.current) return
+        handled.current = true
         const handleCallback = async () => {
             const code = searchParams.get('code')
             const state = searchParams.get('state')
@@ -22,16 +29,16 @@ function CallbackContent() {
                 return
             }
 
-            if (!code) {
+            if (!code || !state) {
                 setStatus('error')
-                setMessage('No authorization code received')
+                setMessage('Authorization code or state is missing')
                 return
             }
 
             try {
                 // The backend callback endpoint will handle the code exchange
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/jira/callback?code=${code}&state=${state}`,
+                    `${process.env.NEXT_PUBLIC_API_URL}/jira/callback?${new URLSearchParams({ code, state })}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -45,6 +52,7 @@ function CallbackContent() {
                     throw new Error(data.detail || 'Failed to connect to Jira')
                 }
 
+                await dispatch(fetchCurrentUser(true))
                 setStatus('success')
                 setMessage('Successfully connected to Jira!')
 
@@ -59,7 +67,7 @@ function CallbackContent() {
         }
 
         handleCallback()
-    }, [searchParams, router])
+    }, [searchParams, router, dispatch])
 
     return (
         <div className="flex flex-col items-center gap-4 rounded-lg border bg-card p-8 shadow-lg">

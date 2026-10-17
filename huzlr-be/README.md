@@ -126,6 +126,8 @@ Context graphs keep operational data in PostgreSQL and maintain a derived, per-p
 
 ## 🤝 Contributing
 
+For Jira Cloud import, persistent sync workers, permissions and coverage, see the [Jira context connector runbook](docs/jira-context-connector.md).
+
 See the [documentation](docs/) for development guides and best practices.
 
 ## 📄 License

@@ -72,17 +72,25 @@ export default function Page() {
   }, [properties]);
 
   const isError = !!error;
+  const handleImportClick = (integration: string) => {
+    if (integration === "jira") {
+      setJiraImportOpen(true)
+    }
+  }
 
   return (
     <>
       <SiteHeader>
         {canCreateProject && (
-          <Link href="/projects/new">
-            <Button size="sm" className="gap-2 rounded-full">
-              <Plus className="h-4 w-4" />
-              Create Project
-            </Button>
-          </Link>
+          <>
+            <ConnectedIntegrationsSheet onImportClick={handleImportClick} />
+            <Link href="/projects/new">
+              <Button size="sm" className="gap-2 rounded-full">
+                <Plus className="h-4 w-4" />
+                Create Project
+              </Button>
+            </Link>
+          </>
         )}
       </SiteHeader>
       <div className="flex flex-1 flex-col gap-4 py-4">
@@ -133,13 +141,7 @@ export default function Page() {
                         Start from Scratch
                       </Button>
                     </Link>
-                    <ConnectedIntegrationsSheet
-                      onImportClick={(integration) => {
-                        if (integration === "jira") {
-                          setJiraImportOpen(true)
-                        }
-                      }}
-                    />
+                    <ConnectedIntegrationsSheet onImportClick={handleImportClick} />
                   </div>
                 </div>
               </div>

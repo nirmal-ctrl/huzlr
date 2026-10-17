@@ -6,7 +6,10 @@ ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$ROOT_DIR/huzlr-be"
 FRONTEND_DIR="$ROOT_DIR/huzlr"
 AGENTS_DIR="$ROOT_DIR/huzlr-agents"
+HUZL_DIR="$ROOT_DIR/huzl"
 AGENT_PYTHON="$AGENTS_DIR/.venv/bin/python"
+HUZL_COMPOSE=(docker compose --project-directory "$HUZL_DIR" --env-file "$HUZL_DIR/.env" -f "$HUZL_DIR/compose.yaml")
+HUZL_STARTED=0
 CHILD_PIDS=()
 CLEANING_UP=0
 
@@ -64,6 +67,14 @@ cleanup() {
 
     echo ""
     echo "Stopping Huzlr services..."
+
+    # Stop the Meet worker while the backend and voice agents are still available.
+    # Leave its container and persistent Google profile intact for the next run.
+    if [ "$HUZL_STARTED" -eq 1 ]; then
+        echo "Stopping Huzl Google Meet worker..."
+        "${HUZL_COMPOSE[@]}" stop --timeout 10 worker || echo "Could not stop the Huzl worker; check Docker."
+        HUZL_STARTED=0
+    fi
 
     local pid
     if [ "${#CHILD_PIDS[@]}" -gt 0 ]; then
@@ -127,6 +138,29 @@ require_file \
 require_file \
     "$FRONTEND_DIR/package.json" \
     "The huzlr frontend package is missing."
+require_file \
+    "$HUZL_DIR/.env" \
+    "Create huzl/.env from huzl/.env.example and configure the worker key and provisioned Google bot profile."
+require_file \
+    "$HUZL_DIR/compose.yaml" \
+    "The Huzl Docker Compose configuration is missing."
+
+if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker is required for the Huzl Google Meet worker. Install and start Docker Desktop."
+    exit 1
+fi
+if ! docker compose version >/dev/null 2>&1; then
+    echo "Docker Compose is unavailable. Install the Docker Compose plugin or Docker Desktop."
+    exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+    echo "Docker is not running or is unreachable. Start Docker Desktop and retry."
+    exit 1
+fi
+if ! "${HUZL_COMPOSE[@]}" config --quiet; then
+    echo "Huzl configuration is invalid. Check huzl/.env and BOT_PROFILE_HOST_DIR."
+    exit 1
+fi
 
 echo "Applying backend database migrations..."
 (
@@ -159,6 +193,16 @@ remember_pid "$!"
 start_agent "brainstorm" "Brainstorm agent"
 start_agent "founder" "Ask Nirmal agent"
 start_agent "scrum_master" "Scrum Master agent"
+
+echo "Building and starting Huzl Google Meet worker..."
+# Mark it before starting so a partially failed Compose startup is cleaned up too.
+HUZL_STARTED=1
+if ! "${HUZL_COMPOSE[@]}" up --build -d worker; then
+    echo "Huzl worker startup failed. Stopping the other Huzlr services."
+    exit 1
+fi
+"${HUZL_COMPOSE[@]}" logs --follow --tail=20 worker &
+remember_pid "$!"
 
 echo ""
 echo "All services started. Press Ctrl+C to stop."

@@ -1,33 +1,38 @@
 import { ArrowRight } from "lucide-react"
+
 import { TrackedLink } from "@/components/tracked-link"
 
 export function CTA() {
   return (
-    <section className="border-t border-hairline py-24 sm:py-28 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl text-center">
-        <p className="text-xs font-medium tracking-[0.18em] uppercase text-clay">
-          Build the hybrid organization
-        </p>
-        <h2 className="mt-4 font-serif text-4xl sm:text-5xl md:text-6xl tracking-tight text-ink text-balance leading-[1.1]">
-          Add intelligence without adding <em className="italic text-clay">coordination chaos.</em>
-        </h2>
-        <p className="mt-6 text-base sm:text-lg leading-relaxed text-ink/65 max-w-xl mx-auto">
-          Join the private beta for product and engineering teams and help shape the
-          coordination layer your future organization will run on.
-        </p>
-        <div className="mt-10 flex flex-col items-center gap-4">
-          <TrackedLink
-            href="/signup"
-            eventName="CTA Click"
-            eventProperties={{ location: "homepage_bottom", destination: "signup", label: "Join the private beta" }}
-            className="group flex items-center gap-2 rounded-full bg-clay px-8 py-3.5 text-sm font-medium text-white transition-colors hover:bg-clay-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay focus-visible:ring-offset-4 focus-visible:ring-offset-paper dark:text-paper"
-          >
+    <section className="bg-paper px-5 py-8 md:px-8 md:py-12">
+      <div className="mx-auto grid min-h-[520px] max-w-[1344px] overflow-hidden rounded-2xl bg-[#2d61b8] text-white lg:grid-cols-12">
+        <div className="flex flex-col justify-between border-b border-white/20 p-7 sm:p-10 lg:col-span-4 lg:border-b-0 lg:border-r lg:p-12">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/65">Private beta</p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/60">For product and engineering teams building the way work happens next.</p>
+          </div>
+          <p className="mt-24 text-sm text-white/60">Limited spots · No credit card required</p>
+        </div>
+
+        <div className="flex flex-col justify-between p-7 sm:p-10 lg:col-span-8 lg:p-12">
+          <h2 className="max-w-4xl font-serif text-[clamp(3.25rem,6.4vw,6.5rem)] font-medium leading-[0.93] tracking-[-0.08em] text-balance">
+            Put your delivery context to work.
+          </h2>
+
+          <div className="mt-20 flex flex-col justify-between gap-8 border-t border-white/25 pt-7 sm:flex-row sm:items-end">
+            <p className="max-w-lg text-base leading-relaxed text-white/70 sm:text-lg">
+              Help shape the coordination layer your future organization will run on.
+            </p>
+            <TrackedLink
+              href="/signup"
+              eventName="CTA Click"
+              eventProperties={{ location: "homepage_bottom", destination: "signup", label: "Join the private beta" }}
+              className="group inline-flex shrink-0 items-center gap-2 self-start bg-white px-5 py-3 text-sm font-semibold text-[#244f99] transition-colors hover:bg-[#eaf1ff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2d61b8]"
+            >
               Join the private beta
-              <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-          </TrackedLink>
-          <p className="text-xs text-ink/65">
-            Limited spots during private beta. No credit card required.
-          </p>
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </TrackedLink>
+          </div>
         </div>
       </div>
     </section>

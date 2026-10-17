@@ -53,12 +53,12 @@ async def session_for_user(db, session_id: str, user_id: int):
     return session
 
 
-def delegate(session: ContextSession, purpose="context-read") -> str:
+def delegate(session: ContextSession, purpose="context-read", jira_private=False) -> str:
     if not settings.CONTEXT_DELEGATION_SECRET:
         raise HTTPException(503, "Context delegation is not configured")
     if purpose not in {"context-read", "context-evidence"}:
         raise ValueError("Invalid delegation purpose")
-    return jwt.encode({"sid": session.id, "uid": session.user_id, "purpose": purpose,
+    return jwt.encode({"sid": session.id, "uid": session.user_id, "purpose": purpose, "jira_private": jira_private,
                        "aud": "huzlr-context", "exp": session.expires_at},
                       settings.CONTEXT_DELEGATION_SECRET, algorithm="HS256")
 
@@ -70,6 +70,8 @@ async def delegated_session(db, token: str, purpose="context-read"):
         payload = jwt.decode(token, settings.CONTEXT_DELEGATION_SECRET, algorithms=["HS256"], audience="huzlr-context")
         if payload.get("purpose") != purpose:
             raise ValueError("Wrong purpose")
-        return await session_for_user(db, payload["sid"], int(payload["uid"]))
+        session = await session_for_user(db, payload["sid"], int(payload["uid"]))
+        session.jira_private = payload.get("jira_private") is True
+        return session
     except (JWTError, KeyError, ValueError) as exc:
         raise HTTPException(401, "Invalid context delegation") from exc

@@ -101,6 +101,12 @@ async def snapshot(db, project_id, workspace_id):
         content = "\n".join(f"[{s.id}] {s.speaker_type}: {s.text}" for s in segments if s.speaker_type == "participant")
         document("Meeting", f"huzlr:project:{project_id}:meeting:{meeting.id}", meeting.title, content,
                  f"/scrum-master/meetings/{meeting.id}")
+    from services.jira.projector import project_sources, PRIVATE_FIELDS
+    jira_nodes, jira_edges, jira_artifacts = await project_sources(db, project_id, workspace_id)
+    nodes.extend(jira_nodes)
+    edges.extend(jira_edges)
+    artifacts.extend(jira_artifacts)
+    source_metadata = {a["source_id"]: {k: a[k] for k in PRIVATE_FIELDS if k in a} for a in artifacts}
     current_versions = {a["source_id"]: a["version"] for a in artifacts}
     for claim in (await db.scalars(select(ContextClaim).where(ContextClaim.project_id == project_id))).all():
         # Stale-source claims remain in SQL history but can no longer answer current questions.
@@ -108,7 +114,7 @@ async def snapshot(db, project_id, workspace_id):
         cid = f"huzlr:claim:{claim.id}"
         node("Claim", cid, claim.predicate, claim.statement, source_id=claim.source_id,
              source_version=claim.source_version, evidence=claim.evidence, confidence=claim.confidence,
-             status=status, recorded_at=claim.created_at.isoformat())
+             status=status, recorded_at=claim.created_at.isoformat(), **source_metadata.get(claim.source_id, {}))
         edge(root, cid, "HAS_CLAIM")
         edge(cid, claim.source_id, "SUPPORTED_BY", claim.source_id)
     return nodes, edges, artifacts

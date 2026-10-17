@@ -8,7 +8,7 @@ from .risk import Risk
 from .milestone import Milestone
 from .conversation import ConversationLog
 from .version import ProjectVersion
-from .jira import JiraConnection
+from .jira import JiraConnection, JiraOAuthState, JiraBinding, JiraSyncRun, JiraSyncTask, JiraSourceObject, JiraSourceVersion
 from .property import Property
 from .preference import PropertyPreference
 from .workspace import Workspace

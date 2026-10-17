@@ -10,7 +10,7 @@ from core.config import settings
 from core.database import AsyncSessionLocal
 from models.context import ContextJob
 from services.context_access import enabled
-from services.context_graph import graph_driver, initialize, replace_projection
+from services.context_graph import graph_driver, initialize, replace_projection, apply_embeddings
 from services.context_snapshot import snapshot
 from services.context_enrichment import enrich
 
@@ -24,13 +24,26 @@ async def claim_job():
             ContextJob.attempts < 5, ContextJob.available_at <= now,
             or_(ContextJob.lease_until.is_(None), ContextJob.lease_until < now))
         job = await db.scalar(query.order_by(ContextJob.available_at, ContextJob.project_id).limit(1).with_for_update(skip_locked=True))
+        phase = "graph"
         if not job:
-            return None
+            phase = "enrichment"
+            job = await db.scalar(select(ContextJob).where(
+                ContextJob.revision == ContextJob.applied_revision,
+                ContextJob.applied_revision > ContextJob.enrichment_revision,
+                ContextJob.enrichment_attempts < 5, ContextJob.enrichment_available_at <= now,
+                or_(ContextJob.lease_until.is_(None), ContextJob.lease_until < now))
+                .order_by(ContextJob.enrichment_available_at, ContextJob.project_id).limit(1).with_for_update(skip_locked=True))
+            if not job:
+                return None
         job.lease_token = str(uuid4())
         job.lease_until = now + timedelta(seconds=90)
-        job.attempts += 1
+        if phase == "graph":
+            job.attempts += 1
+        else:
+            job.enrichment_attempts += 1
         return {"project_id": job.project_id, "workspace_id": job.workspace_id, "revision": job.revision,
-                "token": job.lease_token, "attempts": job.attempts}
+                "token": job.lease_token, "phase": phase,
+                "attempts": job.attempts if phase == "graph" else job.enrichment_attempts}
 
 
 async def heartbeat(job):
@@ -48,9 +61,12 @@ async def process(driver, job):
         async with asyncio.timeout(600):
             async with AsyncSessionLocal() as db:
                 nodes, edges, artifacts = await snapshot(db, job["project_id"], job["workspace_id"])
-                await enrich(db, job["project_id"], nodes, artifacts)
-                await db.commit()
-            await replace_projection(driver, job["project_id"], job["workspace_id"], job["revision"], nodes, edges)
+                if job.get("phase", "graph") == "graph":
+                    await replace_projection(driver, job["project_id"], job["workspace_id"], job["revision"], nodes, edges)
+                else:
+                    await enrich(db, job["project_id"], nodes, artifacts)
+                    await db.commit()
+                    await apply_embeddings(driver, job["project_id"], job["workspace_id"], nodes)
     except Exception as exc:
         # Do not store provider error bodies or source text in the public status response.
         error = type(exc).__name__
@@ -59,11 +75,21 @@ async def process(driver, job):
         heart.cancel()
         await asyncio.gather(heart, return_exceptions=True)
     async with AsyncSessionLocal() as db, db.begin():
-        values = {"lease_token": None, "lease_until": None, "error": error}
-        if error:
-            values["available_at"] = datetime.now(timezone.utc) + timedelta(seconds=min(300, 2 ** job["attempts"] * 5))
+        stamp = datetime.now(timezone.utc)
+        values = {"lease_token": None, "lease_until": None}
+        if job.get("phase", "graph") == "enrichment":
+            values["enrichment_error"] = error
+            if error:
+                values["enrichment_available_at"] = stamp + timedelta(seconds=min(300, 2 ** job["attempts"] * 5))
+            else:
+                values.update(enrichment_revision=job["revision"], enrichment_attempts=0)
         else:
-            values.update(applied_revision=job["revision"], attempts=0, indexed_at=datetime.now(timezone.utc))
+            values["error"] = error
+            if error:
+                values["available_at"] = stamp + timedelta(seconds=min(300, 2 ** job["attempts"] * 5))
+            else:
+                values.update(applied_revision=job["revision"], attempts=0, indexed_at=stamp,
+                    enrichment_attempts=0, enrichment_available_at=stamp, enrichment_error=None)
         await db.execute(update(ContextJob).where(ContextJob.project_id == job["project_id"], ContextJob.lease_token == job["token"]).values(**values))
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.scrum_master_defaults import (
@@ -13,11 +13,15 @@ from models.base import Base
 
 class ScrumMasterSettings(Base):
     __tablename__ = "scrum_master_settings"
+    __table_args__ = (
+        CheckConstraint("voice_mode IN ('pipeline', 'gemini_live')", name="ck_scrum_master_voice_mode"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     workspace_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("workspaces.id"), nullable=False, unique=True, index=True)
     bot_name: Mapped[str] = mapped_column(String(120), default="Huzlr Scrum Master")
     bot_account_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    voice_mode: Mapped[str] = mapped_column(String(30), nullable=False, default="pipeline", server_default="pipeline")
     agent_prompt: Mapped[str] = mapped_column(Text, nullable=False, default=DEFAULT_SCRUM_MASTER_AGENT_PROMPT)
     introduction_message: Mapped[str] = mapped_column(
         Text,

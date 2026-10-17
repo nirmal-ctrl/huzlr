@@ -27,6 +27,7 @@ DEFAULT_SCRUM_MASTER_INTRODUCTION = (
 class ScrumMasterConversationConfig:
     agent_prompt: str = DEFAULT_SCRUM_MASTER_AGENT_PROMPT
     introduction_message: str = DEFAULT_SCRUM_MASTER_INTRODUCTION
+    voice_mode: str = "pipeline"
 
     @classmethod
     def from_metadata(cls, metadata: str | None) -> "ScrumMasterConversationConfig":
@@ -39,7 +40,11 @@ class ScrumMasterConversationConfig:
 
         prompt = value.get("agent_prompt")
         introduction = value.get("introduction_message")
+        voice_mode = value.get("voice_mode", "pipeline")
+        if voice_mode not in ("pipeline", "gemini_live"):
+            raise ValueError(f"Unsupported Scrum Master voice mode: {voice_mode!r}")
         return cls(
+            voice_mode=voice_mode,
             agent_prompt=(
                 prompt.strip()
                 if isinstance(prompt, str) and prompt.strip()

@@ -25,6 +25,6 @@ async def meeting_context_metadata(db, meeting):
                              expires_at=datetime.now(timezone.utc) + timedelta(hours=5))
     db.add(session)
     await db.flush()
-    metadata = {"context_session_id": session.id, "context_token": delegate(session)}
+    metadata = {"context_session_id": session.id, "context_token": delegate(session), "context_project_ids": session.project_ids}
     await db.commit()
     return metadata
