@@ -229,6 +229,68 @@ class GraphIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["facts"])
         self.assertTrue(all(f["project_id"] == PIDS[0] and f["workspace_id"] == 1 for f in result["facts"]))
 
+    async def test_graphiti_history_replay_validity_and_forget(self):
+        from services.context_graphiti import history
+        revision = await self.project_graph(PIDS[0])
+        initial = await history(self.driver, 1, [PIDS[0]], [], source_id="huzlr:issue:100")
+        self.assertEqual(len(initial["episodes"]), 1)
+        cutoff = datetime.fromisoformat(initial["episodes"][0]["recorded_at"])
+        async with self.sessions() as db:
+            issue = await db.get(Issue, 100)
+            issue.description = "Updated after the original observation"
+            await db.commit()
+        revision = await self.project_graph(PIDS[0])
+        current = await history(self.driver, 1, [PIDS[0]], [], source_id="huzlr:issue:100")
+        self.assertEqual(len(current["episodes"]), 2)
+        self.assertIn("Updated after", current["episodes"][0]["content"]["text"])
+        old = await history(self.driver, 1, [PIDS[0]], [], source_id="huzlr:issue:100", as_of=cutoff)
+        self.assertEqual(len(old["episodes"]), 1)
+        self.assertNotIn("Updated after", old["episodes"][0]["content"]["text"])
+        # Same-revision replays cannot create episodes or rewrite the timeline.
+        await self.project_graph(PIDS[0])
+        self.assertEqual(await history(self.driver, 1, [PIDS[0]], [], source_id="huzlr:issue:100"), current)
+        async with self.driver.session(database="neo4j") as graph:
+            invalid = await (await graph.run("""MATCH ()-[r:RELATES_TO]->()
+                WHERE r.project_id = $pid AND r.invalid_at IS NOT NULL RETURN count(r) AS count""", pid=PIDS[0])).single()
+            self.assertGreater(invalid["count"], 0)
+        self.assertEqual((await history(self.driver, 2, [PIDS[0]], []))["episodes"], [])
+        async with self.sessions() as db:
+            await db.delete(await db.get(Issue, 100))
+            await db.commit()
+        await self.project_graph(PIDS[0])
+        self.assertEqual((await history(self.driver, 1, [PIDS[0]], [], source_id="huzlr:issue:100"))["episodes"], [])
+
+    async def test_graphiti_adopts_legacy_nodes_at_same_revision(self):
+        async with self.sessions() as db:
+            job = await db.get(ContextJob, PIDS[0])
+            nodes, edges, _ = await snapshot(db, PIDS[0], 1)
+        async with self.driver.session(database="neo4j") as graph:
+            await (await graph.run("UNWIND $nodes AS props CREATE (n:ContextEntity) SET n = props", nodes=nodes)).consume()
+            await (await graph.run("MERGE (p:ContextPartition {project_id: $pid}) SET p.revision = $revision, p.context_engine = null",
+                pid=PIDS[0], revision=job.revision)).consume()
+        await replace_projection(self.driver, PIDS[0], 1, job.revision, nodes, edges)
+        result = await search(self.driver, 1, [PIDS[0]], "release", [], 20)
+        self.assertEqual(result["engine"], "graphiti")
+        self.assertTrue(result["temporal_facts"])
+        self.assertTrue(all(set(f["source_ids"]).issubset({n["canonical_id"] for n in result["facts"]}) for f in result["temporal_facts"]))
+
+    async def test_graphiti_migration_queues_existing_projects(self):
+        async with self.sessions() as db:
+            before = {job.project_id: job.revision for job in (await db.scalars(select(ContextJob))).all()}
+        path = Path(__file__).resolve().parents[1] / "alembic/versions/e5f6a7b8c9d0_graphiti_context_reindex.py"
+        spec = importlib.util.spec_from_file_location("graphiti_migration", path)
+        migration = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(migration)
+        async with self.engine.begin() as conn:
+            def upgrade(connection):
+                with Operations.context(MigrationContext.configure(connection)):
+                    migration.upgrade()
+            await conn.run_sync(upgrade)
+        async with self.sessions() as db:
+            jobs = (await db.scalars(select(ContextJob))).all()
+            self.assertEqual(len(jobs), 3)
+            self.assertTrue(all(job.revision == before[job.project_id] + 1 and job.revision > job.applied_revision for job in jobs))
+
 
 if __name__ == "__main__":
     unittest.main()

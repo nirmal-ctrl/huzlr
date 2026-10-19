@@ -65,3 +65,4 @@ google-cloud-storage==3.13.1
 # are provided by `livekit-api`.
 livekit-api==1.1.0
 neo4j>=5.26,<6
+graphiti-core[google-genai]==0.31.1

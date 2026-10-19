@@ -23,7 +23,7 @@ from models.team_membership import TeamMembership
 from models.workspace_membership import WorkspaceMembership
 from models.scrum_master import ScrumMeeting
 from schemas.context import SessionCreate, SearchRequest, NoteCreate, ClaimReview, ActionCreate, ChatRequest, ChatAnswer, MeetingProjects
-from schemas.context import VoiceEvidence
+from schemas.context import VoiceEvidence, HistoryRequest
 from schemas.jira import JiraContextRequest
 from services.context_access import enabled, authorize_projects, session_for_user, delegated_session
 from services.context_graph import graph_driver, project_graph, search, jira_candidates
@@ -120,6 +120,44 @@ async def internal_search(payload: SearchRequest, x_huzlr_context_token: Annotat
     return await packet(db, session, payload.query, payload.limit, jira_private=getattr(session, "jira_private", False))
 
 
+async def history_packet(db, session, payload, jira_private=True):
+    if payload.session_id != session.id or payload.project_id not in session.project_ids:
+        raise HTTPException(403, "History request does not match context session")
+    await authorize_projects(db, session.user_id, session.workspace_id, [payload.project_id])
+    from services.context_graphiti import history
+    from services.jira.access import verify_sources
+    try:
+        async with asyncio.timeout(30):
+            async with graph_driver() as driver:
+                ids, bounded = await jira_candidates(driver, session.workspace_id, [payload.project_id], session.user_id,
+                    limit=settings.JIRA_MAX_VISIBILITY_SOURCES) if jira_private else ([], False)
+                allowed = await verify_sources(db, session.user_id, [payload.project_id], ids)
+                result = await history(driver, session.workspace_id, [payload.project_id], allowed,
+                    source_id=payload.source_id, as_of=payload.as_of, limit=payload.limit, cursor=payload.cursor)
+                result["truncated"] = bounded
+                # Recheck source grants/version after the historical read, too.
+                if set(allowed) != set(await verify_sources(db, session.user_id, [payload.project_id], ids)):
+                    raise HTTPException(409, "Jira evidence changed; retry the history request")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.warning("context history failed: %s", type(exc).__name__)
+        raise HTTPException(503, "Project context history is temporarily unavailable") from exc
+    await authorize_projects(db, session.user_id, session.workspace_id, [payload.project_id])
+    return result
+
+
+@router.post("/history")
+async def project_history(payload: HistoryRequest, db=Depends(get_db), user=Depends(get_current_user)):
+    return await history_packet(db, await session_for_user(db, payload.session_id, user.id), payload)
+
+
+@router.post("/internal/history")
+async def internal_history(payload: HistoryRequest, x_huzlr_context_token: Annotated[str, Header()], db=Depends(get_db)):
+    session = await delegated_session(db, x_huzlr_context_token)
+    return await history_packet(db, session, payload, jira_private=getattr(session, "jira_private", False))
+
+
 @router.post("/internal/evidence", status_code=201)
 async def voice_evidence(payload: VoiceEvidence, x_huzlr_context_token: Annotated[str, Header()], db=Depends(get_db)):
     session = await delegated_session(db, x_huzlr_context_token, purpose="context-evidence")
@@ -151,7 +189,7 @@ async def authorized_project(db, user, project_id):
 async def graph_status(project_id: int, db=Depends(get_db), user=Depends(get_current_user)):
     await authorized_project(db, user, project_id)
     job = await db.get(ContextJob, project_id)
-    return {"project_id": project_id, "status": "not_indexed" if not job else
+    return {"engine": "graphiti", "history_time_basis": "observed", "project_id": project_id, "status": "not_indexed" if not job else
             "failed" if job.attempts >= 5 else "pending" if job.revision > job.applied_revision else "ready",
             "indexed_at": job.indexed_at if job else None, "error": job.error if job else None,
             "enrichment": None if not job else {"pending": job.enrichment_revision < job.revision,

@@ -2,6 +2,10 @@
 
 Backend API for the Huzlr application built with FastAPI and PostgreSQL.
 
+## Graphiti context graphs
+
+Project context now uses the pinned Graphiti SDK on the existing Neo4j database. See [setup, migration, history APIs and verification](docs/graphiti-context.md).
+
 Persistent LiveKit voice workers are maintained and deployed independently from the
 top-level `huzlr-agents` module. This backend only creates room tokens, dispatches
 named agents, and exposes protected application-data APIs to those workers, which

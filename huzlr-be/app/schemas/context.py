@@ -1,4 +1,5 @@
 from typing import Literal
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
@@ -22,6 +23,22 @@ class SearchRequest(StrictModel):
     session_id: str = Field(min_length=36, max_length=36)
     query: str = Field(min_length=1, max_length=2000)
     limit: int = Field(default=12, ge=1, le=30)
+
+
+class HistoryRequest(StrictModel):
+    session_id: str = Field(min_length=36, max_length=36)
+    project_id: int = Field(gt=0)
+    source_id: str | None = Field(default=None, max_length=500)
+    as_of: datetime | None = None
+    cursor: int = Field(default=0, ge=0, le=100000)
+    limit: int = Field(default=20, ge=1, le=50)
+
+    @field_validator("as_of")
+    @classmethod
+    def aware_timestamp(cls, value):
+        if value is not None and value.utcoffset() is None:
+            raise ValueError("as_of must include a timezone")
+        return value
 
 
 class NoteCreate(StrictModel):

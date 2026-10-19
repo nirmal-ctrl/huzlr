@@ -1,5 +1,7 @@
 # Jira context connector
 
+Graph storage, temporal history and agent retrieval use [Graphiti context management](graphiti-context.md). Apply the latest migration and restart the context worker when upgrading an existing graph.
+
 The implemented flow is **Jira Cloud site → Jira space (REST project ID) → optional saved filter → selected Huzlr project → versioned evidence → context graph → authorized agent tools**. Importing Jira records does not create local Huzlr issues or change source issues.
 
 ## Start the service

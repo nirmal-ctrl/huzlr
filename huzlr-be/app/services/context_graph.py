@@ -39,6 +39,8 @@ async def initialize(driver):
     async with driver.session(database=settings.NEO4J_DATABASE) as session:
         for statement in statements:
             await (await session.run(statement)).consume()
+        from services.context_graphiti import initialize_graphiti
+        await initialize_graphiti(session)
 
 
 async def replace_projection(driver, project_id, workspace_id, revision, nodes, edges):
@@ -54,25 +56,14 @@ async def replace_projection(driver, project_id, workspace_id, revision, nodes, 
         result = await tx.run("""MERGE (p:ContextPartition {project_id: $pid})
             ON CREATE SET p.revision = 0
             SET p.lock_version = coalesce(p.lock_version, 0) + 1
-            RETURN p.revision AS revision""", pid=project_id)
+            RETURN p.revision AS revision, p.context_engine AS engine""", pid=project_id)
         row = await result.single()
-        if row["revision"] >= revision:
+        if row["revision"] > revision or (row["revision"] == revision and row["engine"] == "graphiti"):
             return
-        await (await tx.run("MATCH (n:ContextEntity {project_id: $pid}) DETACH DELETE n", pid=project_id)).consume()
-        for kind in sorted(KINDS):
-            batch = [n for n in nodes if n["kind"] == kind]
-            if batch:
-                await (await tx.run(f"UNWIND $nodes AS props CREATE (n:ContextEntity:{kind}) SET n = props", nodes=batch)).consume()
-        for kind in sorted(RELATIONS):
-            batch = [e for e in edges if e["kind"] == kind]
-            if batch:
-                # Endpoints may be in another project but never in another workspace.
-                await (await tx.run(f"""UNWIND $edges AS edge
-                    MATCH (a:ContextEntity {{canonical_id: edge.source, workspace_id: $wid}})
-                    MATCH (b:ContextEntity {{canonical_id: edge.target, workspace_id: $wid}})
-                    MERGE (a)-[r:{kind}]->(b) SET r.source_id = edge.source_id""", edges=batch, wid=workspace_id)).consume()
+        from services.context_graphiti import store_projection
+        await store_projection(tx, project_id, workspace_id, revision, nodes, edges)
         await (await tx.run("""MATCH (p:ContextPartition {project_id: $pid})
-            SET p.revision = $revision, p.workspace_id = $wid, p.indexed_at = datetime()""",
+            SET p.revision = $revision, p.workspace_id = $wid, p.indexed_at = datetime(), p.context_engine = 'graphiti'""",
             pid=project_id, wid=workspace_id, revision=revision)).consume()
     async with driver.session(database=settings.NEO4J_DATABASE) as session:
         await session.execute_write(write)
@@ -114,9 +105,10 @@ WHERE a.canonical_id IN $ids AND a.workspace_id = $wid AND a.project_id IN $pids
   AND (coalesce(a.source_system, '') <> 'jira' OR (a.jira_object_id + ':' + a.source_version) IN $jira_ids)
   AND (coalesce(b.source_system, '') <> 'jira' OR (b.jira_object_id + ':' + b.source_version) IN $jira_ids)
   AND NOT coalesce(b.status, '') IN ['superseded', 'retracted']
+  AND r.invalid_at IS NULL AND r.expired_at IS NULL
 RETURN DISTINCT b {.*, embedding: null} AS node,
   {source: startNode(r).canonical_id, target: endNode(r).canonical_id,
-   kind: type(r), source_id: r.source_id} AS edge
+   kind: coalesce(r.name, type(r)), source_id: r.source_id} AS edge
 LIMIT $limit
 """
 
@@ -137,14 +129,18 @@ async def search(driver, workspace_id, project_ids, query, vector, limit, jira_i
     facts, size = [], 0
     for node in unique.values():
         node.pop("embedding", None)
+        node.pop("name_embedding", None)
         size += len(node.get("text", ""))
         if size > 24000:
             break
         facts.append(node)
     allowed = {n["canonical_id"] for n in facts}
+    from services.context_graphiti import search_relationships
+    temporal_facts, temporal_truncated = await search_relationships(driver, workspace_id, project_ids, query, jira_ids or [], limit, list(allowed))
     return {"scope": {"workspace_id": workspace_id, "project_ids": project_ids}, "facts": facts,
             "relationships": [r["edge"] for r in neighbors if r["edge"]["source"] in allowed and r["edge"]["target"] in allowed],
-            "truncated": len(facts) < len(unique), "retrieval_mode": "scoped_exact_hybrid" if vector else "scoped_keyword"}
+            "temporal_facts": temporal_facts, "engine": "graphiti",
+            "truncated": len(facts) < len(unique) or temporal_truncated, "retrieval_mode": "graphiti_scoped_hybrid" if vector else "graphiti_scoped_keyword"}
 
 
 async def project_graph(driver, workspace_id: int, project_id: int, limit: int = 500, jira_ids=None):
@@ -158,9 +154,10 @@ async def project_graph(driver, workspace_id: int, project_id: int, limit: int =
     UNWIND selected AS n
     OPTIONAL MATCH (n)-[r]->(m:ContextEntity {workspace_id: $wid, project_id: $pid})
     WHERE m IN selected AND NOT coalesce(m.status, '') IN ['superseded', 'retracted']
+      AND r.invalid_at IS NULL AND r.expired_at IS NULL
     RETURN collect(DISTINCT properties(n)) AS nodes,
     collect(DISTINCT CASE WHEN r IS NULL THEN null ELSE {
-        source: n.canonical_id, target: m.canonical_id, kind: type(r), source_id: r.source_id
+        source: n.canonical_id, target: m.canonical_id, kind: coalesce(r.name, type(r)), source_id: r.source_id
     } END) AS relationships
     """
     count_query = """
@@ -179,6 +176,7 @@ async def project_graph(driver, workspace_id: int, project_id: int, limit: int =
     relationships = [] if row is None else [dict(edge) for edge in row["relationships"] if edge]
     total = total_row["total"] if total_row else 0
     return {
+        "engine": "graphiti",
         "project_id": project_id,
         "nodes": nodes,
         "relationships": relationships,
@@ -198,8 +196,9 @@ async def jira_candidates(driver, workspace_id, project_ids, user_id, query="", 
       AND ($all OR any(term IN $terms WHERE toLower(n.title) CONTAINS term OR toLower(n.text) CONTAINS term)
         OR (size($vector) > 0 AND n.embedding_model = $model AND size(n.embedding) = size($vector)
             AND vector.similarity.cosine(n.embedding, $vector) > 0.45))
-    OPTIONAL MATCH (n)-[]-(m:ContextEntity)
+    OPTIONAL MATCH (n)-[r]-(m:ContextEntity)
     WHERE m.workspace_id = $wid AND m.project_id IN $pids AND m.jira_owner_id = $uid
+      AND r.invalid_at IS NULL AND r.expired_at IS NULL
       AND NOT coalesce(m.status, '') IN ['superseded', 'retracted']
     WITH n.jira_object_id AS first, m.jira_object_id AS neighbor
     UNWIND [first, neighbor] AS object_id
@@ -222,5 +221,5 @@ async def apply_embeddings(driver, project_id, workspace_id, nodes):
         await (await session.run("""UNWIND $batch AS item
             MATCH (n:ContextEntity {canonical_id: item.id, project_id: $pid, workspace_id: $wid})
             WHERE n.source_version = item.version
-            SET n.embedding = item.embedding, n.embedding_model = item.model""",
+            SET n.embedding = item.embedding, n.name_embedding = item.embedding, n.embedding_model = item.model""",
             batch=batch, pid=project_id, wid=workspace_id)).consume()

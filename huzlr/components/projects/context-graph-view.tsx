@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { useAppSelector } from "@/lib/redux/hooks"
+import { ContextSourceHistory } from "./context-source-history"
 import {
   contextError, type ContextGraphEdge, type ContextGraphNode,
   useProjectContextGraphQuery, useReindexProjectContextMutation,
@@ -65,6 +67,7 @@ function NodeDetails({ node, relations, allNodes, onSelect, onClose }: {
   onSelect: (node: ContextGraphNode) => void; onClose: () => void;
 }) {
   const { label, icon: Icon, tone } = kindInfo(node.kind)
+  const userId = useAppSelector(state => state.auth.user?.id)
   const neighbors = relations.flatMap(edge => {
     if (edge.source !== node.canonical_id && edge.target !== node.canonical_id) return []
     const outgoing = edge.source === node.canonical_id
@@ -88,6 +91,7 @@ function NodeDetails({ node, relations, allNodes, onSelect, onClose }: {
         {node.text && <div className="mt-5"><h3 className="text-[11px] font-medium text-muted-foreground">Source content</h3><p className="mt-2 whitespace-pre-wrap break-words text-xs leading-6">{node.text}</p></div>}
         {node.confidence != null && <div className="mt-4 flex justify-between text-xs"><span className="text-muted-foreground">Extraction confidence</span><span className="tabular-nums">{Math.round(node.confidence * 100)}%</span></div>}
         {node.updated_at && <p className="mt-3 text-[11px] text-muted-foreground">Updated {dateLabel(node.updated_at)}</p>}
+        <ContextSourceHistory key={`${userId}:${node.canonical_id}`} node={node} />
         <div className="mt-5 border-t pt-4">
           <div className="mb-2 flex items-center justify-between"><h3 className="text-[11px] font-medium text-muted-foreground">Connections</h3><span className="text-[10px] tabular-nums text-muted-foreground">{neighbors.length}</span></div>
           {neighbors.length ? neighbors.map(({ edge, other, outgoing }, index) => (

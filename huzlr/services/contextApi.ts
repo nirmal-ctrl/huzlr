@@ -49,12 +49,23 @@ export type ContextGraphEdge = {
 }
 
 export type ProjectContextGraph = {
+  engine?: "graphiti"
   project_id: number
   nodes: ContextGraphNode[]
   relationships: ContextGraphEdge[]
   total_nodes: number
   truncated: boolean
   freshness: { status: "not_indexed" | "pending" | "ready" | "failed"; indexed_at: string | null; error: string | null }
+}
+
+export type ContextHistory = {
+  engine: "graphiti"
+  time_basis: "observed"
+  as_of: string | null
+  episodes: { id: string; source_id: string; source_version: string; recorded_at: string;
+    content: { title?: string; text?: string; status?: string; path?: string } }[]
+  next_cursor: number | null
+  truncated: boolean
 }
 
 export type ContextProjectSummary = {
@@ -81,6 +92,9 @@ export const contextApi = baseApi.injectEndpoints({
     contextChat: builder.mutation<ContextAnswer, { session_id: string; message: string }>({
       query: (body) => ({ url: "/context/chat", method: "POST", body }),
     }),
+    contextHistory: builder.mutation<ContextHistory, { session_id: string; project_id: number; source_id?: string; as_of?: string; cursor?: number; limit?: number }>({
+      query: (body) => ({ url: "/context/history", method: "POST", body }),
+    }),
     confirmContextAction: builder.mutation<{ status: string; issue_id: number }, string>({
       query: (id) => ({ url: `/context/actions/${id}/confirm`, method: "POST" }),
       invalidatesTags: ["Tasks", "ProjectTasks", "TeamTasks"],
@@ -100,7 +114,7 @@ export const contextApi = baseApi.injectEndpoints({
   }),
 })
 
-export const { useContextProjectsQuery, useCreateContextSessionMutation, useContextChatMutation,
+export const { useContextProjectsQuery, useCreateContextSessionMutation, useContextChatMutation, useContextHistoryMutation,
   useConfirmContextActionMutation, useRememberContextMutation, useContextStatusQuery,
   useProjectContextGraphQuery, useReindexProjectContextMutation } = contextApi
 

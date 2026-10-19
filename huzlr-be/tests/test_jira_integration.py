@@ -202,6 +202,15 @@ class JiraIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(any(e["kind"] == "BLOCKS" for e in result["relationships"]))
         other_user = await self.query(2)
         self.assertFalse(any(f.get("source_system") == "jira" for f in other_user["facts"]))
+        self.assertTrue(all(set(f["source_ids"]).issubset({n["canonical_id"] for n in other_user["facts"]}) for f in other_user["temporal_facts"]))
+        from services.context_graphiti import history
+        async with self.sessions() as db:
+            ids, _ = await jira_candidates(self.driver, 1, [PIDS[0]], 1, limit=80)
+            allowed = await verify_sources(db, 1, [PIDS[0]], ids)
+        owned_history = await history(self.driver, 1, [PIDS[0]], allowed, limit=50)
+        self.assertTrue(any(e["content"].get("source_system") == "jira" for e in owned_history["episodes"]))
+        public_history = await history(self.driver, 1, [PIDS[0]], [], limit=50)
+        self.assertFalse(any(e["content"].get("source_system") == "jira" for e in public_history["episodes"]))
         default = await search(self.driver, 1, [PIDS[0]], "migration", [], 100)
         self.assertFalse(any(f.get("source_system") == "jira" for f in default["facts"]))
 
@@ -212,6 +221,12 @@ class JiraIntegrationTests(unittest.IsolatedAsyncioTestCase):
         result = await self.query()
         self.assertFalse(any(":issue:101" in f["canonical_id"] or ":comment:101" in f["canonical_id"] for f in result["facts"]))
         self.assertFalse(any(e["kind"] == "BLOCKS" for e in result["relationships"]))
+        from services.context_graphiti import history
+        async with self.sessions() as db:
+            ids, _ = await jira_candidates(self.driver, 1, [PIDS[0]], 1, limit=80)
+            allowed = await verify_sources(db, 1, [PIDS[0]], ids)
+        historical = await history(self.driver, 1, [PIDS[0]], allowed, limit=50)
+        self.assertFalse(any(":issue:101" in e["source_id"] or ":comment:101" in e["source_id"] for e in historical["episodes"]))
         self.provider.denied.clear()
         self.provider.issues["101"]["fields"]["summary"] = "edited source"
         result = await self.query()

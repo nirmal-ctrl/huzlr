@@ -18,7 +18,7 @@ class ContextToolsTests(unittest.IsolatedAsyncioTestCase):
         http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
         metadata = json.dumps({"context_session_id": "session", "context_token": "delegation", "context_project_ids": [7]})
         tools = {t.__name__: t for t in context_tools(metadata, "https://api.example.test")}
-        self.assertEqual(len(tools), 6)
+        self.assertEqual(len(tools), 7)
         try:
             with patch("huzlr_agents.context.httpx.AsyncClient", return_value=http):
                 await tools["get_source_evidence"]("T-1", dataset="changelog", cursor=20, text_offset=6000, limit=1)
@@ -38,8 +38,27 @@ class ContextToolsTests(unittest.IsolatedAsyncioTestCase):
         with patch("huzlr_agents.context.httpx.AsyncClient") as client:
             self.assertIn("Select a project", await tools["get_project_overview"]())
             client.assert_not_called()
+            self.assertIn("Select a project", await tools["get_project_history"]())
         for metadata in [None, "[]", "invalid", "{}"]:
             self.assertEqual(context_tools(metadata, "https://api.example.test"), [])
+
+    async def test_history_tool_preserves_scope_and_temporal_cutoff(self):
+        requests = []
+        def handler(request):
+            requests.append(request)
+            return httpx.Response(200, json={"episodes": [], "time_basis": "observed"})
+        metadata = json.dumps({"context_session_id": "session", "context_token": "delegation", "context_project_ids": [7]})
+        tools = {tool.__name__: tool for tool in context_tools(metadata, "https://api.example.test")}
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        try:
+            with patch("huzlr_agents.context.httpx.AsyncClient", return_value=client):
+                result = await tools["get_project_history"](source_id="huzlr:issue:1", as_of="2026-10-01T00:00:00Z", cursor=20)
+        finally:
+            await client.aclose()
+        self.assertEqual(str(requests[0].url), "https://api.example.test/api/v1/context/internal/history")
+        self.assertEqual(json.loads(requests[0].content)["project_id"], 7)
+        self.assertEqual(json.loads(requests[0].content)["as_of"], "2026-10-01T00:00:00Z")
+        self.assertIn("observed", result)
 
 
 if __name__ == "__main__":
