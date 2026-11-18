@@ -49,6 +49,6 @@ class ExecutionEngine:
             handler = self.tools.get(call.name)
             if handler is None:
                 raise ValueError(f"Tool is not registered: {call.name}")
-            result = await handler(call.arguments)
+            # Handler is invoked only after policy authorization; sandbox and\n            # approval checks must be implemented before untrusted tools run.\n            result = await handler(call.arguments)
             observations.append({"tool": call.name, "result": result})
         return {"status": "step_limit_reached", "steps": self.max_steps}
