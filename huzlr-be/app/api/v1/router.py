@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from api.v1.endpoints import agent_data, issues, projects, auth, health, jira, meta, milestones, workspaces, teams, invites, livekit, project_documents, scrum_master
-from api.v1.endpoints import context
+from api.v1.endpoints import context, ai_workers
 
 api_router = APIRouter()
 api_router.include_router(context.router, prefix="/context", tags=["context"])
@@ -19,3 +19,5 @@ api_router.include_router(project_documents.router, tags=["project_documents"])
 api_router.include_router(livekit.router, prefix="/livekit", tags=["livekit"])
 api_router.include_router(scrum_master.router, prefix="/scrum-master", tags=["scrum-master"])
 api_router.include_router(agent_data.router, prefix="/internal/agents", tags=["internal-agents"])
+
+api_router.include_router(ai_workers.router, prefix="/ai-workers", tags=["ai-workers"])
