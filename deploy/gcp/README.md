@@ -53,3 +53,11 @@ docker compose --env-file huzl/.env -f deploy/gcp/compose.yaml up --build -d
 ```
 
 Jira ingestion and context projection are separate persistent services in the opt-in `context` profile. Configure `huzlr-be/.env`, apply the database migrations first, and follow the [Jira connector runbook](../../huzlr-be/docs/jira-context-connector.md) before starting `jira-worker` and `context-worker`.
+
+The managed AI Worker queue consumer is in the opt-in `ai-workers` profile. Its
+backend environment needs `DATABASE_URL` and the selected model provider key:
+
+```bash
+docker compose --profile ai-workers --env-file huzl/.env \
+  -f deploy/gcp/compose.yaml up --build -d ai-worker
+```

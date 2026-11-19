@@ -24,6 +24,7 @@ from models.version import ProjectVersion
 from models.issue import Issue
 from models.project import Project
 from models.scrum_master import ScrumMasterSettings, GoogleCalendarConnection, ScrumMeeting, MeetingTranscriptSegment
+from models.ai_worker import AIWorker, AIWorkerExecution, AIWorkerEvent, AIWorkerApproval, AIWorkerNode
 
 
 # Vercel owns the process lifecycle. Persistent LiveKit workers are deployed

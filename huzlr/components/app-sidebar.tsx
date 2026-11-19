@@ -35,6 +35,7 @@ import { sanitizeIdentity } from "@/components/properties/factory"
 import { NavScrumMaster } from "@/components/nav-scrum-master"
 import { NavWorkspace } from "@/components/nav-workspace"
 import { NavProjects } from "@/components/nav-projects"
+import { NavAIWorkers } from "@/components/nav-ai-workers"
 
 const data = {
   navMain: [
@@ -187,6 +188,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects />
+        <NavAIWorkers />
         <NavWorkspace />
         <NavScrumMaster />
         <NavSecondary items={data.navSecondary} className="mt-auto" />

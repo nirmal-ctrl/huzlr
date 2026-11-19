@@ -36,6 +36,14 @@ class EngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ExecutionEngine(StubModel(), {}, ToolPolicy(frozenset()), max_steps=0)
 
+    def test_reject_ambiguous_model_decision(self):
+        with self.assertRaises(ValueError):
+            AgentDecision(completed=True, output="done", tool_call=ToolCall("read_task", {}))
+
+    def test_reject_empty_completion(self):
+        with self.assertRaises(ValueError):
+            AgentDecision(completed=True, output="")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,6 +22,12 @@ class AgentDecision:
     output: str | None = None
     tool_call: ToolCall | None = None
 
+    def __post_init__(self):
+        if self.completed == (self.tool_call is not None):
+            raise ValueError("Decision must either complete or request exactly one tool")
+        if self.completed and not (self.output or "").strip():
+            raise ValueError("Completed decision requires output")
+
 
 class ModelAdapter(Protocol):
     async def decide(self, task: str, observations: list[dict[str, Any]]) -> AgentDecision: ...
@@ -42,13 +48,14 @@ class ExecutionEngine:
             decision = await self.model.decide(task, observations.copy())
             if decision.completed:
                 return {"status": "completed", "output": decision.output, "steps": step + 1}
-            if decision.tool_call is None:
-                raise ValueError("Model must complete or request exactly one tool")
             call = decision.tool_call
+            assert call is not None
             self.policy.authorize(call.name)
             handler = self.tools.get(call.name)
             if handler is None:
                 raise ValueError(f"Tool is not registered: {call.name}")
-            # Handler is invoked only after policy authorization; sandbox and\n            # approval checks must be implemented before untrusted tools run.\n            result = await handler(call.arguments)
+            # Handler is invoked only after policy authorization. Sandbox and
+            # approval checks belong in the injected handler boundary.
+            result = await handler(call.arguments)
             observations.append({"tool": call.name, "result": result})
         return {"status": "step_limit_reached", "steps": self.max_steps}

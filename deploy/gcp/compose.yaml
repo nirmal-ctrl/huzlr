@@ -41,6 +41,11 @@ x-context-worker: &context-worker
       max-file: "5"
 
 services:
+  ai-worker:
+    <<: *context-worker
+    profiles: [ai-workers]
+    command: [python, -m, ai_worker]
+
   jira-worker:
     <<: *context-worker
     command: [python, -m, jira_worker]

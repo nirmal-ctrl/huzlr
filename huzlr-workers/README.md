@@ -1,24 +1,34 @@
-# Huzlr AI Workers — Phase 1 foundation
+# Huzlr AI Workers
 
-This is the **native runtime foundation**, not a production-ready agent service.
+This package contains the bounded execution engine and the outbound-only
+customer-hosted Worker Node.
 
-## Included
-- Validated worker and execution contracts for cloud and customer-hosted deployment
-- Deny-by-default tool authorization
-- Bounded asynchronous model/tool loop with injected adapters
-- Deterministic unit tests without external model credentials
+## Customer-hosted node
 
-## Not implemented yet
-Database persistence, tenant authorization, API endpoints, LLM provider adapters,
-sandbox isolation, dispatch queues, checkpointing, cancellation, approvals,
-customer-hosted node enrollment, and the Next.js dashboard.
+Create a node from **AI Workers → Worker nodes**, copy its one-time token, then
+run:
 
-## Run tests
-From this directory, with Python and `pydantic>=2` installed:
+```bash
+docker build -t huzlr-worker-node .
+docker run --rm \
+  -e HUZLR_CONTROL_PLANE_URL=https://your-huzlr.example.com \
+  -e HUZLR_NODE_TOKEN=huzlr_node_... \
+  -e GEMINI_API_KEY=... \
+  huzlr-worker-node
+```
+
+Provider credentials remain in the node environment. The node makes outbound
+HTTPS requests only, heartbeats execution leases, and never falls back to the
+Huzlr cloud runner. Revoke a token from the dashboard to stop new claims.
+
+The standard node supports the same project-task tools as the cloud runner. Tool
+requests are re-authorized by the control plane, and task mutations pause until
+a project member approves them in Huzlr. The node exposes no filesystem, shell,
+or arbitrary network tools; deployments may inject separately audited local
+handlers into `ExecutionEngine`.
+
+## Tests
 
 ```bash
 PYTHONPATH=. python -m unittest discover -s tests -v
 ```
-
-The runtime must never be exposed to untrusted customer tool execution until
-sandbox isolation, durable state, and policy enforcement are integrated.

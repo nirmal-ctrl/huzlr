@@ -183,6 +183,13 @@ echo "Starting Huzlr Backend on http://localhost:8001..."
 ) &
 remember_pid "$!"
 
+echo "Starting Huzlr AI Worker queue consumer..."
+(
+    cd "$BACKEND_DIR/app" || exit 1
+    exec ../.venv/bin/python -m ai_worker
+) &
+remember_pid "$!"
+
 echo "Starting Huzlr Frontend on http://localhost:3001..."
 (
     cd "$FRONTEND_DIR" || exit 1

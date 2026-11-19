@@ -7,6 +7,7 @@ The frontend and FastAPI backend remain on Vercel. The VM runs:
 - `founder`: LiveKit worker named `huzlr-founder` (Ask Nirmal)
 - `scrum-master`: LiveKit worker named `huzlr-scrum-master`
 - `meet-bridge`: Huzl Google Meet bridge
+- `ai-worker` (optional `ai-workers` profile): durable managed AI Worker runner
 
 ## Production coordinates
 
@@ -72,6 +73,10 @@ docker compose --env-file huzl/.env -f deploy/gcp/compose.yaml \
 # Huzl Google Meet bridge
 docker compose --env-file huzl/.env -f deploy/gcp/compose.yaml \
   logs --tail=200 --timestamps -f meet-bridge
+
+# Managed AI Worker runner
+docker compose --profile ai-workers --env-file huzl/.env -f deploy/gcp/compose.yaml \
+  logs --tail=200 --timestamps -f ai-worker
 ```
 
 Press `Ctrl+C` to stop following logs. This stops only the log viewer; it does

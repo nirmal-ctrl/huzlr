@@ -65,6 +65,18 @@ Comprehensive guides and setup instructions are available in the [`docs/`](docs/
    uvicorn main:app --reload
    ```
 
+   In a second terminal, start the durable cloud AI Worker consumer:
+
+   ```bash
+   cd app
+   python -m ai_worker
+   ```
+
+   Cloud workers use `GEMINI_API_KEY` or `OPENAI_API_KEY` from the backend
+   environment. Customer-hosted workers instead use the outbound node described
+   in [`../huzlr-workers/README.md`](../huzlr-workers/README.md), so their provider
+   credentials remain customer-local.
+
 7. **Access the API**
    - API: http://localhost:8000
    - Docs: http://localhost:8000/docs
