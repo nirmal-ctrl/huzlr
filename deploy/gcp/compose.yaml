@@ -43,8 +43,13 @@ x-context-worker: &context-worker
 services:
   ai-worker:
     <<: *context-worker
+    build:
+      context: ../../huzlr-be
+      dockerfile: Dockerfile.ai-worker
     profiles: [ai-workers]
     command: [python, -m, ai_worker]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   jira-worker:
     <<: *context-worker

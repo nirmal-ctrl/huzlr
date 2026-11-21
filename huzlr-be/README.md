@@ -73,9 +73,20 @@ Comprehensive guides and setup instructions are available in the [`docs/`](docs/
    ```
 
    Cloud workers use `GEMINI_API_KEY` or `OPENAI_API_KEY` from the backend
-   environment. Customer-hosted workers instead use the outbound node described
-   in [`../huzlr-workers/README.md`](../huzlr-workers/README.md), so their provider
-   credentials remain customer-local.
+   environment. AI Workers run exclusively in Huzlr Cloud.
+
+   Optional isolated files and shell execution uses the
+   [managed sandbox backend](sandbox/README.md). Enable it on a Huzlr-managed
+   Docker host, then select the sandbox and tool permissions in worker setup.
+
+   Worker creation supports **Manual setup** and **Create with chat**. Chat uses
+   the configured Gemini credentials, or OpenAI credentials when Gemini is not
+   configured, to propose validated settings for the current workspace. Users
+   review and edit the proposal in manual setup before creating a draft worker.
+   No project is required to create a worker. Choose an optional project or link
+   a Huzlr task when starting an execution; project tools are restricted to that
+   execution’s project and the requesting user’s access. Existing project-scoped
+   workers retain their original restrictions.
 
 7. **Access the API**
    - API: http://localhost:8000

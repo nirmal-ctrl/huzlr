@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class DeploymentKind(str, Enum):
     CLOUD = "cloud"
-    CUSTOMER_HOSTED = "customer_hosted"
 
 
 class WorkerStatus(str, Enum):

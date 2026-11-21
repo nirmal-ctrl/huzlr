@@ -1,31 +1,20 @@
-# Huzlr AI Workers
+# Huzlr AI Workers runtime
 
-This package contains the bounded execution engine and the outbound-only
-customer-hosted Worker Node.
+This package contains the bounded execution engine and validated cloud worker
+contracts. AI Workers run exclusively in Huzlr Cloud. The managed consumer and
+provider adapters live in `huzlr-be/app`.
 
-## Customer-hosted node
+## Run the managed consumer
 
-Create a node from **AI Workers → Worker nodes**, copy its one-time token, then
-run:
+Configure the backend environment, apply its migrations, then run:
 
 ```bash
-docker build -t huzlr-worker-node .
-docker run --rm \
-  -e HUZLR_CONTROL_PLANE_URL=https://your-huzlr.example.com \
-  -e HUZLR_NODE_TOKEN=huzlr_node_... \
-  -e GEMINI_API_KEY=... \
-  huzlr-worker-node
+cd ../huzlr-be/app
+../.venv/bin/python -m ai_worker
 ```
 
-Provider credentials remain in the node environment. The node makes outbound
-HTTPS requests only, heartbeats execution leases, and never falls back to the
-Huzlr cloud runner. Revoke a token from the dashboard to stop new claims.
-
-The standard node supports the same project-task tools as the cloud runner. Tool
-requests are re-authorized by the control plane, and task mutations pause until
-a project member approves them in Huzlr. The node exposes no filesystem, shell,
-or arbitrary network tools; deployments may inject separately audited local
-handlers into `ExecutionEngine`.
+See [backend setup](../huzlr-be/README.md) and the
+[managed deployment guide](../deploy/gcp/README.md).
 
 ## Tests
 

@@ -6,7 +6,7 @@ Project Manager Copilot
 - `huzlr`: Next.js frontend.
 - `huzlr-be`: Vercel-compatible FastAPI control plane and application API.
 - `huzlr-agents`: Persistent Brainstorm, Ask Nirmal, and Scrum Master LiveKit workers.
-- `huzlr-workers`: Bounded AI Worker runtime and customer-hosted outbound node.
+- `huzlr-workers`: Bounded AI Worker runtime contracts and execution engine.
 - `huzl`: Google Meet automation and audio bridge.
 
 Voice agents are deployed independently from FastAPI. See `huzlr-agents/README.md`

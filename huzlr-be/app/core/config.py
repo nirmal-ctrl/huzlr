@@ -55,7 +55,12 @@ class Settings(BaseSettings):
     AI_WORKER_LEASE_SECONDS: int = 120
     AI_WORKER_COST_PER_MILLION_TOKENS_CENTS: int = 100
     AI_WORKER_MAX_ACTIVE_PER_WORKER: int = 5
-    AI_WORKER_NODE_TOKEN_PEPPER: str = ""
+    # Set on both the web API and Huzlr's managed queue consumers.
+    AI_WORKER_SANDBOX_ENABLED: bool = False
+    AI_WORKER_SANDBOX_IMAGE: str = "huzlr-sandbox:local"
+    AI_WORKER_SANDBOX_MEMORY_MB: int = 512
+    AI_WORKER_SANDBOX_CPUS: float = 1.0
+    AI_WORKER_SANDBOX_HOST_ID: str = "local"
 
     # Context graphs apply to every workspace/project when the global service is enabled.
     CONTEXT_ENABLED: bool = True

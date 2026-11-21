@@ -5,18 +5,24 @@ from worker_runtime.models import WorkerDefinition, ExecutionRecord, DeploymentK
 
 
 class ContractsTests(unittest.TestCase):
-    def test_worker_defaults_and_customer_hosted(self):
+    def test_worker_defaults_to_cloud(self):
         worker = WorkerDefinition(
             organization_id=uuid4(),
             name="Developer",
             instructions="Only inspect tasks",
             model_provider="test",
             model_name="stub",
-            deployment_kind=DeploymentKind.CUSTOMER_HOSTED,
         )
         self.assertEqual(worker.version, 1)
         self.assertEqual(worker.allowed_tools, [])
-        self.assertEqual(worker.deployment_kind.value, "customer_hosted")
+        self.assertEqual(worker.deployment_kind, DeploymentKind.CLOUD)
+
+    def test_reject_customer_hosted_deployment(self):
+        with self.assertRaises(ValidationError):
+            WorkerDefinition(
+                organization_id=uuid4(), name="Developer", instructions="Inspect",
+                model_provider="test", model_name="stub", deployment_kind="customer_hosted",
+            )
 
     def test_reject_invalid_step_limit(self):
         with self.assertRaises(ValidationError):

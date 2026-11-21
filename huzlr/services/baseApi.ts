@@ -55,6 +55,6 @@ const baseQueryWithSessionHandling: BaseQueryFn<
 export const baseApi = createApi({
     reducerPath: 'api',
     baseQuery: baseQueryWithSessionHandling,
-    tagTypes: ['Projects', 'Brainstorms', 'Dashboard', 'Milestones', 'ProjectMilestones', 'Tasks', 'ProjectTasks', 'TeamTasks', 'Documents', 'ProjectDocuments', 'ScrumMeetings', 'ScrumSettings', 'CalendarStatus', 'AIWorkers', 'WorkerExecutions', 'WorkerNodes'],
+    tagTypes: ['Projects', 'Brainstorms', 'Dashboard', 'Milestones', 'ProjectMilestones', 'Tasks', 'ProjectTasks', 'TeamTasks', 'Documents', 'ProjectDocuments', 'ScrumMeetings', 'ScrumSettings', 'CalendarStatus', 'AIWorkers', 'WorkerExecutions', 'WorkerSessions'],
     endpoints: () => ({}),
 })

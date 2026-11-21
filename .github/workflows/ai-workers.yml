@@ -6,9 +6,22 @@ on:
       - "huzlr-be/app/models/ai_worker.py"
       - "huzlr-be/app/api/v1/endpoints/ai_workers.py"
       - "huzlr-be/app/services/ai_worker_runtime.py"
+      - "huzlr-be/app/services/ai_worker_sandbox.py"
+      - "huzlr-be/app/services/ai_worker_creation.py"
+      - "huzlr-be/tests/test_ai_workers_creation.py"
+      - "huzlr-be/app/core/config.py"
+      - "huzlr-be/sandbox/**"
+      - "huzlr-be/Dockerfile.ai-worker"
+      - "huzlr-be/.dockerignore"
+      - "huzlr-be/requirements.ai-worker.txt"
+      - "deploy/gcp/compose.yaml"
+      - "huzlr-be/tests/test_ai_workers_sandbox.py"
       - "huzlr-be/app/ai_worker.py"
+      - "huzlr-be/tests/test_ai_workers_cloud_only.py"
+      - "huzlr-be/tests/test_ai_workers_pagination.py"
       - "huzlr-be/alembic/versions/*ai_workers*"
       - "huzlr/app/(app)/ai-workers/**"
+      - "huzlr/components/ai-workers/**"
       - "huzlr/services/aiWorkersApi.ts"
       - ".github/workflows/ai-workers.yml"
   pull_request:
@@ -17,9 +30,22 @@ on:
       - "huzlr-be/app/models/ai_worker.py"
       - "huzlr-be/app/api/v1/endpoints/ai_workers.py"
       - "huzlr-be/app/services/ai_worker_runtime.py"
+      - "huzlr-be/app/services/ai_worker_sandbox.py"
+      - "huzlr-be/app/services/ai_worker_creation.py"
+      - "huzlr-be/tests/test_ai_workers_creation.py"
+      - "huzlr-be/app/core/config.py"
+      - "huzlr-be/sandbox/**"
+      - "huzlr-be/Dockerfile.ai-worker"
+      - "huzlr-be/.dockerignore"
+      - "huzlr-be/requirements.ai-worker.txt"
+      - "deploy/gcp/compose.yaml"
+      - "huzlr-be/tests/test_ai_workers_sandbox.py"
       - "huzlr-be/app/ai_worker.py"
+      - "huzlr-be/tests/test_ai_workers_cloud_only.py"
+      - "huzlr-be/tests/test_ai_workers_pagination.py"
       - "huzlr-be/alembic/versions/*ai_workers*"
       - "huzlr/app/(app)/ai-workers/**"
+      - "huzlr/components/ai-workers/**"
       - "huzlr/services/aiWorkersApi.ts"
       - ".github/workflows/ai-workers.yml"
 jobs:
@@ -34,7 +60,39 @@ jobs:
         working-directory: huzlr-workers
       - run: PYTHONPATH=. python -m unittest discover -s tests -v
         working-directory: huzlr-workers
-      - run: python -m compileall -q huzlr-be/app/models/ai_worker.py huzlr-be/app/api/v1/endpoints/ai_workers.py huzlr-be/app/services/ai_worker_runtime.py huzlr-be/app/ai_worker.py huzlr-be/alembic/versions/f1a2b3c4d5e6_ai_workers_runtime.py
+      - run: python -m compileall -q huzlr-be/app/models/ai_worker.py huzlr-be/app/api/v1/endpoints/ai_workers.py huzlr-be/app/services/ai_worker_runtime.py huzlr-be/app/ai_worker.py huzlr-be/alembic/versions/f2a3b4c5d6e7_ai_workers_cloud_only.py
+
+  cloud-api-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://test:test@localhost/test
+      SECRET_KEY: ci-test-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r huzlr-be/requirements.ai-worker.txt fastapi==0.121.2 python-jose==3.5.0 email-validator==2.3.0
+      - run: docker build -t huzlr-sandbox:local sandbox
+        working-directory: huzlr-be
+      - run: HUZLR_TEST_POSTGRES=1 HUZLR_TEST_DOCKER=1 python -m unittest discover -s tests -p 'test_ai_workers*.py' -v
+        working-directory: huzlr-be
+      - run: docker build -t huzlr-ai-worker:ci -f huzlr-be/Dockerfile.ai-worker huzlr-be
+      - run: docker run --rm --entrypoint docker huzlr-ai-worker:ci --version
+      - run: docker run --rm -e DATABASE_URL=postgresql+asyncpg://test:test@localhost/test --entrypoint python huzlr-ai-worker:ci -c "from ai_worker import run_forever"
 
   frontend-types:
     runs-on: ubuntu-latest
